@@ -137,7 +137,7 @@
       </spacer>
      </item>
      <item alignment="Qt::AlignHCenter">
-      <widget class="QPushButton" name="Run">
+      <widget class="QPushButton" name="Exit">
        <property name="minimumSize">
         <size>
          <width>100</width>
@@ -151,7 +151,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Run</string>
+        <string>Exit</string>
        </property>
       </widget>
      </item>

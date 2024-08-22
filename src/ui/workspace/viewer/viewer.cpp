@@ -1,21 +1,19 @@
 #include "viewer.hpp"
+#include "ui_viewer.h"
 
-#include <cstdlib>
-#include <iostream>
 #include <pcl/impl/point_types.hpp>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
+
+#include <qchar.h>
 #include <qgraphicsscene.h>
+#include <qmessagebox.h>
 #include <qobjectdefs.h>
 #include <qpixmap.h>
+#include <qpushbutton.h>
 #include <qwidget.h>
-
-#include <cstdio>
-#include <memory>
-
-#include "ui_viewer.h"
 
 #if VTK_MAJOR_VERSION > 8
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -117,8 +115,8 @@ Viewer::Viewer(QWidget* parent)
     pimpl_->ui()->setupUi(this);
     pimpl_->load();
 
-    connect(pimpl_->ui()->Refresh, &QPushButton::clicked,
-        this, &Viewer::refresh_callback);
+    connect(pimpl_->ui()->Refresh, &QPushButton::clicked, this, &Viewer::refresh_callback);
+    connect(pimpl_->ui()->Exit, &QPushButton::clicked, this, &Viewer::exit_callback);
 
     const auto path = "/home/creeper/workspace/sentry/ignore/bag/robomaster_slam2.pcd";
 
@@ -142,6 +140,20 @@ void Viewer::refresh_callback()
 {
     pimpl_->refresh();
     internal::message("refreshed");
+}
+
+void Viewer::exit_callback()
+{
+    auto answer = QMessageBox::information(NULL, "Exits", "Sure to exit?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (answer == QMessageBox::Yes) {
+        std::exit(0);
+    } else {
+        internal::message("cancel exit");
+    }
+
+    auto s = QString {};
 }
 
 } // namespace workspace
