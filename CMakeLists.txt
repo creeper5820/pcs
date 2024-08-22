@@ -14,6 +14,8 @@ list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "src/ui/")
 aux_source_directory(src/ SRC)
 aux_source_directory(src/ui/workspace/ SRC)
 aux_source_directory(src/ui/workspace/viewer/ SRC)
+aux_source_directory(src/core/viewer/ SRC)
+aux_source_directory(src/core/operator/ SRC)
 
 find_package(Qt5 COMPONENTS Concurrent OpenGL Widgets REQUIRED)
 find_package(PCL COMPONENTS io common visualization REQUIRED)

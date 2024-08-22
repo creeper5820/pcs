@@ -1,6 +1,12 @@
 #pragma once
+#include "core/viewer/cloud.hpp"
+#include "ui_viewer.h"
 
+#include <qmessagebox.h>
+#include <qpushbutton.h>
 #include <qwidget.h>
+
+#include <memory>
 
 namespace workspace {
 
@@ -9,16 +15,14 @@ class Viewer : public QWidget {
 public:
     Viewer(QWidget* parent = nullptr);
     ~Viewer();
-    Viewer(const Viewer&) = delete;
-    Viewer& operator=(const Viewer&) = delete;
 
 private Q_SLOTS:
     void refresh_callback();
     void exit_callback();
 
 private:
-    struct Impl;
-    Impl* pimpl_;
+    std::unique_ptr<Ui::WorkspaceViewer> ui_;
+    std::unique_ptr<core::viewer::Storage> storage_;
 };
 
 } // namespace workspace
