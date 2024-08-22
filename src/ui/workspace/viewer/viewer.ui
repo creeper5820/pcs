@@ -61,7 +61,7 @@
       </spacer>
      </item>
      <item alignment="Qt::AlignHCenter">
-      <widget class="QPushButton" name="hello_world">
+      <widget class="QPushButton" name="Refresh">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -81,7 +81,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Hello</string>
+        <string>Refresh</string>
        </property>
       </widget>
      </item>
@@ -102,7 +102,7 @@
       </spacer>
      </item>
      <item alignment="Qt::AlignHCenter">
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="Settings">
        <property name="minimumSize">
         <size>
          <width>100</width>
@@ -137,7 +137,7 @@
       </spacer>
      </item>
      <item alignment="Qt::AlignHCenter">
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="Run">
        <property name="minimumSize">
         <size>
          <width>100</width>

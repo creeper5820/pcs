@@ -13,7 +13,7 @@ class Viewer : public QWidget {
   Viewer& operator=(const Viewer&) = delete;
 
  private Q_SLOTS:
-  void button_hello_world_callback();
+  void refresh_callback();
 
  private:
   struct Impl;

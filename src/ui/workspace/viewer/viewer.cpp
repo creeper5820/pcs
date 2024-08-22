@@ -1,5 +1,12 @@
 #include "viewer.hpp"
 
+#include <cstdlib>
+#include <iostream>
+#include <pcl/impl/point_types.hpp>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <qgraphicsscene.h>
 #include <qobjectdefs.h>
 #include <qpixmap.h>
@@ -13,67 +20,128 @@
 #if VTK_MAJOR_VERSION > 8
 #include <vtkGenericOpenGLRenderWindow.h>
 #endif
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/visualization/pcl_visualizer.h>
 
-using namespace workspace;
+namespace workspace::internal {
+template <typename... Args>
+    requires requires(Args... args) {
+        ((std::cout << args), ...);
+    }
+inline void message(Args... args)
+{
+    ((std::cout << '[' << args << ']'), ...) << std::endl;
+}
 
-struct Viewer::Impl {
- public:
-  Impl() {
-    // 注意构造中不要依赖UI，此时还未与 QWidget/QMainWindow 绑定
-    ui_ = std::make_unique<Ui::WorkspaceViewer>();
-    scene_ = std::make_unique<QGraphicsScene>();
-  }
-
-  ~Impl() {}
-
-  inline void show_picture() {
-    ui_->graphicsView->setScene(scene_.get());
-    ui_->graphicsView->show();
-  }
-
-  inline void close_picture() { ui_->graphicsView->close(); }
-
-  void init_vtk_viewer() {
+inline void bind_vtk(
+    std::shared_ptr<pcl::visualization::PCLVisualizer>& viewer,
+    QVTKOpenGLNativeWidget* vtk, const std::string& name)
+{
     using namespace pcl::visualization;
-    auto& vtk = ui_->vtkWidget;
-    auto name = std::string("viewer");
 
 #if VTK_MAJOR_VERSION > 8
     auto render = vtkSmartPointer<vtkRenderer>::New();
     auto window = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
     window->AddRenderer(render);
-    viewer_.reset(
-        new pcl::visualization::PCLVisualizer(render, window, "viewer", false));
-    vtk->setRenderWindow(viewer_->getRenderWindow());
-    viewer_->setupInteractor(vtk->interactor(), vtk->renderWindow());
+    viewer = std::make_shared<PCLVisualizer>(render, window, "viewer", false);
+    vtk->setRenderWindow(viewer->getRenderWindow());
+    viewer->setupInteractor(vtk->interactor(), vtk->renderWindow());
 #else
-    viewer_.reset(new PCLVisualizer(name, false));
+    viewer.reset(new PCLVisualizer(name, false));
     vtk->SetRenderWindow(viewer_->getRenderWindow());
-    viewer_->setupInteractor(vtk->GetInteractor(), vtk->GetRenderWindow());
+    viewer->setupInteractor(vtk->GetInteractor(), vtk->GetRenderWindow());
 #endif
-  }
-
-  const std::unique_ptr<Ui::WorkspaceViewer>& ui() { return ui_; }
-
- private:
-  std::unique_ptr<Ui::WorkspaceViewer> ui_;
-  std::unique_ptr<QGraphicsScene> scene_;
-
-  pcl::visualization::PCLVisualizer::Ptr viewer_;
-};
-
-Viewer::Viewer(QWidget* parent) : QWidget(parent) {
-  pimpl_ = new Impl{};
-  pimpl_->ui()->setupUi(this);
-  pimpl_->init_vtk_viewer();
-
-  connect(pimpl_->ui()->hello_world, &QPushButton::clicked, this,
-          &Viewer::button_hello_world_callback);
 }
 
-Viewer::~Viewer() { delete pimpl_; }
+inline void refresh_vtk(QVTKOpenGLNativeWidget* vtk)
+{
+#if VTK_MAJOR_VERSION > 8
+    vtk->renderWindow()->Render();
+#else
+    vtk->update();
+#endif
+}
+}; // namespace workspace::internal
 
-void Viewer::button_hello_world_callback() {}
+namespace workspace {
+struct Viewer::Impl {
+public:
+    enum class ReturnT : uint8_t {
+        SUCCESS,
+        NEED_INIT,
+    };
+
+    // 注意构造中不要依赖UI，此时还未与 QWidget/QMainWindow 绑定
+    Impl()
+    {
+        ui_ = std::make_unique<Ui::WorkspaceViewer>();
+    }
+
+    const std::unique_ptr<Ui::WorkspaceViewer>& ui() { return ui_; }
+
+    void load()
+    {
+        internal::bind_vtk(viewer_, ui_->vtkWidget, "vtk");
+    }
+
+    void refresh()
+    {
+        internal::refresh_vtk(ui_->vtkWidget);
+    }
+
+    template <typename PointT>
+        requires requires(PointT) {
+            pcl::PointCloud<PointT> {};
+        }
+    ReturnT register_cloud(pcl::PointCloud<PointT>::Ptr cloud, const std::string& name)
+    {
+        if (viewer_ == nullptr) {
+            internal::message("visualizer need to be initialized");
+            return ReturnT::NEED_INIT;
+        }
+
+        viewer_->addPointCloud(cloud, name);
+        viewer_->resetCamera();
+
+        internal::message("register cloud successfully");
+        return ReturnT::SUCCESS;
+    }
+
+private:
+    std::unique_ptr<Ui::WorkspaceViewer> ui_;
+    pcl::visualization::PCLVisualizer::Ptr viewer_;
+};
+
+Viewer::Viewer(QWidget* parent)
+    : QWidget(parent)
+{
+    pimpl_ = new Impl {};
+    pimpl_->ui()->setupUi(this);
+    pimpl_->load();
+
+    connect(pimpl_->ui()->Refresh, &QPushButton::clicked,
+        this, &Viewer::refresh_callback);
+
+    const auto path = "/home/creeper/workspace/sentry/ignore/bag/robomaster_slam2.pcd";
+
+    static auto cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+    if (pcl::io::loadPCDFile(path, *cloud) != -1) {
+        internal::message("cloud size", cloud->size());
+        pimpl_->register_cloud<pcl::PointXYZ>(cloud, "cloud");
+        pimpl_->refresh();
+    } else {
+        internal::message("load cloud failed", path);
+        std::exit(-1);
+    }
+}
+
+Viewer::~Viewer()
+{
+    delete pimpl_;
+}
+
+void Viewer::refresh_callback()
+{
+    pimpl_->refresh();
+    internal::message("refreshed");
+}
+
+} // namespace workspace
