@@ -10,40 +10,31 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-aux_source_directory(src/core/viewer/ SRC)
-aux_source_directory(src/core/operator/ SRC)
-# aux_source_directory(src/ui/workspace/ SRC)
-# aux_source_directory(src/ui/workspace/viewer/ SRC)
+list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "src/qwidget/")
+file(GLOB_RECURSE PROJECT_SRC src/*.cpp)
 
-find_package(Qt5 COMPONENTS Core Quick REQUIRED)
+find_package(Qt5 COMPONENTS Core REQUIRED)
 find_package(PCL COMPONENTS io common visualization REQUIRED)
 find_package(VTK REQUIRED)
 
-include_directories(src)
 include_directories(
+    ${PROJECT_SOURCE_DIR}/src
+    ${Qt5Core_INCLUDE_DIRS} 
     ${PCL_INCLUDE_DIRS} 
-    ${Qt5Widgets_INCLUDE_DIRS} 
-    ${QtQml_INCLUDE_DIRS}
 )
 
 add_definitions(
+    ${Qt5Core_DEFINITIONS} 
     ${PCL_DEFINITIONS} 
-    ${Qt5Widgets_DEFINITIONS} 
-    ${QtQml_DEFINITIONS} 
-    ${Qt5Quick_DEFINITIONS}
 )
 
 add_executable(
     ${PROJECT_NAME}
-    src/main.cpp
-    src/qml/qml.qrc
-    ${SRC}
+    ${PROJECT_SRC}
 )
 
 target_link_libraries(
     ${PROJECT_NAME} 
     ${PCL_LIBRARIES} 
-    Qt5::Widgets
-    Qt5::Quick
-    Qt5::Qml
-)
+    Qt5::Core
+)  

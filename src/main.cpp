@@ -1,17 +1,14 @@
 #include "qapplication.h"
-#include <QtQml/qqmlapplicationengine.h>
+#include <qurl.h>
 
-// #include "ui/workspace/viewer/viewer.hpp"
-// #include "ui/workspace/workspace.hpp"
+#include "qwidget/workspace/viewer/viewer.hpp"
 
 int main(int argc, char* argv[])
 {
     auto app = QApplication { argc, argv };
-    auto qml = QQmlApplicationEngine {};
-    qml.load(QUrl(QStringLiteral("qrc:/viewer.qml")));
 
-    // auto a = workspace::Viewer {};
-    // a.show();
+    auto viewer = workspace::Viewer {};
+    viewer.show();
 
     return app.exec();
 }

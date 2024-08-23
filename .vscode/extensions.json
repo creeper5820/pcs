@@ -1,11 +1,11 @@
 {
     "recommendations": [
+        "ms-ceintl.vscode-language-pack-zh-hans",
+        "xaver.clang-format",
         "llvm-vs-code-extensions.vscode-clangd",
         "twxs.cmake",
-        "xaver.clang-format",
         "streetsidesoftware.code-spell-checker",
-        "bbenoist.qml",
-        "thomasvogelpohl.vsc-qml-snippets",
-        "andreoneti.qml-formatter"
+        "andreoneti.qml-formatter",
+        "felgo.felgo"
     ]
 }
