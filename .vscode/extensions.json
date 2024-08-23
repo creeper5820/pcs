@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "twxs.cmake",
+        "xaver.clang-format",
+        "streetsidesoftware.code-spell-checker",
+        "bbenoist.qml",
+        "thomasvogelpohl.vsc-qml-snippets",
+        "andreoneti.qml-formatter"
+    ]
+}

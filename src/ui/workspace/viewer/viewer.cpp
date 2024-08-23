@@ -1,5 +1,5 @@
 #include "viewer.hpp"
-#include "utility/viewer/common.hpp"
+#include "utility/common.hpp"
 
 using namespace workspace;
 
@@ -14,7 +14,7 @@ Viewer::Viewer(QWidget* parent)
 
     storage_ = std::make_unique<core::viewer::Storage>();
     storage_->bind_viewer(ui_->vtkWidget);
-    storage_->load_cloud("/home/creeper/workspace/sentry/ignore/develop_ws/pcd/1716207427.pcd", "123");
+    storage_->load_cloud("/home/creeper/workspace/sentry/ignore/bag/robomaster_slam.pcd", "123");
     utility::refresh_vtk(ui_->vtkWidget);
 }
 

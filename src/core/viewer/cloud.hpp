@@ -2,6 +2,7 @@
 #include <QVTKOpenGLNativeWidget.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <string>
 
 namespace core::viewer {
 
