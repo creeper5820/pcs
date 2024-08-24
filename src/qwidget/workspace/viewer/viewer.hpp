@@ -1,28 +1,29 @@
 #pragma once
+
 #include "core/viewer/cloud.hpp"
-#include "ui_viewer.h"
 
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qwidget.h>
-
-#include <memory>
+#include <ui_viewer.h>
 
 namespace workspace {
 
 class Viewer : public QWidget {
     Q_OBJECT
 public:
-    Viewer(QWidget* parent = nullptr);
-    ~Viewer();
+    Viewer(QWidget* parent = nullptr)
+        : QWidget(parent)
+    {
+        ui_ = new Ui::WorkspaceViewer();
+        ui_->setupUi(this);
+        core::viewer::storage.bind_viewer(ui_->vtkWidget);
+    }
 
-private Q_SLOTS:
-    void refresh_callback();
-    void exit_callback();
+    ~Viewer() { }
 
 private:
-    std::unique_ptr<Ui::WorkspaceViewer> ui_;
-    std::unique_ptr<core::viewer::Storage> storage_;
+    Ui::WorkspaceViewer* ui_;
 };
 
 } // namespace workspace

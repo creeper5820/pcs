@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qss/button/exit.qss</file>
+        <file>qss/button/about.qss</file>
+        <file>qss/button/layout.qss</file>
+        <file>qss/button/common.qss</file>
+        <file>qss/bar/menu.qss</file>
+    </qresource>
+</RCC>

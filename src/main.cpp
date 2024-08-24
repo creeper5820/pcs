@@ -1,14 +1,12 @@
 #include "qapplication.h"
-#include <qurl.h>
-
-#include "qwidget/workspace/viewer/viewer.hpp"
+#include "qwidget/workspace/workspace.hpp"
 
 int main(int argc, char* argv[])
 {
     auto app = QApplication { argc, argv };
 
-    auto viewer = workspace::Viewer {};
-    viewer.show();
+    auto workspace = workspace::Workspace {};
+    workspace.show();
 
     return app.exec();
 }

@@ -18,7 +18,7 @@ public:
     void bind_viewer(QVTKOpenGLNativeWidget* interface);
 
     // @brief as you can see, load a point cloud
-    void load_cloud(const std::string& path, const std::string& name);
+    bool load_cloud(const std::string& path, const std::string& name);
 
     // @brief as you can see, remove a point cloud
     void remove_cloud(const std::string& name);
@@ -38,4 +38,5 @@ private:
     Impl* pimpl_;
 };
 
+inline auto storage = Storage {};
 }

@@ -2,6 +2,7 @@
 
 #include <QVTKOpenGLNativeWidget.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include <qfileinfo.h>
 
 #if VTK_MAJOR_VERSION > 8
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -44,5 +45,12 @@ inline void refresh_vtk(QVTKOpenGLNativeWidget* vtk)
 #else
     vtk->update();
 #endif
+}
+
+inline const QString style(const QString& url)
+{
+    QFile style { url };
+    style.open(QFile::ReadOnly | QFile::Text);
+    return style.readAll();
 }
 };

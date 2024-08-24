@@ -23,9 +23,10 @@ public:
     inline void register_viewer(QVTKOpenGLNativeWidget* interface)
     {
         utility::bind_vtk(visualizer_, interface, "qt");
+        refresh_viewer();
     }
 
-    inline void load_cloud(const std::string& path, const std::string& name)
+    inline bool load_cloud(const std::string& path, const std::string& name)
     {
         auto contains = true;
         if (!clouds_.contains(name)) {
@@ -34,16 +35,39 @@ public:
         }
 
         auto& cloud = clouds_[name];
-        if (pcl::io::loadPCDFile(path, *cloud) == -1) {
-            QMessageBox::information(nullptr, "info", "failed to load cloud");
+        if (pcl::io::loadPCDFile(path, *cloud) != 0) {
             if (!contains)
                 clouds_.erase(name);
+            utility::message("load", "failed");
+            return false;
         } else {
-            auto msg = "load cloud successfully, size: " + std::to_string(cloud->size());
-            QMessageBox::information(nullptr, "info", msg.data());
             visualizer_->addPointCloud(cloud, name);
             visualizer_->resetCamera();
+            utility::message("load", "size", std::to_string(cloud->size()), "path", path);
+            refresh_viewer();
+            return true;
         }
+    }
+
+    inline void refresh_viewer()
+    {
+        visualizer_->getRenderWindow()->Render();
+    }
+
+    inline void remove_cloud(const std::string& name)
+    {
+        clouds_.erase(name);
+        visualizer_->removePointCloud(name);
+        refresh_viewer();
+        utility::message("remove", name, "clouds", clouds_.size());
+    }
+
+    inline void clear_cloud()
+    {
+        visualizer_->removeAllPointClouds();
+        clouds_.clear();
+        refresh_viewer();
+        utility::message("clear", "clouds");
     }
 
 private:
@@ -61,15 +85,15 @@ void Storage::bind_viewer(QVTKOpenGLNativeWidget* interface)
     pimpl_->register_viewer(interface);
 }
 
-void Storage::load_cloud(const std::string& path, const std::string& name)
+bool Storage::load_cloud(const std::string& path, const std::string& name)
 {
-    pimpl_->load_cloud(path, name);
+    return pimpl_->load_cloud(path, name);
 }
 
-void Storage::remove_cloud(const std::string& name) { }
+void Storage::remove_cloud(const std::string& name) { pimpl_->remove_cloud(name); }
 
-void Storage::clear_cloud() { }
+void Storage::clear_cloud() { pimpl_->clear_cloud(); }
 
 void Storage::clear() { }
 
-void Storage::refresh_viewer() { }
+void Storage::refresh_viewer() { pimpl_->refresh_viewer(); }
