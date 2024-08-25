@@ -5,5 +5,11 @@
         <file>qss/button/layout.qss</file>
         <file>qss/button/common.qss</file>
         <file>qss/bar/menu.qss</file>
+        <file>qss/bar/status.qss</file>
+        <file>qss/normal/viewer.qss</file>
+
+        <file>pic/clear.svg</file>
+        <file>pic/file.svg</file>
+        <file>pic/reset.svg</file>
     </qresource>
 </RCC>

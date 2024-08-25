@@ -10,6 +10,7 @@
 #include <qwidget.h>
 #include <ui_workspace.h>
 
+#include "operator/operator.hpp"
 #include "tool_bar/tool_bar.hpp"
 #include "utility/common.hpp"
 #include "viewer/viewer.hpp"
@@ -31,13 +32,18 @@ public:
             utility::style(":qss/button/about.qss"));
         page_.menu->setStyleSheet(
             utility::style(":qss/bar/menu.qss"));
+        page_.statusBar->setStyleSheet(
+            utility::style(":qss/bar/status.qss"));
 
         // layout
-        auto& layout = page_.layout_workspace;
-        layout->addWidget(&tool_bar_);
+        auto& layout
+            = page_.layout_workspace;
+        layout->addWidget(&operator_);
         layout->setStretch(1, 0);
         layout->addWidget(&viewer_);
         layout->setStretch(2, 1);
+        layout->addWidget(&tool_);
+        layout->setStretch(3, 0);
 
         connect(page_.button_exit, &QPushButton::clicked,
             this, &Workspace::exit);
@@ -55,8 +61,9 @@ private slots:
 
 private:
     Ui::Workspace page_;
-    ToolBar tool_bar_;
+    ToolBar tool_;
     Viewer viewer_;
+    OperatorBar operator_;
 };
 
 }

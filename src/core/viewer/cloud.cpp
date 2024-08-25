@@ -42,8 +42,8 @@ public:
             return false;
         } else {
             visualizer_->addPointCloud(cloud, name);
-            visualizer_->resetCamera();
-            utility::message("load", "size", std::to_string(cloud->size()), "path", path);
+            utility::message("load", "size",
+                std::to_string(cloud->size()), "path", path);
             refresh_viewer();
             return true;
         }
@@ -52,6 +52,7 @@ public:
     inline void refresh_viewer()
     {
         visualizer_->getRenderWindow()->Render();
+        visualizer_->resetCamera();
     }
 
     inline void remove_cloud(const std::string& name)

@@ -9,6 +9,7 @@
 #include <qlist.h>
 #include <qlistwidget.h>
 #include <qmenu.h>
+#include <qpixmap.h>
 #include <qwidget.h>
 #include <ui_cloud_item.h>
 #include <ui_tool_bar.h>
@@ -21,6 +22,10 @@ public:
         : QWidget(parent)
     {
         page_.setupUi(this);
+
+        page_.button_clear->setIcon(QPixmap(":pic/clear.svg"));
+        page_.button_load->setIcon(QPixmap(":pic/file.svg"));
+        page_.button_refresh->setIcon(QPixmap(":pic/reset.svg"));
 
         connect(page_.button_refresh, &QPushButton::clicked, this, &ToolBar::refresh);
         connect(page_.button_load, &QPushButton::clicked, this, &ToolBar::load);
