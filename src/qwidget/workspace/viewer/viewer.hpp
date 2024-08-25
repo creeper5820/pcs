@@ -14,13 +14,11 @@ class Viewer : public QWidget {
     Q_OBJECT
 public:
     Viewer(QWidget* parent = nullptr)
-        : QWidget(parent)
-    {
+        : QWidget(parent) {
         page_ = new Ui::WorkspaceViewer();
         page_->setupUi(this);
 
-        page_->frame->setStyleSheet(
-            utility::style(":qss/normal/viewer.qss"));
+        page_->frame->setStyleSheet(utility::style(":qss/normal/viewer.qss"));
 
         core::viewer::storage.bind_viewer(page_->vtkWidget);
     }

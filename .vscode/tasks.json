@@ -4,34 +4,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "make and run",
-            "type": "shell",
-            "command": "cd build && make -j && ./pcs",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
             "label": "make",
             "type": "shell",
-            "command": "cd build && make -j",
+            "command": "cd build && cmake .. && make -j",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
-        },
-        {
-            "label": "cmake",
-            "type": "shell",
-            "command": "cd build && cmake ..",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
+        }
     ]
 }

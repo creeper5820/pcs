@@ -1,7 +1,10 @@
 #pragma once
+#include "item.hpp"
 #include <QVTKOpenGLNativeWidget.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
+#include <optional>
 
 namespace core::viewer {
 
@@ -12,26 +15,22 @@ public:
     Storage(const Storage&) = delete;
     Storage& operator=(const Storage&) = delete;
 
-    using PointCloudT = pcl::PointCloud<pcl::PointXYZ>;
-
-    // @brief bind the qt vtk window with pcl visualizer
     void bind_viewer(QVTKOpenGLNativeWidget* interface);
+    void refresh_viewer();
 
-    // @brief as you can see, load a point cloud
-    bool load_cloud(const std::string& path, const std::string& name);
-
-    // @brief as you can see, remove a point cloud
-    void remove_cloud(const std::string& name);
-
-    // @brief clear all the point clouds
+    [[nodiscard]] bool load_cloud(const std::string& path);
+    void remove_cloud(const std::string& path);
     void clear_cloud();
-
-    // TODO: clear ...
-
-    // @brief clear all
     void clear();
 
-    void refresh_viewer();
+    std::optional<std::reference_wrapper<Item>>
+    operator[](const std::string& path);
+
+    // void set_color(const std::string& name);
+    // void set_size(const std::string& name);
+
+    void set_coordinate_system(double scale = 1.0,
+        const std::string& id = "reference", int viewport = 0);
 
 private:
     struct Impl;
@@ -39,4 +38,4 @@ private:
 };
 
 inline auto storage = Storage {};
-}
+} // namespace core::viewer

@@ -10,18 +10,13 @@
 
 namespace utility {
 template <typename... Args>
-    requires requires(Args... args) {
-        ((std::cout << args), ...);
-    }
-inline void message(Args... args)
-{
+    requires requires(Args... args) { ((std::cout << args), ...); }
+inline void message(Args... args) {
     ((std::cout << '[' << args << ']'), ...) << std::endl;
 }
 
-inline void bind_vtk(
-    std::shared_ptr<pcl::visualization::PCLVisualizer>& viewer,
-    QVTKOpenGLNativeWidget* vtk, const std::string& name)
-{
+inline void bind_vtk(std::shared_ptr<pcl::visualization::PCLVisualizer>& viewer,
+    QVTKOpenGLNativeWidget* vtk, const std::string& name) {
     using namespace pcl::visualization;
 
 #if VTK_MAJOR_VERSION > 8
@@ -38,8 +33,7 @@ inline void bind_vtk(
 #endif
 }
 
-inline void refresh_vtk(QVTKOpenGLNativeWidget* vtk)
-{
+inline void refresh_vtk(QVTKOpenGLNativeWidget* vtk) {
 #if VTK_MAJOR_VERSION > 8
     vtk->renderWindow()->Render();
 #else
@@ -47,8 +41,7 @@ inline void refresh_vtk(QVTKOpenGLNativeWidget* vtk)
 #endif
 }
 
-inline const QString style(const QString& url)
-{
+inline const QString style(const QString& url) {
     QFile style { url };
     style.open(QFile::ReadOnly | QFile::Text);
     return style.readAll();
