@@ -14,6 +14,18 @@ struct Item {
 public:
     using PointCloudT = pcl::PointCloud<pcl::PointXYZRGB>;
 
+    struct RGB {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+
+        bool operator==(const RGB& rgb) const {
+            return r == rgb.r
+                && g == rgb.g
+                && b == rgb.b;
+        }
+    };
+
     template <typename PointT>
     Item(pcl::PointCloud<PointT>::Ptr cloud) {
         assert(cloud != nullptr);
@@ -36,34 +48,28 @@ public:
 
     bool save(const std::string& path = {}) {
         if (path_.empty() && path.empty()) {
-            utility::message("save", "failed", "path is empty");
+            util::message("save", "path is empty");
             return false;
         }
         auto& target = path.empty() ? path_ : path;
         if (!pcl::io::savePCDFileBinary(target, *cloud_)) {
-            utility::message("save", target);
+            util::message("save", target);
             return true;
         } else {
-            utility::message("save", "failed");
+            util::message("save", "failed");
             return false;
         }
     }
 
     void set_color(uint8_t r, uint8_t g, uint8_t b) {
+        if (color_ == RGB { r, g, b })
+            return;
         for (auto& point : cloud_->points) {
             point.r = r;
             point.g = g;
             point.b = b;
         }
-
-        color_[0] = r;
-        color_[1] = g;
-        color_[2] = b;
-
-        utility::message("color", "set", path_,
-            static_cast<int>(color_[0]),
-            static_cast<int>(color_[1]),
-            static_cast<int>(color_[2]));
+        color_ = RGB { r, g, b };
     }
 
     bool loaded() { return loaded_; }
@@ -75,12 +81,9 @@ public:
 
 private:
     PointCloudT::Ptr cloud_;
-
-    std::string path_;
+    std::string path_ { "nothing" };
     std::string frame_ { "default" };
-
+    RGB color_ { 255, 255, 255 };
     bool loaded_ { false };
-
-    uint8_t color_[3];
 };
 }

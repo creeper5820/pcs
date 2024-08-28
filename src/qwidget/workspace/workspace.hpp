@@ -13,7 +13,7 @@
 #include <qwidget.h>
 #include <ui_workspace.h>
 
-#include "operator.hpp"
+#include "operator_bar.hpp"
 #include "tool_bar.hpp"
 #include "utility/common.hpp"
 #include "viewer.hpp"
@@ -27,15 +27,15 @@ public:
         setupUi(this);
 
         button_exit->setStyleSheet(
-            utility::style(":qss/button/exit.qss"));
+            util::style(":qss/button/exit.qss"));
         button_layout->setStyleSheet(
-            utility::style(":qss/button/layout.qss"));
+            util::style(":qss/button/layout.qss"));
         button_about->setStyleSheet(
-            utility::style(":qss/button/about.qss"));
+            util::style(":qss/button/about.qss"));
         menu->setStyleSheet(
-            utility::style(":qss/bar/menu.qss"));
+            util::style(":qss/bar/menu.qss"));
         status_bar->setStyleSheet(
-            utility::style(":qss/bar/status.qss"));
+            util::style(":qss/bar/status.qss"));
 
         // layout
         auto& layout = layout_workspace;

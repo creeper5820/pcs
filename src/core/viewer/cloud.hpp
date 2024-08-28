@@ -1,22 +1,21 @@
 #pragma once
 #include "item.hpp"
+#include "utility/single.hpp"
 
 #include <QVTKOpenGLNativeWidget.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include <optional>
-
 namespace core::view {
-
-class CloudView {
+class CloudView : public util::Singleton<CloudView> {
 public:
-    CloudView();
+    CloudView(typename util::Singleton<CloudView>::token);
     ~CloudView();
     CloudView(const CloudView&) = delete;
     CloudView& operator=(const CloudView&) = delete;
 
     void bind_viewer(QVTKOpenGLNativeWidget* interface);
+
     void render();
     void reset_camera();
 
@@ -25,8 +24,7 @@ public:
     void clear_cloud();
     void clear();
 
-    std::optional<std::reference_wrapper<Item>>
-    operator[](const std::string& path);
+    std::shared_ptr<Item> operator[](const std::string& path);
 
     void set_color(const std::string& name,
         uint8_t r, uint8_t g, uint8_t b);
@@ -41,6 +39,8 @@ private:
     struct Impl;
     Impl* pimpl_;
 };
+}
 
-inline auto instance = CloudView {};
-} // namespace core::view
+namespace core {
+using View = view::CloudView;
+}

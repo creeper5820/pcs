@@ -10,8 +10,6 @@
 class Operator : public QWidget {
     Q_OBJECT
 public:
-    explicit Operator() = default;
-
     void bind(QPushButton* button) {
         setContextMenuPolicy(Qt::CustomContextMenu);
         connect(button, &QWidget::customContextMenuRequested,
@@ -33,10 +31,13 @@ private:
     Q_SLOT void click_callback() override {
         static auto flag { true };
 
-        if (flag)
-            core::view::instance.add_coordinate_system(2.0, "default");
-        else
-            core::view::instance.remove_coordinate_system("default");
+        if (flag) {
+            core::View::instance().add_coordinate_system(
+                1.0, "default");
+        } else {
+            core::View::instance().remove_coordinate_system(
+                "default");
+        }
 
         flag = !flag;
     }
@@ -45,19 +46,4 @@ private:
     QIcon make_icon() override {
         return QPixmap(":pic/coordination.svg");
     }
-};
-
-class OperatorBar : public QWidget, Ui::Operator {
-    Q_OBJECT
-public:
-    OperatorBar(QWidget* parent = nullptr)
-        : QWidget(parent) {
-        setupUi(this);
-        setFixedWidth(30);
-
-        coordinate_.bind(operator1);
-    }
-
-private:
-    Coordinate coordinate_;
 };

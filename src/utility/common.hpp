@@ -8,7 +8,7 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #endif
 
-namespace utility {
+namespace util {
 template <typename... Args>
     requires requires(Args... args) { ((std::cout << args), ...); }
 inline void message(Args... args) {

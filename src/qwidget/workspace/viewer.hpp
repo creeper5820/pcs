@@ -17,9 +17,10 @@ public:
         : QWidget(parent) {
         setupUi(this);
 
-        frame->setStyleSheet(utility::style(":qss/normal/viewer.qss"));
+        frame->setStyleSheet(
+            util::style(":qss/normal/viewer.qss"));
 
-        core::view::instance.bind_viewer(vtkWidget);
+        core::View::instance().bind_viewer(vtkWidget);
     }
 
     ~Viewer() { }

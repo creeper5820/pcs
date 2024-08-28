@@ -16,42 +16,38 @@ public:
     Impl() { }
 
     inline void register_viewer(QVTKOpenGLNativeWidget* interface) {
-        utility::bind_vtk(visualizer_, interface, "qt");
-        render();
+        util::bind_vtk(visualizer_, interface, "qt");
         visualizer_->getRenderWindow()->GlobalWarningDisplayOff();
+        visualizer_render();
     }
 
     inline bool load_cloud(const std::string& path) {
         auto contains = true;
-        if (!clouds_.contains(path)) {
-            clouds_[path] = std::make_unique<Item>(path);
+        if (!items_.contains(path)) {
+            items_[path] = std::make_shared<Item>(path);
             contains = false;
         }
 
-        auto& cloud = *clouds_[path];
+        auto& cloud = *items_[path];
         if (!cloud.loaded()) {
             if (!contains)
-                clouds_.erase(path);
-            utility::message("load", "failed");
+                items_.erase(path);
+            util::message("load", "failed");
             return false;
         } else {
             visualizer_->addPointCloud(*cloud, path);
-            utility::message("load", "size",
+            util::message("load", "size",
                 std::to_string(cloud.size()), "path", path);
-            render();
+            visualizer_render();
             return true;
         }
     }
 
-    inline std::optional<std::reference_wrapper<Item>>
-    operator[](const std::string& path) {
-        if (clouds_.contains(path))
-            return { *clouds_[path] };
-        else
-            return std::nullopt;
+    inline std::shared_ptr<Item> operator[](const std::string& path) {
+        return items_.contains(path) ? items_[path] : nullptr;
     }
 
-    inline void render() {
+    inline void visualizer_render() {
         visualizer_->getRenderWindow()->Render();
     }
     inline void reset_camera() {
@@ -59,52 +55,59 @@ public:
     }
 
     inline void remove_cloud(const std::string& name) {
-        clouds_.erase(name);
+        items_.erase(name);
         visualizer_->removePointCloud(name);
-        render();
-        utility::message("remove", name, "clouds", clouds_.size());
+        visualizer_render();
+        util::message("remove", name,
+            "clouds", items_.size());
     }
 
     inline void clear_cloud() {
         visualizer_->removeAllPointClouds();
-        clouds_.clear();
-        render();
-        utility::message("clear", "clouds");
+        items_.clear();
+        visualizer_render();
+        util::message("clear", "clouds");
     }
 
     inline void add_coordinate_system(double scale = 1.0,
         const std::string& id = "reference", int viewport = 0) {
         visualizer_->addCoordinateSystem(scale, id, viewport);
-        render();
+        visualizer_render();
     }
     inline void remove_coordinate_system(const std::string& id) {
         visualizer_->removeCoordinateSystem(id);
-        render();
+        visualizer_render();
     }
 
     inline void set_color(const std::string& name, uint8_t r, uint8_t g, uint8_t b) {
-        if (!clouds_.contains(name)) {
-            utility::message("unknown cloud");
+        if (!items_.contains(name)) {
+            util::message("unknown cloud");
             return;
         }
-
-        auto item = *clouds_[name];
-        item.set_color(r, g, b);
-        visualizer_->updatePointCloud(*item, name);
-        render();
+        // ??? 你妈的不用引用 ???
+        // 浪费我TM的两天时间找你这个BUG
+        // 给我老老实实用智能指针
+        auto item = items_[name];
+        item->set_color(r, g, b);
+        visualizer_->updatePointCloud(**item, name);
+        visualizer_render();
     }
 
 private:
     pcl::visualization::PCLVisualizer::Ptr visualizer_;
 
-    std::map<std::string, std::unique_ptr<Item>> clouds_;
+    std::map<std::string, std::shared_ptr<Item>> items_;
 
     bool enable_info_ { true };
 };
 
-CloudView::CloudView() { pimpl_ = new Impl {}; }
+CloudView::CloudView(typename util::Singleton<CloudView>::token) {
+    pimpl_ = new Impl {};
+}
 
-CloudView::~CloudView() { delete pimpl_; }
+CloudView::~CloudView() {
+    delete pimpl_;
+}
 
 void CloudView::bind_viewer(QVTKOpenGLNativeWidget* interface) {
     pimpl_->register_viewer(interface);
@@ -118,13 +121,21 @@ void CloudView::remove_cloud(const std::string& path) {
     pimpl_->remove_cloud(path);
 }
 
-void CloudView::clear_cloud() { pimpl_->clear_cloud(); }
+void CloudView::clear_cloud() {
+    pimpl_->clear_cloud();
+}
 
-void CloudView::clear() { pimpl_->clear_cloud(); }
+void CloudView::clear() {
+    pimpl_->clear_cloud();
+}
 
-void CloudView::render() { pimpl_->render(); }
+void CloudView::render() {
+    pimpl_->visualizer_render();
+}
 
-void CloudView::reset_camera() { pimpl_->reset_camera(); }
+void CloudView::reset_camera() {
+    pimpl_->reset_camera();
+}
 
 void CloudView::set_color(const std::string& name,
     uint8_t r, uint8_t g, uint8_t b) {
@@ -136,11 +147,12 @@ void CloudView::add_coordinate_system(
     pimpl_->add_coordinate_system(scale, id, viewport);
 }
 
-void CloudView::remove_coordinate_system(const std::string& id) {
+void CloudView::remove_coordinate_system(
+    const std::string& id) {
     pimpl_->remove_coordinate_system(id);
 }
 
-std::optional<std::reference_wrapper<Item>>
+std::shared_ptr<Item>
 CloudView::operator[](const std::string& path) {
     return (*pimpl_)[path];
 }
