@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>400</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>800</width>
-    <height>400</height>
+    <height>500</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -239,7 +239,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusBar">
+  <widget class="QStatusBar" name="status_bar">
    <property name="maximumSize">
     <size>
      <width>16777215</width>

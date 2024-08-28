@@ -5,7 +5,8 @@ project(pcs)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -15,7 +16,7 @@ find_package(Qt5 COMPONENTS Core REQUIRED)
 find_package(PCL COMPONENTS io common visualization REQUIRED)
 find_package(VTK REQUIRED)
 
-list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "src/qwidget/")
+list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "ui/")
 file(GLOB_RECURSE PROJECT_CPP "src/*.cpp")
 file(GLOB_RECURSE PROJECT_HPP "src/*.hpp")
 

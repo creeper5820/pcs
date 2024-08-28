@@ -13,32 +13,32 @@
 #include <qwidget.h>
 #include <ui_workspace.h>
 
-#include "operator/operator.hpp"
-#include "tool_bar/tool_bar.hpp"
+#include "operator.hpp"
+#include "tool_bar.hpp"
 #include "utility/common.hpp"
-#include "viewer/viewer.hpp"
+#include "viewer.hpp"
 
 namespace workspace {
 
-class Workspace final : public QMainWindow {
+class Workspace final : public QMainWindow, Ui::Workspace {
     Q_OBJECT
 public:
     explicit Workspace() {
-        page_.setupUi(this);
+        setupUi(this);
 
-        page_.button_exit->setStyleSheet(
+        button_exit->setStyleSheet(
             utility::style(":qss/button/exit.qss"));
-        page_.button_layout->setStyleSheet(
+        button_layout->setStyleSheet(
             utility::style(":qss/button/layout.qss"));
-        page_.button_about->setStyleSheet(
+        button_about->setStyleSheet(
             utility::style(":qss/button/about.qss"));
-        page_.menu->setStyleSheet(
+        menu->setStyleSheet(
             utility::style(":qss/bar/menu.qss"));
-        page_.statusBar->setStyleSheet(
+        status_bar->setStyleSheet(
             utility::style(":qss/bar/status.qss"));
 
         // layout
-        auto& layout = page_.layout_workspace;
+        auto& layout = layout_workspace;
         layout->addWidget(&operator_);
         layout->setStretch(1, 0);
         layout->addWidget(&viewer_);
@@ -46,9 +46,9 @@ public:
         layout->addWidget(&tool_);
         layout->setStretch(3, 0);
 
-        connect(page_.button_exit, &QPushButton::clicked,
+        connect(button_exit, &QPushButton::clicked,
             this, &Workspace::exit);
-        connect(page_.button_layout, &QPushButton::clicked,
+        connect(button_layout, &QPushButton::clicked,
             this, &Workspace::toggle_layout);
     }
 
@@ -67,10 +67,8 @@ private slots:
         constexpr auto k = 0.95;
 
         auto screen = QGuiApplication::primaryScreen()->size();
-        auto center = QPoint(
-            (1. - k) / 2. * screen.width(), (1. - k) / 2. * screen.height());
-
-        utility::message(center.x(), center.y());
+        auto center = QPoint((1. - k) / 2. * screen.width(),
+            (1. - k) / 2. * screen.height());
 
         if (toggle) {
             current_size = size();
@@ -86,10 +84,9 @@ private slots:
     }
 
 private:
-    Ui::Workspace page_;
+    OperatorBar operator_;
     ToolBar tool_;
     Viewer viewer_;
-    OperatorBar operator_;
 };
 
 } // namespace workspace

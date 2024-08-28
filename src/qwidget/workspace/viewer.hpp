@@ -10,23 +10,21 @@
 
 namespace workspace {
 
-class Viewer : public QWidget {
+class Viewer : public QWidget, Ui::WorkspaceViewer {
     Q_OBJECT
 public:
     Viewer(QWidget* parent = nullptr)
         : QWidget(parent) {
-        page_ = new Ui::WorkspaceViewer();
-        page_->setupUi(this);
+        setupUi(this);
 
-        page_->frame->setStyleSheet(utility::style(":qss/normal/viewer.qss"));
+        frame->setStyleSheet(utility::style(":qss/normal/viewer.qss"));
 
-        core::viewer::storage.bind_viewer(page_->vtkWidget);
+        core::view::instance.bind_viewer(vtkWidget);
     }
 
     ~Viewer() { }
 
 private:
-    Ui::WorkspaceViewer* page_;
 };
 
 } // namespace workspace

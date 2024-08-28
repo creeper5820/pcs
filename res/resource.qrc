@@ -11,5 +11,8 @@
         <file>pic/clear.svg</file>
         <file>pic/file.svg</file>
         <file>pic/reset.svg</file>
+        <file>pic/coordination.svg</file>
+        <file>pic/rect.svg</file>
+        <file>pic/default.svg</file>
     </qresource>
 </RCC>
