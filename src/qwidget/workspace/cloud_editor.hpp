@@ -22,14 +22,17 @@ public:
         : QWidget(parent) {
         setupUi(this);
 
-        list_cloud->setContextMenuPolicy(Qt::CustomContextMenu);
-        connect(list_cloud, &QWidget::customContextMenuRequested,
-            this, &CloudEditor::display_menu_of_list);
-
+        // bind icon with button
         button_clear->setIcon(QPixmap(":pic/clear.svg"));
         button_load->setIcon(QPixmap(":pic/file.svg"));
         button_refresh->setIcon(QPixmap(":pic/reset.svg"));
 
+        // custom context menu
+        list_cloud->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(list_cloud, &QWidget::customContextMenuRequested,
+            this, &CloudEditor::display_menu_of_list);
+
+        // connect
         connect(button_refresh, &QPushButton::clicked,
             this, &CloudEditor::refresh);
         connect(button_load, &QPushButton::clicked,
@@ -73,8 +76,8 @@ private slots:
         auto cloud = core::View::instance()[path];
 
         const auto name = names_[index];
-        const auto rgb = cloud->color();
         const auto frame = QString::fromStdString(cloud->frame());
+        const auto rgb = cloud->color();
         const auto color = QString::asprintf(
             "%d, %d, %d", rgb.r, rgb.g, rgb.b);
 
@@ -149,6 +152,7 @@ private:
         return path.right(path.size() - path.lastIndexOf("/") - 1);
     }
 
+    // TODO: fuck this
     inline void refresh_list() {
         list_cloud->clear();
         list_cloud->addItems(names_);

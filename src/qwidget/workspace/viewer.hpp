@@ -10,20 +10,20 @@
 
 namespace workspace {
 
-class Viewer : public QWidget, Ui::WorkspaceViewer {
+class View : public QWidget, Ui::WorkspaceViewer {
     Q_OBJECT
 public:
-    Viewer(QWidget* parent = nullptr)
+    View(QWidget* parent = nullptr)
         : QWidget(parent) {
+
         setupUi(this);
 
-        frame->setStyleSheet(
-            util::style(":qss/normal/viewer.qss"));
+        frame->setStyleSheet(util::style(":qss/normal/viewer.qss"));
 
         core::View::instance().bind_viewer(vtkWidget);
     }
 
-    ~Viewer() { }
+    ~View() { }
 
 private:
 };

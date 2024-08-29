@@ -20,12 +20,14 @@
 
 namespace workspace {
 
+/// @brief workspace as you can see, nothing more
 class Workspace final : public QMainWindow, Ui::Workspace {
     Q_OBJECT
 public:
     explicit Workspace() {
         setupUi(this);
 
+        // load qss style
         button_exit->setStyleSheet(
             util::style(":qss/button/exit.qss"));
         button_layout->setStyleSheet(
@@ -46,6 +48,7 @@ public:
         layout->addWidget(&tool_);
         layout->setStretch(3, 0);
 
+        // connect button with callback
         connect(button_exit, &QPushButton::clicked,
             this, &Workspace::exit);
         connect(button_layout, &QPushButton::clicked,
@@ -60,14 +63,13 @@ private slots:
             QCoreApplication::exit(0);
     }
     void toggle_layout() {
+        constexpr auto k = 0.95;
         static auto toggle { true };
         static auto current_size = size();
         static auto current_pos = pos();
 
-        constexpr auto k = 0.95;
-
-        auto screen = QGuiApplication::primaryScreen()->size();
-        auto center = QPoint((1. - k) / 2. * screen.width(),
+        const auto screen = QGuiApplication::primaryScreen()->size();
+        const auto center = QPoint((1. - k) / 2. * screen.width(),
             (1. - k) / 2. * screen.height());
 
         if (toggle) {
@@ -79,14 +81,13 @@ private slots:
             setFixedSize(current_size);
             move(current_pos);
         }
-
         toggle = !toggle;
     }
 
 private:
-    OperatorBar operator_;
-    CloudEditor tool_;
-    Viewer viewer_;
+    OperatorBar operator_ { this };
+    CloudEditor tool_ { this };
+    View viewer_ { this };
 };
 
 } // namespace workspace

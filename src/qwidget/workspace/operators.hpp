@@ -29,17 +29,13 @@ class Coordinate : public Operator {
     Q_OBJECT
 private:
     Q_SLOT void click_callback() override {
-        static auto flag { true };
-
-        if (flag) {
-            core::View::instance().add_coordinate_system(
-                1.0, "default");
+        static auto flag = false;
+        auto& view = core::View::instance();
+        if ((flag = !flag)) {
+            view.add_coordinate_system(1.0, "default");
         } else {
-            core::View::instance().remove_coordinate_system(
-                "default");
+            view.remove_coordinate_system("default");
         }
-
-        flag = !flag;
     }
     Q_SLOT void custom_menu() override {
     }
