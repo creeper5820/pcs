@@ -35,6 +35,7 @@ public:
             util::message("load", "failed");
             return false;
         } else {
+            cloud.set_color(255, 255, 255);
             visualizer_->addPointCloud(*cloud, path);
             util::message("load", "size",
                 std::to_string(cloud.size()), "path", path);

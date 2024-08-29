@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ToolBar</class>
- <widget class="QWidget" name="ToolBar">
+ <class>CloudEditor</class>
+ <widget class="QWidget" name="CloudEditor">
   <property name="windowModality">
    <enum>Qt::NonModal</enum>
   </property>

@@ -31,7 +31,6 @@ public:
         assert(cloud != nullptr);
         cloud_ = std::make_shared<PointCloudT>();
         pcl::copyPointCloud(*cloud, *cloud_);
-        set_color(255, 255, 255);
         loaded_ = true;
     };
 
@@ -41,7 +40,6 @@ public:
         auto xyz = pcl::PointCloud<pcl::PointXYZ> {};
         if (pcl::io::loadPCDFile(path, xyz) == 0) {
             pcl::copyPointCloud(xyz, *cloud_);
-            set_color(255, 255, 255);
             loaded_ = true;
         }
     }
@@ -83,7 +81,7 @@ private:
     PointCloudT::Ptr cloud_;
     std::string path_ { "nothing" };
     std::string frame_ { "default" };
-    RGB color_ { 255, 255, 255 };
+    RGB color_ {};
     bool loaded_ { false };
 };
 }

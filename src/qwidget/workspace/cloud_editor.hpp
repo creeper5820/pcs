@@ -10,38 +10,38 @@
 #include <qmenu.h>
 #include <qpixmap.h>
 #include <qwidget.h>
-#include <ui_tool_bar.h>
+#include <ui_cloud_editor.h>
 
 #include <regex>
 
 namespace workspace {
-class ToolBar : public QWidget, Ui::ToolBar {
+class CloudEditor : public QWidget, Ui::CloudEditor {
     Q_OBJECT
 public:
-    ToolBar(QWidget* parent = nullptr)
+    CloudEditor(QWidget* parent = nullptr)
         : QWidget(parent) {
         setupUi(this);
 
         list_cloud->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(list_cloud, &QWidget::customContextMenuRequested,
-            this, &ToolBar::display_menu_of_list);
+            this, &CloudEditor::display_menu_of_list);
 
         button_clear->setIcon(QPixmap(":pic/clear.svg"));
         button_load->setIcon(QPixmap(":pic/file.svg"));
         button_refresh->setIcon(QPixmap(":pic/reset.svg"));
 
         connect(button_refresh, &QPushButton::clicked,
-            this, &ToolBar::refresh);
+            this, &CloudEditor::refresh);
         connect(button_load, &QPushButton::clicked,
-            this, &ToolBar::load_cloud);
+            this, &CloudEditor::load_cloud);
         connect(button_clear, &QPushButton::clicked,
-            this, &ToolBar::clear_cloud);
+            this, &CloudEditor::clear_cloud);
         connect(list_cloud, &QListWidget::itemClicked,
-            this, &ToolBar::update_cloud_editor);
+            this, &CloudEditor::update_cloud_editor);
         connect(editor_cloud_name, &QLineEdit::editingFinished,
-            this, &ToolBar::update_cloud_name);
+            this, &CloudEditor::update_cloud_name);
         connect(editor_cloud_color, &QLineEdit::editingFinished,
-            this, &ToolBar::update_cloud_color);
+            this, &CloudEditor::update_cloud_color);
     }
 private slots:
     void remove_current_cloud() {
@@ -57,7 +57,7 @@ private slots:
             return;
         auto menu = QMenu {};
         menu.addAction("delete", this,
-            &ToolBar::remove_current_cloud);
+            &CloudEditor::remove_current_cloud);
         menu.exec(QCursor::pos());
     }
 

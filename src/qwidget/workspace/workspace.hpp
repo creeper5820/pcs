@@ -13,8 +13,8 @@
 #include <qwidget.h>
 #include <ui_workspace.h>
 
+#include "cloud_editor.hpp"
 #include "operator_bar.hpp"
-#include "tool_bar.hpp"
 #include "utility/common.hpp"
 #include "viewer.hpp"
 
@@ -85,7 +85,7 @@ private slots:
 
 private:
     OperatorBar operator_;
-    ToolBar tool_;
+    CloudEditor tool_;
     Viewer viewer_;
 };
 
