@@ -1,12 +1,13 @@
 #pragma once
 
-#include "operators.hpp"
+#include "operators.hh"
 
 #include <qobjectdefs.h>
 #include <qpushbutton.h>
 #include <qwidget.h>
 #include <ui_operator.h>
 
+namespace workspace {
 class OperatorBar : public QWidget, Ui::Operator {
     Q_OBJECT
 public:
@@ -21,3 +22,4 @@ public:
 private:
     Coordinate coordinate_;
 };
+}

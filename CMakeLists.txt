@@ -12,13 +12,25 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+find_package(spdlog REQUIRED)
 find_package(Qt5 COMPONENTS Core REQUIRED)
-find_package(PCL COMPONENTS io common visualization REQUIRED)
-find_package(VTK REQUIRED)
+find_package(PCL COMPONENTS io common REQUIRED)
+find_package(VTK COMPONENTS 
+  CommonColor
+  CommonCore
+  CommonDataModel
+  FiltersSources
+  InteractionStyle
+  RenderingContextOpenGL2
+  RenderingCore
+  RenderingFreeType
+  RenderingGL2PSOpenGL2
+  RenderingOpenGL2
+)
 
 list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "ui/")
-file(GLOB_RECURSE PROJECT_CPP "src/*.cpp")
-file(GLOB_RECURSE PROJECT_HPP "src/*.hpp")
+file(GLOB_RECURSE PROJECT_CPP "src/*.cc")
+file(GLOB_RECURSE PROJECT_HPP "src/*.hh")
 
 
 include_directories(
@@ -42,5 +54,12 @@ add_executable(
 target_link_libraries(
     ${PROJECT_NAME} 
     ${PCL_LIBRARIES} 
+    ${VTK_LIBRARIES}
     Qt5::Core
-)  
+    spdlog::spdlog
+)
+
+vtk_module_autoinit(
+  TARGETS ${PROJECT_NAME}
+  MODULES ${VTK_LIBRARIES}
+)

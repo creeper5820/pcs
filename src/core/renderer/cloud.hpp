@@ -1,6 +1,6 @@
 #pragma once
-#include "item.hpp"
-#include "utility/single.hpp"
+#include "item.hh"
+#include "utility/single.hh"
 
 #include <QVTKOpenGLNativeWidget.h>
 #include <pcl/point_cloud.h>
@@ -12,17 +12,12 @@ namespace core::view {
 /// @note based on Mayer's singleton
 class CloudView : public util::Singleton<CloudView> {
 public:
-    CloudView(typename util::Singleton<CloudView>::token);
+    CloudView(util::Singleton<CloudView>::token);
     ~CloudView();
     CloudView(const CloudView&) = delete;
     CloudView& operator=(const CloudView&) = delete;
 
     void bind_viewer(QVTKOpenGLNativeWidget* interface);
-
-    void reset_camera();
-    void clear_cloud();
-    void clear();
-    void render();
 
     [[nodiscard]] bool load_cloud(const std::string& path);
 
@@ -36,6 +31,11 @@ public:
     void remove_coordinate_system(const std::string& id);
 
     std::shared_ptr<Item> operator[](const std::string& path);
+
+    void reset_camera();
+    void clear_cloud();
+    void clear();
+    void render();
 
 private:
     struct Impl;

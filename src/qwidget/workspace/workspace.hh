@@ -13,10 +13,10 @@
 #include <qwidget.h>
 #include <ui_workspace.h>
 
-#include "cloud_editor.hpp"
-#include "operator_bar.hpp"
-#include "utility/common.hpp"
-#include "viewer.hpp"
+#include "cloud_editor.hh"
+#include "operator_bar.hh"
+#include "utility/common.hh"
+#include "view.hh"
 
 namespace workspace {
 

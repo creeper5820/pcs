@@ -1,4 +1,33 @@
-### idea
+## 架构
+### 用户界面
+### 操作管理
+### 点云管理
+### 渲染管理
+
+## Update Loop
+
+0. `User Operator`
+
+    ```
+    Instance: Qt
+    ```
+0. `Operator Manager`
+
+    ```
+    Instance: core::Operators
+    ```
+0. `Modify Points`
+
+    ```
+    Instance: core::Points
+    ```
+0. `Render New Points`
+
+    ```
+    Instance: core::Renderer
+    ```
+
+## IDEA
 - 鼠标左键移动视角
 - 体素点云或者网格化描述点云，半透明网格
 - 按住特殊键放置参考点/参考网格（立体），放在点云表面上

@@ -1,28 +1,26 @@
 #pragma once
 
-#include "utility/common.hpp"
+#include "utility/common.hh"
 
 #include <cassert>
 #include <memory>
-#include <pcl/common/io.h>
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace core::view {
+namespace core::cloud {
 struct Item {
 public:
-    using PointCloudT = pcl::PointCloud<pcl::PointXYZRGB>;
+    using PointCloudT = pcl::PointCloud<pcl::PointXYZ>;
 
     struct RGB {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
+        double r;
+        double g;
+        double b;
 
         bool operator==(const RGB& rgb) const {
-            return r == rgb.r
-                && g == rgb.g
-                && b == rgb.b;
+            return r == rgb.r && g == rgb.g && b == rgb.b;
         }
     };
 
@@ -37,9 +35,7 @@ public:
     Item(const std::string& path)
         : path_(path) {
         cloud_ = std::make_shared<PointCloudT>();
-        auto xyz = pcl::PointCloud<pcl::PointXYZ> {};
-        if (pcl::io::loadPCDFile(path, xyz) == 0) {
-            pcl::copyPointCloud(xyz, *cloud_);
+        if (pcl::io::loadPCDFile(path, *cloud_) == 0) {
             loaded_ = true;
         }
     }
@@ -59,18 +55,16 @@ public:
         }
     }
 
-    void set_color(uint8_t r, uint8_t g, uint8_t b) {
-        if (color_ == RGB { r, g, b })
-            return;
-        for (auto& point : cloud_->points) {
-            point.r = r;
-            point.g = g;
-            point.b = b;
-        }
-        color_ = RGB { r, g, b };
+    void setColor(double r, double g, double b) {
+        color_ = { r, g, b };
     }
 
-    bool loaded() { return loaded_; }
+    void setVisible(bool flag) {
+        visible_ = flag;
+    }
+
+    auto loaded() { return loaded_; }
+    auto visible() { return visible_; }
     auto path() { return path_; }
     auto frame() { return frame_; }
     auto color() { return color_; }
@@ -83,5 +77,6 @@ private:
     std::string frame_ { "default" };
     RGB color_ {};
     bool loaded_ { false };
+    bool visible_ { false };
 };
 }

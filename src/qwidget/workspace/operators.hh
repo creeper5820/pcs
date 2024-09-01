@@ -5,8 +5,9 @@
 #include <qwidget.h>
 #include <ui_operator.h>
 
-#include "core/viewer/cloud.hpp"
+#include "core/cloud/cloud.hh"
 
+namespace workspace {
 class Operator : public QWidget {
     Q_OBJECT
 public:
@@ -29,13 +30,13 @@ class Coordinate : public Operator {
     Q_OBJECT
 private:
     Q_SLOT void click_callback() override {
-        static auto flag = false;
-        auto& view = core::View::instance();
-        if ((flag = !flag)) {
-            view.add_coordinate_system(1.0, "default");
-        } else {
-            view.remove_coordinate_system("default");
-        }
+        // static auto flag = false;
+        // auto& view = core::View::instance();
+        // if ((flag = !flag)) {
+        //     view.add_coordinate_system(1.0, "default");
+        // } else {
+        //     view.remove_coordinate_system("default");
+        // }
     }
     Q_SLOT void custom_menu() override {
     }
@@ -43,3 +44,4 @@ private:
         return QPixmap(":pic/coordination.svg");
     }
 };
+}

@@ -15,7 +15,7 @@ inline void message(Args... args) {
     ((std::cout << '[' << args << ']'), ...) << std::endl;
 }
 
-inline void bind_vtk(std::shared_ptr<pcl::visualization::PCLVisualizer>& viewer,
+inline void bind_vtk(std::shared_ptr<pcl::visualization::PCLVisualizer>& view,
     QVTKOpenGLNativeWidget* vtk, const std::string& name) {
     using namespace pcl::visualization;
 
@@ -23,9 +23,9 @@ inline void bind_vtk(std::shared_ptr<pcl::visualization::PCLVisualizer>& viewer,
     auto render = vtkSmartPointer<vtkRenderer>::New();
     auto window = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
     window->AddRenderer(render);
-    viewer = std::make_shared<PCLVisualizer>(render, window, "viewer", false);
-    vtk->setRenderWindow(viewer->getRenderWindow());
-    viewer->setupInteractor(vtk->interactor(), vtk->renderWindow());
+    view = std::make_shared<PCLVisualizer>(render, window, "view", false);
+    vtk->setRenderWindow(view->getRenderWindow());
+    view->setupInteractor(vtk->interactor(), vtk->renderWindow());
 #else
     viewer.reset(new PCLVisualizer(name, false));
     vtk->SetRenderWindow(viewer_->getRenderWindow());

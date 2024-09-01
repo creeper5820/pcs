@@ -56,28 +56,11 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
-      <item>
-       <widget class="PCLQVTKWidget" name="vtkWidget">
-        <property name="minimumSize">
-         <size>
-          <width>400</width>
-          <height>200</height>
-         </size>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>PCLQVTKWidget</class>
-   <extends>QOpenGLWidget</extends>
-   <header location="global">pcl/visualization/qvtk_compatibility.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

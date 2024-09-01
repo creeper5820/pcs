@@ -1,5 +1,5 @@
 #pragma once
-#include "core/viewer/cloud.hpp"
+#include "core/cloud/cloud.hh"
 
 #include <qchar.h>
 #include <qcursor.h>
@@ -51,7 +51,7 @@ private slots:
         const auto index = get_cloud_index();
         if (index == -1)
             return;
-        core::View::instance().remove_cloud(paths_[index].toStdString());
+        // core::Cloud::instance().remove_cloud(paths_[index].toStdString());
         remove_from_list(index);
     }
 
@@ -73,17 +73,17 @@ private slots:
             return;
         }
         const auto path = paths_[index].toStdString();
-        auto cloud = core::View::instance()[path];
+        // auto cloud = core::View::instance()[path];
 
         const auto name = names_[index];
-        const auto frame = QString::fromStdString(cloud->frame());
-        const auto rgb = cloud->color();
-        const auto color = QString::asprintf(
-            "%d, %d, %d", rgb.r, rgb.g, rgb.b);
+        // const auto frame = QString::fromStdString(cloud->frame());
+        // const auto rgb = cloud->color();
+        // const auto color = QString::asprintf(
+        // "%d, %d, %d", rgb.r, rgb.g, rgb.b);
 
-        editor_cloud_name->setText(name);
-        editor_cloud_color->setText(color);
-        editor_cloud_frame->setText(frame);
+        // editor_cloud_name->setText(name);
+        // editor_cloud_color->setText(color);
+        // editor_cloud_frame->setText(frame);
     }
 
     void update_cloud_name() {
@@ -113,35 +113,36 @@ private slots:
         auto text = editor_cloud_color->text().toStdString();
         const auto path = paths_[index].toStdString();
         auto match = std::smatch();
-        if (std::regex_match(text, match, regex_rgb)) {
-            core::View::instance().set_color(path,
-                std::stoi(match[1]),
-                std::stoi(match[2]),
-                std::stoi(match[3]));
-        } else if (std::regex_match(text, match, regex_hex)) {
-        } else {
-            util::message("wrong color");
-        }
+
+        // if (std::regex_match(text, match, regex_rgb)) {
+        //     core::View::instance().set_color(path,
+        //         std::stoi(match[1]),
+        //         std::stoi(match[2]),
+        //         std::stoi(match[3]));
+        // } else if (std::regex_match(text, match, regex_hex)) {
+        // } else {
+        //     util::message("wrong color");
+        // }
     }
 
     void refresh() {
-        core::View::instance().render();
-        core::View::instance().reset_camera();
+        // core::View::instance().render();
+        // core::View::instance().reset_camera();
     }
 
     void load_cloud() {
-        const auto _path = QFileDialog::getOpenFileName(
-            this, "Open File", "", "PCD Files (*.pcd)");
-        const auto path = _path.toStdString();
-        const auto name = path.substr(path.find_last_of("/") + 1);
-        if (!_path.isEmpty() && !paths_.contains(_path)
-            && core::View::instance().load_cloud(path))
-            append_to_list(_path);
+        // const auto _path = QFileDialog::getOpenFileName(
+        //     this, "Open File", "", "PCD Files (*.pcd)");
+        // const auto path = _path.toStdString();
+        // const auto name = path.substr(path.find_last_of("/") + 1);
+        // if (!_path.isEmpty() && !paths_.contains(_path)
+        //     && core::View::instance().load_cloud(path))
+        //     append_to_list(_path);
     }
 
     void clear_cloud() {
-        core::View::instance().clear_cloud();
-        clear_list();
+        // core::View::instance().clear_cloud();
+        // clear_list();
     }
 
 private:

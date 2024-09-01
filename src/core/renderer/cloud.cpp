@@ -1,6 +1,6 @@
-#include "cloud.hpp"
-#include "item.hpp"
-#include "utility/common.hpp"
+#include "core/view/cloud.hh"
+#include "core/view/item.hh"
+#include "utility/common.hh"
 
 #include <pcl/ModelCoefficients.h>
 #include <pcl/conversions.h>
@@ -15,9 +15,10 @@ struct CloudView::Impl {
 public:
     Impl() { }
 
-    inline void register_viewer(QVTKOpenGLNativeWidget* interface) {
-        util::bind_vtk(visualizer_, interface, "qt");
-        visualizer_->getRenderWindow()->GlobalWarningDisplayOff();
+    inline void register_viewer(QVTKOpenGLNativeWidget* vtk) {
+        util::bind_vtk(visualizer_, vtk, "qt");
+        visualizer_->getRenderWindow()
+            ->GlobalWarningDisplayOff();
         visualizer_render();
     }
 
@@ -27,7 +28,6 @@ public:
             items_[path] = std::make_shared<Item>(path);
             contains = false;
         }
-
         auto& cloud = *items_[path];
         if (!cloud.loaded()) {
             if (!contains)
@@ -35,7 +35,7 @@ public:
             util::message("load", "failed");
             return false;
         } else {
-            cloud.set_color(255, 255, 255);
+            cloud.setColor(255, 255, 255);
             visualizer_->addPointCloud(*cloud, path);
             util::message("load", "size",
                 std::to_string(cloud.size()), "path", path);
@@ -89,7 +89,7 @@ public:
         // 浪费我TM的两天时间找你这个BUG
         // 给我老老实实用智能指针
         auto item = items_[name];
-        item->set_color(r, g, b);
+        item->setColor(r, g, b);
         visualizer_->updatePointCloud(**item, name);
         visualizer_render();
     }
@@ -97,12 +97,12 @@ public:
 private:
     pcl::visualization::PCLVisualizer::Ptr visualizer_;
 
-    std::map<std::string, std::shared_ptr<Item>> items_;
+    std::unordered_map<std::string, std::shared_ptr<Item>> items_;
 
     bool enable_info_ { true };
 };
 
-CloudView::CloudView(typename util::Singleton<CloudView>::token) {
+CloudView::CloudView(util::Singleton<CloudView>::token) {
     pimpl_ = new Impl {};
 }
 
