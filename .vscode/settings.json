@@ -4,6 +4,7 @@
     "lldb.dereferencePointers": true,
     "lldb.consoleMode": "commands",
     "cSpell.words": [
+        "Interactor",
         "Pixmap"
     ]
 }
