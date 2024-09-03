@@ -1,6 +1,4 @@
 #pragma once
-
-#pragma once
 #include "utility/single.hh"
 
 #include <QVTKOpenGLNativeWidget.h>
@@ -12,25 +10,25 @@ namespace core::cloud {
 class Cloud : public util::Singleton<Cloud> {
 public:
     Cloud(util::Singleton<Cloud>::token);
-    ~Cloud();
     Cloud(const Cloud&) = delete;
     Cloud& operator=(const Cloud&) = delete;
+    ~Cloud();
 
     /// Configuration
-    void connectUI(QVTKOpenGLNativeWidget* interface);
+    void connectWidget(QVTKOpenGLNativeWidget* interface);
 
     /// CRUD
-    bool loadCloud(const std::string& name);
-    void removeCloud(const std::string& name);
-    void saveCloud(const std::string& name, const std::string& path);
-    void clearCloud();
+    bool loadCloud(int index, const std::string& path);
+    void saveCloud(int index, const std::string& path);
+    void removeCloud(int index);
+    void removeAllCloud();
 
     /// Modify property
-    void modifyColor(const std::string& name, double r, double g, double b);
-    void modifyPointSize(const std::string& name);
-    void modifyVisible(const std::string& name, bool flag);
+    void modifyColor(int index, double r, double g, double b);
+    void modifyPointSize(int index, double size);
+    void modifyVisible(int index, bool flag);
 
-    void transformCloud(const std::string& name, Eigen::Affine3d transform);
+    void transformCloud(int index, Eigen::Affine3d transform);
 
     /// Select
     void addSelectCubeArea(int index, Eigen::Vector3d corner[2]);
@@ -42,13 +40,13 @@ public:
 
     /// Operators after selecting
     void removeSelectCloud();
-    void removeSelectCloud(const std::string& name);
+    void removeSelectCloud(int index);
 
     void segmentSelectCloud();
-    void segmentSelectCloud(const std::string& name);
+    void segmentSelectCloud(int index);
 
     void extractSelectCloud();
-    void extractSelectCloud(const std::string& name);
+    void extractSelectCloud(int index);
 
 private:
     struct Impl;
@@ -57,5 +55,5 @@ private:
 }
 
 namespace core {
-using Cloud = core::cloud::Cloud;
+using Cloud = cloud::Cloud;
 }

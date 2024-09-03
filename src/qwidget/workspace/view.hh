@@ -18,7 +18,7 @@ public:
         setupUi(this);
 
         window_ = new QVTKOpenGLNativeWidget {};
-        core::Cloud::instance().connectUI(window_);
+        core::Cloud::instance().connectWidget(window_);
 
         frame->setStyleSheet(util::style(":qss/normal/viewer.qss"));
         frame->layout()->addWidget(window_);

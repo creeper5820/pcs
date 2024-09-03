@@ -63,12 +63,13 @@ public:
         visible_ = flag;
     }
 
-    auto loaded() { return loaded_; }
-    auto visible() { return visible_; }
-    auto path() { return path_; }
-    auto frame() { return frame_; }
-    auto color() { return color_; }
-    auto size() { return cloud_->size(); }
+    auto loaded() const { return loaded_; }
+    auto visible() const { return visible_; }
+    auto path() const { return path_; }
+    auto frame() const { return frame_; }
+    auto color() const { return color_; }
+    auto size() const { return cloud_->size(); }
+    auto points() const { return *cloud_; }
     auto operator*() { return cloud_; }
 
 private:

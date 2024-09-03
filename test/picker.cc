@@ -4,6 +4,7 @@
 
 #include <vtkAbstractPicker.h>
 #include <vtkBuffer.h>
+#include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
@@ -19,13 +20,6 @@ constexpr auto* path {
     "/ignore/develop_ws/pcd/1716207472.pcd"
 };
 
-using PointCloudT = pcl::PointCloud<pcl::PointXYZ>;
-auto pointCloud = std::make_shared<::PointCloudT>();
-auto vertexFilter = vtkNew<vtkVertexGlyphFilter> {};
-
-auto renderer = vtkNew<vtkRenderer> {};
-auto renderWindow = vtkNew<vtkRenderWindow> {};
-
 auto pointsSource = vtkNew<vtkPoints> {};
 auto cloudPolyData = vtkNew<vtkPolyData> {};
 auto cloudMapper = vtkNew<vtkPolyDataMapper> {};
@@ -35,6 +29,10 @@ auto pointsClicked = vtkNew<vtkPoints> {};
 auto clickedPolyData = vtkNew<vtkPolyData> {};
 auto clickedMapper = vtkNew<vtkPolyDataMapper> {};
 auto clickedActor = vtkNew<vtkActor> {};
+
+using PointCloudT = pcl::PointCloud<pcl::PointXYZ>;
+auto pointCloud = std::make_shared<::PointCloudT>();
+auto vertexFilter = vtkNew<vtkVertexGlyphFilter> {};
 
 class PickStyle : public vtkInteractorStyleTrackballCamera {
 public:
@@ -105,6 +103,9 @@ auto main() -> int {
     clickedActor->GetProperty()->SetColor(1, 0, 0);
 
     // Render
+    auto renderer = vtkNew<vtkRenderer> {};
+    auto renderWindow = vtkNew<vtkRenderWindow> {};
+
     renderWindow->SetWindowName("Point");
     renderWindow->AddRenderer(renderer);
 
