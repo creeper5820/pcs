@@ -71,8 +71,8 @@ private slots:
         cloudManager_.modifyPointSize(index, 1);
 
         auto item = new CloudListItem(cloudList);
-        item->setPath(path);
         item->setCloudIndex(index);
+        item->setPath(path);
         item->setLabel(getNameFromPath(path));
     }
 

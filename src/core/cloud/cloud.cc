@@ -15,42 +15,42 @@ public:
     explicit Impl() = default;
 
     /// CRUD
-    int loadCloud(const std::string& filePath) {
+    StereoIndex loadCloud(const std::string& filePath) {
         auto pointCloud = std::make_unique<PointCloud>(filePath);
-        const auto index = renderer_.addCloud(*pointCloud);
+        const auto index = renderer_.addCloud(*pointCloud, { 1, 1, 1 }, 2);
         pointClouds_[index] = std::move(pointCloud);
         return index;
     }
 
-    void saveCloud(int index, const std::string& filePath) {
+    void saveCloud(StereoIndex index, const std::string& filePath) {
         pointClouds_[index]->save(filePath);
     }
 
-    void removeCloud(int index) {
-        renderer_.removeCloud(index);
+    void removeCloud(StereoIndex index) {
+        renderer_.removeStereoProps(index);
         pointClouds_.erase(index);
     }
 
     void removeAllCloud() {
-        renderer_.removeAllCloud();
+        renderer_.removeAllProps();
         pointClouds_.clear();
     }
 
     /// Modify property
-    void modifyColor(int index, double r, double g, double b) {
+    void modifyColor(StereoIndex index, double r, double g, double b) {
         renderer_.modifyColor(index, r, g, b);
         pointClouds_[index]->setColor(r, g, b);
     }
 
-    void modifyPointSize(int index, double size) {
+    void modifyPointSize(StereoIndex index, double size) {
         renderer_.modifyPointSize(index, size);
     }
 
-    void modifyVisible(int index, bool flag) {
+    void modifyVisible(StereoIndex index, bool flag) {
         renderer_.modifyVisible(index, flag);
     }
 
-    void transformCloud(int index, Eigen::Affine3d transform) {
+    void transformCloud(StereoIndex index, Eigen::Affine3d transform) {
         renderer_.transformCloud(index, transform);
     }
 
@@ -84,7 +84,7 @@ public:
     }
 
 private:
-    std::unordered_map<int, std::unique_ptr<PointCloud>> pointClouds_;
+    std::unordered_map<StereoIndex, std::unique_ptr<PointCloud>> pointClouds_;
 
     core::Renderer& renderer_ = core::Renderer::instance();
     core::cloud::Filter& filter_ = core::cloud::Filter::instance();
@@ -112,13 +112,13 @@ void Cloud::refresh() {
 }
 
 /// CRUD
-int Cloud::loadCloud(const std::string& path) {
+StereoIndex Cloud::loadCloud(const std::string& path) {
     return pimpl_->loadCloud(path);
 }
-void Cloud::saveCloud(int index, const std::string& path) {
+void Cloud::saveCloud(StereoIndex index, const std::string& path) {
     pimpl_->saveCloud(index, path);
 }
-void Cloud::removeCloud(int index) {
+void Cloud::removeCloud(StereoIndex index) {
     pimpl_->removeCloud(index);
 }
 void Cloud::removeAllCloud() {
@@ -126,16 +126,16 @@ void Cloud::removeAllCloud() {
 }
 
 /// Modify property
-void Cloud::modifyColor(int index, double r, double g, double b) {
+void Cloud::modifyColor(StereoIndex index, double r, double g, double b) {
     pimpl_->modifyColor(index, r, g, b);
 }
-void Cloud::modifyPointSize(int index, double size) {
+void Cloud::modifyPointSize(StereoIndex index, double size) {
     pimpl_->modifyPointSize(index, size);
 }
-void Cloud::modifyVisible(int index, bool flag) {
+void Cloud::modifyVisible(StereoIndex index, bool flag) {
     pimpl_->modifyVisible(index, flag);
 }
-void Cloud::transformCloud(int index, Eigen::Affine3d transform) {
+void Cloud::transformCloud(StereoIndex index, Eigen::Affine3d transform) {
     pimpl_->transformCloud(index, transform);
 }
 

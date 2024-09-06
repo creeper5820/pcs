@@ -1,9 +1,7 @@
 #pragma once
 
-#include <Eigen/Dense>
-#include <qlistwidget.h>
-
 #include "core/cloud/cloud.hh"
+#include <qlistwidget.h>
 
 static auto& cloudManager = core::Cloud::instance();
 
@@ -22,7 +20,7 @@ public:
         setText(label);
     }
 
-    void setCloudIndex(int cloudIndex) {
+    void setCloudIndex(StereoIndex cloudIndex) {
         cloudIndex_ = cloudIndex;
     }
 
@@ -53,14 +51,14 @@ public:
     double r() const { return r_; }
     double g() const { return g_; }
     double b() const { return b_; }
-    int cloudIndex() const { return cloudIndex_; }
+    StereoIndex cloudIndex() const { return cloudIndex_; }
     double pointSize() const { return pointSize_; }
     bool visible() const { return visible_; }
 
 private:
     QString path_ = "unknown";
     QString frame_ = "unknown";
-    int cloudIndex_ = -1;
+    StereoIndex cloudIndex_;
 
     double r_ = 1;
     double g_ = 1;

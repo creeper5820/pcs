@@ -60,14 +60,12 @@ private:
     core::Cloud& cloud_ = core::Cloud::instance();
     core::Renderer& renderer_ = core::Renderer::instance();
 
-    void showClickedPoint(Eigen::Vector3d position) {
-        static int indexPointLast = -1;
-
-        auto indexPoint = renderer_.addPoint(position,
-            { 1.0, 0.5, 0.5 }, 10);
-
-        if (indexPointLast != -1)
-            renderer_.removePoint(indexPointLast);
+    void showClickedPoint(Translation position) {
+        static StereoIndex indexPointLast;
+        auto indexPoint = renderer_.addPoint(
+            position, { 1.0, 0.5, 0.5 }, 10);
+        if (indexPointLast.valid())
+            renderer_.removeStereoProps(indexPointLast);
 
         indexPointLast = indexPoint;
     }

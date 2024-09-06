@@ -17,6 +17,7 @@ public:
         setFixedWidth(30);
 
         coordinate_.connectPushButton(operator1);
+        pointPicker_.connectPushButton(operator2);
     }
 
 private:

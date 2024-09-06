@@ -1,4 +1,5 @@
 #pragma once
+#include "core/renderer/index.hh"
 #include "utility/single.hh"
 
 #include <QVTKOpenGLNativeWidget.h>
@@ -20,16 +21,16 @@ public:
     void refresh();
 
     /// CRUD
-    int loadCloud(const std::string& path);
-    void saveCloud(int index, const std::string& path);
-    void removeCloud(int index);
+    StereoIndex loadCloud(const std::string& path);
+    void saveCloud(StereoIndex index, const std::string& path);
+    void removeCloud(StereoIndex index);
     void removeAllCloud();
 
     /// Modify property
-    void modifyColor(int index, double r, double g, double b);
-    void modifyPointSize(int index, double size);
-    void modifyVisible(int index, bool flag);
-    void transformCloud(int index, Eigen::Affine3d transform);
+    void modifyColor(StereoIndex index, double r, double g, double b);
+    void modifyPointSize(StereoIndex index, double size);
+    void modifyVisible(StereoIndex index, bool flag);
+    void transformCloud(StereoIndex index, Eigen::Affine3d transform);
 
     /// Select
     int addSelectPointArea(Eigen::Vector3d point);
