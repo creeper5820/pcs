@@ -1,5 +1,6 @@
 #pragma once
 
+#include "qdatetime.h"
 #include <qcoreapplication.h>
 #include <qmainwindow.h>
 #include <qmessagebox.h>
@@ -13,15 +14,16 @@
 #include <qwidget.h>
 #include <ui_workspace.h>
 
-#include "cloud_editor.hh"
-#include "operator_bar.hh"
+#include "core/operator/interactor.hh"
+#include "qwidget/workspace/cloud_editor.hh"
+#include "qwidget/workspace/operator_bar.hh"
+#include "qwidget/workspace/view.hh"
 #include "utility/common.hh"
-#include "view.hh"
 
 namespace workspace {
 
 /// @brief workspace as you can see, nothing more
-class Workspace final : public QMainWindow, Ui::Workspace {
+class Workspace final : public QMainWindow, public Ui::Workspace {
     Q_OBJECT
 public:
     explicit Workspace() {
@@ -36,40 +38,56 @@ public:
             util::style(":qss/button/about.qss"));
         menu->setStyleSheet(
             util::style(":qss/bar/menu.qss"));
-        status_bar->setStyleSheet(
+        messageBar->setStyleSheet(
             util::style(":qss/bar/status.qss"));
 
         // layout
-        auto& layout = layout_workspace;
+        auto& layout = workspaceLayout;
         layout->addWidget(&operator_);
         layout->setStretch(1, 0);
-        layout->addWidget(&viewer_);
+        layout->addWidget(&view_);
         layout->setStretch(2, 1);
         layout->addWidget(&tool_);
         layout->setStretch(3, 0);
 
         // connect button with callback
         connect(button_exit, &QPushButton::clicked,
-            this, &Workspace::exit);
+            this, &Workspace::exitWorkspace);
         connect(button_layout, &QPushButton::clicked,
-            this, &Workspace::toggle_layout);
+            this, &Workspace::toggleLayout);
+
+        auto& point = core::operators::clickedPoint;
+        auto& isClicked = core::operators::isClicked;
+        view_.registerOnMouseRelease([this](QMouseEvent* event) {
+            if (isClicked) {
+                auto clickMessage = QString("Clicked: (")
+                    + QString::number(point.x(), 'f', 3) + ", "
+                    + QString::number(point.y(), 'f', 3) + ", "
+                    + QString::number(point.z(), 'f', 3) + ")";
+                showStatusWithTime(clickMessage);
+                isClicked = false;
+            }
+        });
     }
 
 private slots:
-    void exit() {
+    void
+    exitWorkspace() {
         auto answer = QMessageBox::information(
             this, "info", "Exit?", QMessageBox::Ok | QMessageBox::No);
         if (answer == QMessageBox::Ok)
             QCoreApplication::exit(0);
     }
-    void toggle_layout() {
+
+    void toggleLayout() {
         constexpr auto k = 0.95;
         static auto toggle { true };
         static auto current_size = size();
         static auto current_pos = pos();
 
         const auto screen = QGuiApplication::primaryScreen()->size();
-        const auto center = QPoint((1. - k) / 2. * screen.width(),
+        const auto center = QPoint(
+            (1. - k) / 2. * screen.width(),
             (1. - k) / 2. * screen.height());
 
         if (toggle) {
@@ -84,10 +102,15 @@ private slots:
         toggle = !toggle;
     }
 
+    inline void showStatusWithTime(const QString& message) {
+        auto timeMessage = QTime::currentTime().toString("[ hh:mm:ss ]");
+        messageBar->showMessage(timeMessage + " " + message);
+    }
+
 private:
     OperatorBar operator_ { this };
     CloudEditor tool_ { this };
-    View viewer_ { this };
+    View view_ { this };
 };
 
 } // namespace workspace

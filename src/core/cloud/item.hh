@@ -12,7 +12,8 @@
 namespace core::cloud {
 struct Item {
 public:
-    using PointCloudT = pcl::PointCloud<pcl::PointXYZ>;
+    using PointT = pcl::PointXYZ;
+    using PointCloudT = pcl::PointCloud<PointT>;
 
     struct RGB {
         double r;
@@ -81,3 +82,5 @@ private:
     bool visible_ { false };
 };
 }
+
+using PointCloud = core::cloud::Item;

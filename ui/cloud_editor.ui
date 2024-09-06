@@ -98,7 +98,7 @@
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
         <item>
-         <widget class="QPushButton" name="button_load">
+         <widget class="QPushButton" name="loadButton">
           <property name="maximumSize">
            <size>
             <width>30</width>
@@ -120,7 +120,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="button_clear">
+         <widget class="QPushButton" name="clearButton">
           <property name="maximumSize">
            <size>
             <width>30</width>
@@ -136,7 +136,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="button_refresh">
+         <widget class="QPushButton" name="refreshButton">
           <property name="maximumSize">
            <size>
             <width>30</width>
@@ -157,7 +157,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QListWidget" name="list_cloud">
+    <widget class="QListWidget" name="cloudList">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
@@ -167,7 +167,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="editor_frame">
+    <widget class="QFrame" name="editorFrame">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -198,7 +198,7 @@
       </property>
       <item>
        <widget class="QWidget" name="editor" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0">
+        <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,0,0,0,0">
          <property name="spacing">
           <number>2</number>
          </property>
@@ -244,7 +244,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="editor_cloud_name">
+            <widget class="QLineEdit" name="nameEditor">
              <property name="maximumSize">
               <size>
                <width>180</width>
@@ -300,7 +300,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="editor_cloud_frame">
+            <widget class="QLineEdit" name="frameEditor">
              <property name="maximumSize">
               <size>
                <width>180</width>
@@ -348,7 +348,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="editor_cloud_color">
+            <widget class="QLineEdit" name="colorEditor">
              <property name="maximumSize">
               <size>
                <width>180</width>
@@ -367,12 +367,54 @@
           </layout>
          </item>
          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>8</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>size</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="pointSizeEditor">
+             <property name="maximumSize">
+              <size>
+               <width>180</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButton_2">
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <property name="spacing">
             <number>2</number>
            </property>
            <item>
-            <widget class="QCheckBox" name="check_cloud_visible">
+            <widget class="QCheckBox" name="visibleCheck">
              <property name="font">
               <font>
                <pointsize>8</pointsize>
@@ -384,7 +426,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="check_cloud_label">
+            <widget class="QCheckBox" name="showLabelCheck">
              <property name="font">
               <font>
                <pointsize>8</pointsize>

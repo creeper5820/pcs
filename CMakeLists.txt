@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+add_compile_options(-Os -O3)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -14,7 +14,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(spdlog REQUIRED)
 find_package(Qt5 COMPONENTS Core REQUIRED)
-find_package(PCL COMPONENTS io common REQUIRED)
+find_package(PCL 1.12 COMPONENTS io common filters REQUIRED)
 find_package(VTK COMPONENTS 
   CommonColor
   CommonCore

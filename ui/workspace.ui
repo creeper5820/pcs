@@ -228,7 +228,7 @@
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="layout_workspace">
+     <layout class="QHBoxLayout" name="workspaceLayout">
       <property name="rightMargin">
        <number>0</number>
       </property>
@@ -239,12 +239,18 @@
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="status_bar">
+  <widget class="QStatusBar" name="messageBar">
    <property name="maximumSize">
     <size>
      <width>16777215</width>
      <height>20</height>
     </size>
+   </property>
+   <property name="font">
+    <font>
+     <family>Noto Sans Mono</family>
+     <pointsize>7</pointsize>
+    </font>
    </property>
   </widget>
  </widget>

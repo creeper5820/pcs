@@ -5,42 +5,59 @@
 #include <qwidget.h>
 #include <ui_operator.h>
 
-#include "core/cloud/cloud.hh"
+#include "core/renderer/renderer.hh"
 
 namespace workspace {
 class Operator : public QWidget {
     Q_OBJECT
 public:
-    void bind(QPushButton* button) {
+    void connectPushButton(QPushButton* button) {
         setContextMenuPolicy(Qt::CustomContextMenu);
+        button->setIcon(makeIconPixmap());
+
         connect(button, &QWidget::customContextMenuRequested,
-            this, &Operator::custom_menu);
+            this, &Operator::showCustomMenu);
         connect(button, &QPushButton::clicked,
-            this, &Operator::click_callback);
-        button->setIcon(make_icon());
+            this, &Operator::onLeftMouseClick);
     }
 
 private:
-    Q_SLOT virtual void click_callback() = 0;
-    Q_SLOT virtual void custom_menu() = 0;
-    virtual QIcon make_icon() = 0;
+    Q_SLOT virtual void onLeftMouseClick() = 0;
+    Q_SLOT virtual void showCustomMenu() = 0;
+    virtual QIcon makeIconPixmap() = 0;
 };
 
 class Coordinate : public Operator {
-    Q_OBJECT
 private:
-    Q_SLOT void click_callback() override {
-        // static auto flag = false;
-        // auto& view = core::View::instance();
-        // if ((flag = !flag)) {
-        //     view.add_coordinate_system(1.0, "default");
-        // } else {
-        //     view.remove_coordinate_system("default");
-        // }
+    void onLeftMouseClick() override {
+        auto& renderer = core::Renderer::instance();
+        static auto flag = false;
+        static auto index = renderer.addCoordinateSystem({}, 10, 0.2);
+
+        if ((flag = !flag)) {
+            renderer.setStereoPropsVisible(index, true);
+        } else {
+            renderer.setStereoPropsVisible(index, false);
+        }
     }
-    Q_SLOT void custom_menu() override {
+
+    void showCustomMenu() override {
     }
-    QIcon make_icon() override {
+
+    QIcon makeIconPixmap() override {
+        return QPixmap(":pic/coordination.svg");
+    }
+};
+
+class PointPicker : public Operator {
+private:
+    void onLeftMouseClick() override {
+    }
+
+    void showCustomMenu() override {
+    }
+
+    QIcon makeIconPixmap() override {
         return QPixmap(":pic/coordination.svg");
     }
 };

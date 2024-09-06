@@ -16,10 +16,11 @@ public:
         setupUi(this);
         setFixedWidth(30);
 
-        coordinate_.bind(operator1);
+        coordinate_.connectPushButton(operator1);
     }
 
 private:
     Coordinate coordinate_;
+    PointPicker pointPicker_;
 };
 }

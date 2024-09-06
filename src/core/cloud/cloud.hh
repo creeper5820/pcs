@@ -17,8 +17,10 @@ public:
     /// Configuration
     void connectWidget(QVTKOpenGLNativeWidget* interface);
 
+    void refresh();
+
     /// CRUD
-    bool loadCloud(int index, const std::string& path);
+    int loadCloud(const std::string& path);
     void saveCloud(int index, const std::string& path);
     void removeCloud(int index);
     void removeAllCloud();
@@ -27,26 +29,23 @@ public:
     void modifyColor(int index, double r, double g, double b);
     void modifyPointSize(int index, double size);
     void modifyVisible(int index, bool flag);
-
     void transformCloud(int index, Eigen::Affine3d transform);
 
     /// Select
-    void addSelectCubeArea(int index, Eigen::Vector3d corner[2]);
-    void addSelectCubeArea(int index, Eigen::Vector3d center, double length);
-    void addSelectSphereArea(int index, Eigen::Vector3d center, double radius);
+    int addSelectPointArea(Eigen::Vector3d point);
+    int addSelectCubeArea(Eigen::Vector3d corner[2]);
+    int addSelectCubeArea(Eigen::Vector3d center, double length);
+    int addSelectSphereArea(Eigen::Vector3d center, double radius);
 
-    void removeSelectArea(int index);
     void removeAllSelectArea();
+    void removeSelectArea(int index);
 
     /// Operators after selecting
-    void removeSelectCloud();
+    void removeAllSelectCloud();
     void removeSelectCloud(int index);
 
-    void segmentSelectCloud();
-    void segmentSelectCloud(int index);
-
-    void extractSelectCloud();
-    void extractSelectCloud(int index);
+    int extractAllSelectCloud();
+    int extractSelectCloud(int index);
 
 private:
     struct Impl;
