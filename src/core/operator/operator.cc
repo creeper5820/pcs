@@ -1,5 +1,5 @@
 #include "operator.hh"
-#include "core/cloud/cloud.hh"
+#include "core/pointcloud/cloud.hh"
 #include "interactor.hh"
 
 using namespace core::operators;
@@ -12,7 +12,7 @@ public:
     }
 
 private:
-    core::Cloud& cloudManager_ { core::Cloud::instance() };
+    CloudManager& cloudManager_ { CloudManager::instance() };
     vtkSmartPointer<PickStyle> pickStyle_ { vtkNew<PickStyle>() };
 };
 

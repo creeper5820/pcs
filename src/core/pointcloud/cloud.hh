@@ -1,5 +1,7 @@
 #pragma once
-#include "core/renderer/index.hh"
+#include "core/share/cloud-box.hh"
+#include "core/share/index.hh"
+#include "core/share/object.hh"
 #include "utility/single.hh"
 
 #include <QVTKOpenGLNativeWidget.h>
@@ -8,20 +10,26 @@
 
 namespace core::cloud {
 
-class Cloud : public util::Singleton<Cloud> {
+struct CloudPackage {
+    std::unique_ptr<CloudSource> source;
+    std::unique_ptr<CloudObject> object;
+};
+
+class CloudManager : public util::Singleton<CloudManager> {
 public:
-    Cloud(util::Singleton<Cloud>::token);
-    Cloud(const Cloud&) = delete;
-    Cloud& operator=(const Cloud&) = delete;
-    ~Cloud();
+    CloudManager(util::Singleton<CloudManager>::token);
+    CloudManager(const CloudManager&) = delete;
+    CloudManager& operator=(const CloudManager&) = delete;
+    ~CloudManager();
 
     /// Configuration
     void connectWidget(QVTKOpenGLNativeWidget* interface);
 
     void refresh();
 
+    std::unique_ptr<CloudPackage> makePackage(const std::string& path);
+
     /// CRUD
-    StereoIndex loadCloud(const std::string& path);
     void saveCloud(StereoIndex index, const std::string& path);
     void removeCloud(StereoIndex index);
     void removeAllCloud();
@@ -54,6 +62,5 @@ private:
 };
 }
 
-namespace core {
-using Cloud = cloud::Cloud;
-}
+using CloudPackage = core::cloud::CloudPackage;
+using CloudManager = core::cloud::CloudManager;

@@ -12,6 +12,7 @@
 namespace core::renderer {
 template <typename T>
 struct Index {
+public:
     T& operator++() {
         this->index++;
         return *reinterpret_cast<T*>(this);
@@ -24,10 +25,12 @@ struct Index {
     bool operator==(const Index& r) const {
         return index == r.index;
     }
+    int index = -1;
+
+public:
     bool valid() const {
         return index != -1;
     }
-    int index = -1;
 };
 struct FlatIndex final : Index<FlatIndex> { };
 struct StereoIndex final : Index<StereoIndex> { };

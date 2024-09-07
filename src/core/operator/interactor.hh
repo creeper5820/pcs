@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/cloud/cloud.hh"
+#include "core/pointcloud/cloud.hh"
 #include "core/renderer/renderer.hh"
 
 #include <vtkAbstractPicker.h>
@@ -57,17 +57,15 @@ public:
 private:
     Eigen::Vector2d mousePosition_ = { 0, 0 };
 
-    core::Cloud& cloud_ = core::Cloud::instance();
+    CloudManager& cloudManager_ = CloudManager::instance();
     core::Renderer& renderer_ = core::Renderer::instance();
 
-    void showClickedPoint(Translation position) {
-        static StereoIndex indexPointLast;
-        auto indexPoint = renderer_.addPoint(
+    void showClickedPoint(Eigen::Vector3d position) {
+        static auto pointObject = renderer_.addPoint(
             position, { 1.0, 0.5, 0.5 }, 10);
-        if (indexPointLast.valid())
-            renderer_.removeStereoProps(indexPointLast);
 
-        indexPointLast = indexPoint;
+        pointObject = renderer_.addPoint(
+            position, { 1.0, 0.5, 0.5 }, 10);
     }
 };
 inline vtkStandardNewMacro(PickStyle);

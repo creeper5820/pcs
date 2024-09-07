@@ -1,6 +1,6 @@
 #pragma once
 
-#include "operators.hh"
+#include "widget/workspace/operators.hh"
 
 #include <qobjectdefs.h>
 #include <qpushbutton.h>

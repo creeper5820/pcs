@@ -4,7 +4,9 @@
     "lldb.dereferencePointers": true,
     "lldb.consoleMode": "commands",
     "cSpell.words": [
+        "Dragable",
         "Interactor",
+        "Pickable",
         "Pixmap"
     ]
 }

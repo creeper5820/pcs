@@ -22,27 +22,44 @@ void Renderer::refresh() {
     pimpl_->refreshCamera();
 }
 
-StereoIndex Renderer::addCloud(const PointCloud& item, RenderColor color,
+void Renderer::render() {
+    pimpl_->render();
+}
+
+void Renderer::removeObject(Object<vtkSmartPointer<vtkActor>>& object) {
+    pimpl_->removeObject(object);
+}
+void Renderer::removeObject(Object<vtkSmartPointer<vtkTextActor>>& object) {
+    pimpl_->removeObject(object);
+}
+void Renderer::removeObject(Object<vtkSmartPointer<vtkActor2D>>& object) {
+    pimpl_->removeObject(object);
+}
+void Renderer::removeObject(Object<vtkSmartPointer<vtkAxesActor>>& object) {
+    pimpl_->removeObject(object);
+}
+
+std::unique_ptr<CloudObject> Renderer::addCloud(const CloudBox& item, RenderColor color,
     double pointSize, double alpha) {
     return pimpl_->addCloud(item, color, pointSize, alpha);
 }
 
-FlatIndex Renderer::addText(Translation position, RenderColor color, int fontSize,
-    const std::string& data) {
+FlatIndex Renderer::addText(const std::string& data, Eigen::Vector3d position,
+    RenderColor color, int fontSize) {
     return pimpl_->addText(position, color, fontSize, data);
 }
 
-StereoIndex Renderer::addPoint(Translation point, RenderColor color, double size,
-    double alpha) {
+std::unique_ptr<PointObject> Renderer::addPoint(Eigen::Vector3d point, RenderColor color,
+    double size, double alpha) {
     return pimpl_->addPoint(point, color, size, alpha);
 }
 
-StereoIndex Renderer::addLine(Translation p1, Translation p2, RenderColor color,
+StereoIndex Renderer::addLine(Eigen::Vector3d p1, Eigen::Vector3d p2, RenderColor color,
     double width, double alpha) {
     return pimpl_->addLine(p1, p2, color, width, alpha);
 }
 
-StereoIndex Renderer::addCoordinateSystem(Translation center, double length,
+StereoIndex Renderer::addCoordinateSystem(Eigen::Vector3d center, double length,
     double width, double alpha) {
     return pimpl_->addCoordinateSystem(center, length, width, alpha);
 }

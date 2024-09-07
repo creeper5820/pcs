@@ -15,10 +15,10 @@
 #include <ui_workspace.h>
 
 #include "core/operator/interactor.hh"
-#include "qwidget/workspace/cloud_editor.hh"
-#include "qwidget/workspace/operator_bar.hh"
-#include "qwidget/workspace/view.hh"
 #include "utility/common.hh"
+#include "widget/workspace/cloud-editor.hh"
+#include "widget/workspace/operator-bar.hh"
+#include "widget/workspace/view.hh"
 
 namespace workspace {
 

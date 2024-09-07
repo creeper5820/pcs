@@ -1,9 +1,10 @@
 #pragma once
-#include "item.hh"
+#include "core/share/cloud-box.hh"
 #include "utility/single.hh"
 
 namespace core::cloud {
-class Filter : public util::Singleton<Filter> {
+template <typename PointT>
+class Filter : public util::Singleton<Filter<PointT>> {
 public:
     Filter(util::Singleton<Filter>::token);
     ~Filter();
@@ -11,8 +12,8 @@ public:
     Filter& operator=(const Filter&) = delete;
 
     /// Apply
-    void apply(PointCloud& pointCloud);
-    void extract(const PointCloud& input, PointCloud& output);
+    void apply(CloudSource& pointCloud);
+    void extract(const CloudSource& input, CloudSource& output);
 
     /// Select
     int addSelectPointArea(Eigen::Vector3d point);

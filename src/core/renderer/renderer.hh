@@ -1,13 +1,12 @@
 #pragma once
-#include "core/cloud/item.hh"
-#include "core/renderer/index.hh"
+#include "core/share/cloud-box.hh"
+#include "core/share/index.hh"
+#include "core/share/object.hh"
 #include "utility/single.hh"
 
 #include <QVTKOpenGLNativeWidget.h>
-
-using PointCloud = core::cloud::Item;
-using RenderColor = std::tuple<double, double, double>;
-using Translation = std::tuple<double, double, double>;
+#include <vtkAxesActor.h>
+#include <vtkTextActor.h>
 
 namespace core::renderer {
 class Renderer : public util::Singleton<Renderer> {
@@ -19,17 +18,26 @@ public:
 
     /// Configuration
     void connectWidget(QVTKOpenGLNativeWidget* interface);
-    void refresh();
 
-    StereoIndex addCloud(const PointCloud& item, RenderColor color,
-        double pointSize, double alpha = 1.0);
-    FlatIndex addText(Translation position, RenderColor color, int fontSize,
-        const std::string& data);
-    StereoIndex addPoint(Translation point, RenderColor color, double size,
-        double alpha = 1.0);
-    StereoIndex addLine(Translation p1, Translation p2, RenderColor color,
+    void refresh();
+    void render();
+
+    void removeObject(Object<vtkSmartPointer<vtkActor>>& object);
+    void removeObject(Object<vtkSmartPointer<vtkTextActor>>& object);
+    void removeObject(Object<vtkSmartPointer<vtkActor2D>>& object);
+    void removeObject(Object<vtkSmartPointer<vtkAxesActor>>& object);
+
+    std::unique_ptr<CloudObject> addCloud(const CloudBox& item, RenderColor color = { 1, 1, 1 },
+        double pointSize = 2.0, double alpha = 1.0);
+    std::unique_ptr<PointObject> addPoint(Eigen::Vector3d point, RenderColor color = { 1, 1, 1 },
+        double size = 1.0, double alpha = 1.0);
+
+    FlatIndex addText(const std::string& data, Eigen::Vector3d position,
+        RenderColor color = { 1, 1, 1 }, int fontSize = 16);
+
+    StereoIndex addLine(Eigen::Vector3d p1, Eigen::Vector3d p2, RenderColor color,
         double width, double alpha = 1.0);
-    StereoIndex addCoordinateSystem(Translation center, double length,
+    StereoIndex addCoordinateSystem(Eigen::Vector3d center, double length,
         double width, double alpha = 1.0);
 
     void removeStereoProps(StereoIndex index);
@@ -54,3 +62,5 @@ private:
 namespace core {
 using Renderer = renderer::Renderer;
 }
+
+using Renderer = core::renderer::Renderer;

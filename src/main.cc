@@ -1,5 +1,5 @@
 #include "qapplication.h"
-#include "qwidget/workspace/workspace.hh"
+#include "widget/workspace/workspace.hh"
 
 int main(int argc, char* argv[]) {
     using namespace workspace;

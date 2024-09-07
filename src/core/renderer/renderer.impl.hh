@@ -21,7 +21,12 @@
 namespace core::renderer {
 struct Renderer::Impl {
 public:
-    explicit Impl() = default;
+    explicit Impl() {
+        objectKiller = [this](vtkProp* prop) {
+            renderer_->RemoveActor(prop);
+            window_->Render();
+        };
+    }
     ~Impl() = default;
 
     void connectWidget(QVTKOpenGLNativeWidget* interface) {
@@ -41,8 +46,18 @@ public:
         window_->Render();
     }
 
+    void render() {
+        window_->Render();
+    }
+
+    template <vtkPropHandler Handler>
+    void removeObject(Object<Handler>& object) {
+        renderer_->RemoveActor(object.handler());
+        window_->Render();
+    }
+
     /// CRUD
-    StereoIndex addCloud(const PointCloud& item, RenderColor color,
+    std::unique_ptr<CloudObject> addCloud(const CloudBox& item, RenderColor color,
         double pointSize, double alpha) {
         vtkNew<vtkPoints> points;
         for (const auto point : item.points())
@@ -65,18 +80,16 @@ public:
         renderer_->AddActor(actor);
         window_->Render();
 
-        stereoProps_[stereoPropsIndexCount_] = actor;
-        return stereoPropsIndexCount_++;
+        return std::make_unique<CloudObject>(actor);
     }
 
-    FlatIndex addText(Translation position, RenderColor color, int fontSize,
+    FlatIndex addText(Eigen::Vector3d position, RenderColor color, int fontSize,
         const std::string& data) {
-        auto [x, y, z] = position;
         auto [r, g, b] = color;
 
         auto textActor = vtkNew<vtkTextActor> {};
         textActor->SetInput(data.c_str());
-        textActor->SetPosition2(x, y);
+        textActor->SetPosition2(position.x(), position.y());
         auto property = textActor->GetTextProperty();
         property->SetFontSize(fontSize);
         property->SetColor(r, g, b);
@@ -84,16 +97,16 @@ public:
         renderer_->AddActor2D(textActor);
         window_->Render();
 
-        flatProps_[flatPropsIndexCount_] = textActor;
-        return flatPropsIndexCount_++;
+        flatProps_[flatPropsIndex_] = textActor;
+        return flatPropsIndex_++;
     }
 
-    StereoIndex addPoint(Translation point, RenderColor color, double size, double alpha = 1.0) {
+    std::unique_ptr<PointObject> addPoint(Eigen::Vector3d point,
+        RenderColor color, double size, double alpha = 1.0) {
         auto [r, g, b] = color;
-        auto [x, y, z] = point;
 
         vtkNew<vtkPoints> points;
-        points->InsertNextPoint(x, y, z);
+        points->InsertNextPoint(point.x(), point.y(), point.z());
 
         vtkNew<vtkPolyData> polyData;
         polyData->SetPoints(points);
@@ -115,19 +128,16 @@ public:
         renderer_->AddActor(actor);
         window_->Render();
 
-        stereoProps_[stereoPropsIndexCount_] = actor;
-        return stereoPropsIndexCount_++;
+        return std::make_unique<PointObject>(actor);
     }
 
-    StereoIndex addLine(Translation p1, Translation p2, RenderColor color, double width,
+    StereoIndex addLine(Eigen::Vector3d p1, Eigen::Vector3d p2, RenderColor color, double width,
         double alpha = 1.0) {
         auto [r, g, b] = color;
-        auto [x1, y1, z1] = p1;
-        auto [x2, y2, z2] = p2;
 
         vtkNew<vtkPoints> points;
-        points->InsertNextPoint(x1, y1, z1);
-        points->InsertNextPoint(x2, y2, z2);
+        points->InsertNextPoint(p1.x(), p1.y(), p1.z());
+        points->InsertNextPoint(p2.x(), p2.y(), p2.z());
 
         vtkNew<vtkPolyData> polyData;
         polyData->SetPoints(points);
@@ -150,15 +160,14 @@ public:
         renderer_->AddActor(actor);
         window_->Render();
 
-        stereoProps_[stereoPropsIndexCount_] = actor;
-        return stereoPropsIndexCount_++;
+        stereoProps_[stereoPropsIndex_] = actor;
+        return stereoPropsIndex_++;
     }
 
-    StereoIndex addCoordinateSystem(Translation center, double length,
+    StereoIndex addCoordinateSystem(Eigen::Vector3d center, double length,
         double width, double alpha = 1.0) {
-        auto [x, y, z] = center;
         vtkNew<vtkAxesActor> axesActor;
-        axesActor->SetPosition(x, y, z);
+        axesActor->SetPosition(center.x(), center.y(), center.z());
         axesActor->SetTotalLength(length, length, length);
         axesActor->SetShaftType(vtkAxesActor::LINE_SHAFT);
         axesActor->SetConeRadius(width / 2.0);
@@ -167,21 +176,17 @@ public:
         renderer_->AddActor(axesActor);
         window_->Render();
 
-        stereoProps_[stereoPropsIndexCount_] = axesActor;
-        return stereoPropsIndexCount_++;
+        stereoProps_[stereoPropsIndex_] = axesActor;
+        return stereoPropsIndex_++;
     }
 
     void removeStereoProps(StereoIndex index) {
-        if (!stereoProps_.contains(index))
-            return;
         renderer_->RemoveActor(stereoProps_[index]);
         stereoProps_.erase(index);
         window_->Render();
     }
 
     void removeFlatProps(FlatIndex index) {
-        if (!flatProps_.contains(index))
-            return;
         renderer_->RemoveActor(flatProps_[index]);
         flatProps_.erase(index);
         window_->Render();
@@ -194,23 +199,16 @@ public:
 
     /// Modify property
     void setStereoPropsVisible(StereoIndex index, bool flag) {
-        if (!stereoProps_.contains(index))
-            return;
         stereoProps_[index]->SetVisibility(flag);
         window_->Render();
     }
 
     void setFlatPropsVisible(FlatIndex index, bool flag) {
-        if (!flatProps_.contains(index))
-            return;
         flatProps_[index]->SetVisibility(flag);
         window_->Render();
     }
 
     void modifyColor(StereoIndex index, double r, double g, double b) {
-        if (!stereoProps_.contains(index))
-            return;
-
         auto actor = dynamic_cast<vtkActor*>(stereoProps_[index].Get());
         actor->GetProperty()->SetColor(r, g, b);
 
@@ -218,9 +216,6 @@ public:
     }
 
     void modifyVisible(StereoIndex index, bool flag) {
-        if (!stereoProps_.contains(index))
-            return;
-
         auto& actor = stereoProps_[index];
         actor->SetVisibility(flag);
 
@@ -228,10 +223,6 @@ public:
     }
 
     void modifyPointSize(StereoIndex index, double size) {
-        if (!stereoProps_.contains(index))
-            return;
-        spdlog::info("modifyPointSize: {} {}", index.index, size);
-
         auto actor = dynamic_cast<vtkActor*>(stereoProps_[index].Get());
         actor->GetProperty()->SetPointSize(size);
 
@@ -239,18 +230,13 @@ public:
     }
 
     void transformCloud(StereoIndex index, Eigen::Affine3d transform) {
-        if (!stereoProps_.contains(index))
-            return;
-
         auto& actor = stereoProps_[index];
 
-        const auto translation = Eigen::Translation3d { transform.translation() };
-        actor->SetPosition(translation.x(),
-            translation.y(), translation.z());
-
         const auto quaternion = Eigen::Quaterniond { transform.rotation() };
-        actor->RotateWXYZ(quaternion.w(),
-            quaternion.x(), quaternion.y(), quaternion.z());
+        actor->RotateWXYZ(quaternion.w(), quaternion.x(), quaternion.y(),
+            quaternion.z());
+        const auto translation = Eigen::Translation3d { transform.translation() };
+        actor->SetPosition(translation.x(), translation.y(), translation.z());
 
         window_->Render();
     }
@@ -259,10 +245,10 @@ private:
     vtkSmartPointer<vtkRenderer> renderer_;
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> window_;
 
-    StereoIndex stereoPropsIndexCount_;
+    StereoIndex stereoPropsIndex_;
     std::unordered_map<StereoIndex, vtkSmartPointer<vtkProp3D>> stereoProps_;
 
-    FlatIndex flatPropsIndexCount_;
+    FlatIndex flatPropsIndex_;
     std::unordered_map<FlatIndex, vtkSmartPointer<vtkProp>> flatProps_;
 };
 }

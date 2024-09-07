@@ -1,8 +1,6 @@
 #pragma once
-#include "cloud_list_item.hh"
-#include "core/cloud/cloud.hh"
-
-#include <spdlog/spdlog.h>
+#include "core/pointcloud/cloud.hh"
+#include "widget/workspace/list-item.hh"
 
 #include <qchar.h>
 #include <qcursor.h>
@@ -17,6 +15,7 @@
 #include <ui_cloud_editor.h>
 
 #include <regex>
+#include <spdlog/spdlog.h>
 
 namespace workspace {
 namespace speed = spdlog;
@@ -56,6 +55,7 @@ public:
         connect(pointSizeEditor, &QLineEdit::editingFinished,
             this, &CloudEditor::applyPointSize);
     }
+
 private slots:
     /// Operators
     void loadCloud() {
@@ -67,21 +67,18 @@ private slots:
         const auto pathStd = path.toStdString();
         speed::info("load cloud form {}", pathStd);
 
-        auto index = cloudManager_.loadCloud(pathStd);
-        cloudManager_.modifyPointSize(index, 1);
+        auto package = cloudManager_.makePackage(pathStd);
 
-        auto item = new CloudListItem(cloudList);
-        item->setCloudIndex(index);
-        item->setPath(path);
-        item->setLabel(getNameFromPath(path));
+        auto* listItem = new CloudListItem(cloudList);
+        listItem->bindPackage(std::move(package));
+        listItem->setLabel(getNameFromPath(path));
     }
 
     void removeSelectedCloud() {
-        auto* item = dynamic_cast<CloudListItem*>(
-            cloudList->currentItem());
-        auto cloudIndex = item->cloudIndex();
-        cloudManager_.removeCloud(cloudIndex);
-        delete item;
+        auto item = currentListItem();
+        if (item == nullptr)
+            return;
+        cloudList->takeItem(cloudList->row(item));
     }
 
     void refresh() {
@@ -105,18 +102,19 @@ private slots:
     void updateEditorMessage() {
         auto item = currentListItem();
 
-        if (item == nullptr) {
-            nameEditor->setText("");
-            colorEditor->setText("");
-            frameEditor->setText("");
+        if (item == nullptr)
             return;
-        }
+
+        auto [r, g, b] = item->color();
+        auto sizeText = QString::number(item->pointSize());
+        auto colorText = QString::asprintf("%.3f, %.3f, %.3f", r, g, b);
 
         nameEditor->setText(item->label());
         frameEditor->setText(item->frame());
-        pointSizeEditor->setText(QString::number(item->pointSize()));
-        colorEditor->setText(QString::asprintf(
-            "%.3f, %.3f, %.3f", item->r(), item->g(), item->b()));
+        pointSizeEditor->setText(sizeText);
+        colorEditor->setText(colorText);
+
+        visibleCheck->setChecked(item->visible());
     }
 
     void applyCloudName() {
@@ -173,7 +171,7 @@ private:
     QStringList paths_;
     QStringList names_;
 
-    core::Cloud& cloudManager_ = core::Cloud::instance();
+    CloudManager& cloudManager_ = CloudManager::instance();
 
     inline CloudListItem* currentListItem() {
         return dynamic_cast<CloudListItem*>(
