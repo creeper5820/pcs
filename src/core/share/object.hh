@@ -6,7 +6,6 @@
 #include <vtkSmartPointer.h>
 
 #include <functional>
-#include <spdlog/spdlog.h>
 
 using RenderColor = std::tuple<double, double, double>;
 
@@ -14,7 +13,7 @@ using RenderColor = std::tuple<double, double, double>;
     template <>                                         \
     struct std::hash<Object> {                          \
         std::size_t operator()(const Object& f) const { \
-            return std::hash<void*> {}(f.makeHash());   \
+            return std::hash<void*> {}(f.hashValue());  \
         }                                               \
     };
 
@@ -33,7 +32,6 @@ public:
         : handler_(handler) {
     }
     ~Object() {
-        spdlog::info("delete {}", typeid(Handler).name());
         objectKiller(handler_);
     }
     Object(const Object&) = delete;
@@ -53,7 +51,7 @@ public:
     inline bool operator==(const Object& r) const {
         return handler_ == r.handler_;
     }
-    inline void* makeHash() const {
+    inline void* hashValue() const {
         return handler_.Get();
     }
 
