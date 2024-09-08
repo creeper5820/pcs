@@ -6,11 +6,11 @@ namespace speed = spdlog;
 
 Renderer::Renderer(util::Singleton<Renderer>::token)
     : pimpl_(new Impl) {
-    speed::info("load core::Renderer");
+    speed::info("load Renderer");
 }
 Renderer::~Renderer() {
     delete pimpl_;
-    speed::info("delete core::Renderer");
+    speed::info("delete Renderer");
 }
 
 /// Configuration

@@ -29,17 +29,6 @@ public:
 
     std::unique_ptr<CloudPackage> makePackage(const std::string& path);
 
-    /// CRUD
-    void saveCloud(StereoIndex index, const std::string& path);
-    void removeCloud(StereoIndex index);
-    void removeAllCloud();
-
-    /// Modify property
-    void modifyColor(StereoIndex index, double r, double g, double b);
-    void modifyPointSize(StereoIndex index, double size);
-    void modifyVisible(StereoIndex index, bool flag);
-    void transformCloud(StereoIndex index, Eigen::Affine3d transform);
-
     /// Select
     int addSelectPointArea(Eigen::Vector3d point);
     int addSelectCubeArea(Eigen::Vector3d corner[2]);

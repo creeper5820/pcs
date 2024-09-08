@@ -87,7 +87,6 @@ private slots:
 
     void removeAllCloud() {
         cloudList->clear();
-        cloudManager_.removeAllCloud();
     }
 
     /// List Widget

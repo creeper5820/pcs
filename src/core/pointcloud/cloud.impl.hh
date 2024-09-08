@@ -16,42 +16,6 @@ public:
         return std::make_unique<CloudPackage>(std::move(source), std::move(object));
     }
 
-    void saveCloud(StereoIndex index, const std::string& filePath) {
-        // pointClouds_[index]->save(filePath);
-    }
-
-    void removeCloud(StereoIndex index) {
-        renderer_.removeStereoProps(index);
-        // pointClouds_.erase(index);
-    }
-
-    void removePackage(CloudPackage& package) {
-        renderer_.removeObject(*package.object);
-    }
-
-    void removeAllCloud() {
-        renderer_.removeAllProps();
-        pointClouds_.clear();
-    }
-
-    /// Modify property
-    void modifyColor(StereoIndex index, double r, double g, double b) {
-        renderer_.modifyColor(index, r, g, b);
-        // pointClouds_[index]->setColor(r, g, b);
-    }
-
-    void modifyPointSize(StereoIndex index, double size) {
-        renderer_.modifyPointSize(index, size);
-    }
-
-    void modifyVisible(StereoIndex index, bool flag) {
-        renderer_.modifyVisible(index, flag);
-    }
-
-    void transformCloud(StereoIndex index, Eigen::Affine3d transform) {
-        renderer_.transformCloud(index, transform);
-    }
-
     /// Select
     int addSelectCubeArea(Eigen::Vector3d corner[2]) {
         return {};

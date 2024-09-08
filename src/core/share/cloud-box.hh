@@ -26,7 +26,8 @@ public:
         loaded_ = status ? true : false;
     }
 
-    CloudSource() = default;
+    CloudSource(const CloudSource&) = delete;
+    CloudSource& operator=(const CloudSource&) = delete;
 
     bool save(const std::string& path) {
         if (!pcl::io::savePCDFileBinary(path, *cloud_))

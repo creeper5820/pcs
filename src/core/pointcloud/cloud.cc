@@ -28,31 +28,6 @@ std::unique_ptr<CloudPackage> CloudManager::makePackage(const std::string& path)
     return pimpl_->makePackage(path);
 }
 
-/// CRUD
-void CloudManager::saveCloud(StereoIndex index, const std::string& path) {
-    pimpl_->saveCloud(index, path);
-}
-void CloudManager::removeCloud(StereoIndex index) {
-    pimpl_->removeCloud(index);
-}
-void CloudManager::removeAllCloud() {
-    pimpl_->removeAllCloud();
-}
-
-/// Modify property
-void CloudManager::modifyColor(StereoIndex index, double r, double g, double b) {
-    pimpl_->modifyColor(index, r, g, b);
-}
-void CloudManager::modifyPointSize(StereoIndex index, double size) {
-    pimpl_->modifyPointSize(index, size);
-}
-void CloudManager::modifyVisible(StereoIndex index, bool flag) {
-    pimpl_->modifyVisible(index, flag);
-}
-void CloudManager::transformCloud(StereoIndex index, Eigen::Affine3d transform) {
-    pimpl_->transformCloud(index, transform);
-}
-
 /// Select
 int CloudManager::addSelectCubeArea(Eigen::Vector3d corner[2]) {
     return {};
