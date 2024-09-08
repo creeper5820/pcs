@@ -15,13 +15,14 @@ CloudManager::~CloudManager() {
 
 /// Configuration
 void CloudManager::connectWidget(QVTKOpenGLNativeWidget* interface) {
-    auto& renderer = core::Renderer::instance();
+    auto& renderer = Renderer::instance();
     renderer.connectWidget(interface);
 }
 
 void CloudManager::refresh() {
-    auto& renderer = core::Renderer::instance();
-    renderer.refresh();
+    auto& renderer = Renderer::instance();
+    renderer.resetCamera();
+    renderer.render();
 }
 
 std::unique_ptr<CloudPackage> CloudManager::makePackage(const std::string& path) {

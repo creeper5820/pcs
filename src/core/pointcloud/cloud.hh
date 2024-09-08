@@ -1,6 +1,5 @@
 #pragma once
 #include "core/share/cloud-box.hh"
-#include "core/share/index.hh"
 #include "core/share/object.hh"
 #include "utility/single.hh"
 

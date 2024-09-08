@@ -58,14 +58,14 @@ private:
     Eigen::Vector2d mousePosition_ = { 0, 0 };
 
     CloudManager& cloudManager_ = CloudManager::instance();
-    core::Renderer& renderer_ = core::Renderer::instance();
+    Renderer& renderer_ = Renderer::instance();
 
     void showClickedPoint(Eigen::Vector3d position) {
-        static auto pointObject = renderer_.addPoint(
-            position, { 1.0, 0.5, 0.5 }, 10);
+        static auto pointObject = renderer_.makePoint(
+            position, Renderer::miku, 10);
 
-        pointObject = renderer_.addPoint(
-            position, { 1.0, 0.5, 0.5 }, 10);
+        pointObject = renderer_.makePoint(
+            position, Renderer::miku, 10);
     }
 };
 inline vtkStandardNewMacro(PickStyle);

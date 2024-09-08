@@ -30,15 +30,10 @@ private:
 class Coordinate : public Operator {
 private:
     void onLeftMouseClick() override {
-        auto& renderer = core::Renderer::instance();
+        auto& renderer = Renderer::instance();
         static auto flag = false;
-        static auto index = renderer.addCoordinateSystem({}, 10, 0.2);
-
-        if ((flag = !flag)) {
-            renderer.setStereoPropsVisible(index, true);
-        } else {
-            renderer.setStereoPropsVisible(index, false);
-        }
+        static auto coordinate = renderer.makeCoordinate({}, 10, 0.2);
+        coordinate->setVisible(flag = !flag);
     }
 
     void showCustomMenu() override {

@@ -1,6 +1,5 @@
 #pragma once
 #include "core/share/cloud-box.hh"
-#include "core/share/index.hh"
 #include "core/share/object.hh"
 #include "utility/single.hh"
 
@@ -19,38 +18,30 @@ public:
     /// Configuration
     void connectWidget(QVTKOpenGLNativeWidget* interface);
 
-    void refresh();
+    void resetCamera();
     void render();
 
-    void removeObject(Object<vtkSmartPointer<vtkActor>>& object);
-    void removeObject(Object<vtkSmartPointer<vtkTextActor>>& object);
-    void removeObject(Object<vtkSmartPointer<vtkActor2D>>& object);
-    void removeObject(Object<vtkSmartPointer<vtkAxesActor>>& object);
+    template <vtkPropHandler Handler>
+    void removeObject(Object<Handler>& object);
 
-    std::unique_ptr<CloudObject> addCloud(const CloudBox& item, RenderColor color = { 1, 1, 1 },
-        double pointSize = 2.0, double alpha = 1.0);
-    std::unique_ptr<PointObject> addPoint(Eigen::Vector3d point, RenderColor color = { 1, 1, 1 },
-        double size = 1.0, double alpha = 1.0);
+    static constexpr auto white = RenderColor { 1.0, 1.0, 1.0 };
+    static constexpr auto black = RenderColor { 0.0, 0.0, 0.0 };
+    static constexpr auto miku = RenderColor { 0.2235294117647059, 0.7725490196078432, 0.7333333333333333 };
 
-    FlatIndex addText(const std::string& data, Eigen::Vector3d position,
-        RenderColor color = { 1, 1, 1 }, int fontSize = 16);
+    std::unique_ptr<CloudObject> makeCloud(const CloudBox& item, RenderColor color = white,
+        double pointSize = 2.0);
 
-    StereoIndex addLine(Eigen::Vector3d p1, Eigen::Vector3d p2, RenderColor color,
-        double width, double alpha = 1.0);
-    StereoIndex addCoordinateSystem(Eigen::Vector3d center, double length,
-        double width, double alpha = 1.0);
+    std::unique_ptr<PointObject> makePoint(const Eigen::Vector3d& point,
+        const RenderColor& color = white, double size = 1.0);
 
-    void removeStereoProps(StereoIndex index);
-    void removeFlatProps(FlatIndex index);
-    void removeAllProps();
+    std::unique_ptr<TextObject> makeText(const Eigen::Vector3d& position, const std::string& data,
+        RenderColor color = white, int fontSize = 16);
 
-    /// Modify property
-    void modifyVisible(StereoIndex index, bool flag);
-    void modifyPointSize(StereoIndex index, double size);
-    void modifyColor(StereoIndex index, double r, double g, double b);
-    void transformCloud(StereoIndex index, Eigen::Affine3d transform);
-    void setStereoPropsVisible(StereoIndex index, bool flag);
-    void setFlatPropsVisible(FlatIndex index, bool flag);
+    std::unique_ptr<LineObject> makeLine(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
+        const RenderColor& color, double width);
+
+    std::unique_ptr<CoordinateObject> makeCoordinate(const Eigen::Vector3d& center,
+        double length = 10.0, double width = 0.5);
 
 private:
     struct Impl;
@@ -58,9 +49,5 @@ private:
 };
 
 };
-
-namespace core {
-using Renderer = renderer::Renderer;
-}
 
 using Renderer = core::renderer::Renderer;

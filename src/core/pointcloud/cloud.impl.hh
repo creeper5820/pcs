@@ -12,7 +12,7 @@ public:
     /// CRUD
     std::unique_ptr<CloudPackage> makePackage(const std::string& path) {
         auto source = std::make_unique<CloudSource>(path);
-        auto object = renderer_.addCloud(*source);
+        auto object = renderer_.makeCloud(*source);
         return std::make_unique<CloudPackage>(std::move(source), std::move(object));
     }
 
@@ -53,6 +53,6 @@ public:
 private:
     std::unordered_map<CloudObject, std::unique_ptr<CloudSource>> pointClouds_;
 
-    core::Renderer& renderer_ = core::Renderer::instance();
+    Renderer& renderer_ = Renderer::instance();
 };
 }
