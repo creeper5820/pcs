@@ -19,10 +19,10 @@ inline Eigen::Vector3d clickedPoint { 0, 0, 0 };
 inline bool isClicked { false };
 }
 
-class PickStyle : public vtkInteractorStyleTrackballCamera {
+class Selector : public vtkInteractorStyleTrackballCamera {
 public:
-    static PickStyle* New();
-    vtkTypeMacro(PickStyle, vtkInteractorStyleTrackballCamera);
+    static Selector* New();
+    vtkTypeMacro(Selector, vtkInteractorStyleTrackballCamera);
 
     void OnLeftButtonDown() override {
         mousePosition_ = { this->Interactor->GetEventPosition()[0],
@@ -60,12 +60,27 @@ private:
     CloudManager& cloudManager_ = CloudManager::instance();
     Renderer& renderer_ = Renderer::instance();
 
-    void showClickedPoint(Eigen::Vector3d position) {
-        static auto pointObject = renderer_.makePoint(
-            position, Renderer::miku, 10);
+    void showClickedPoint(const Eigen::Vector3d& position) {
+        static std::unique_ptr<PointObject> pointObjects[2] {
+            renderer_.makePoint({}, Renderer::miku, 10),
+            renderer_.makePoint({}, Renderer::miku, 10)
+        };
+        static Eigen::Vector3d positions[2] {
+            Eigen::Vector3d::Zero(),
+            Eigen::Vector3d::Zero()
+        };
+        static auto lineObject = std::unique_ptr<LineObject>();
+        static auto textObject = std::unique_ptr<TextObject>();
+        static auto index = 0;
+        index = index ? 0 : 1;
 
-        pointObject = renderer_.makePoint(
-            position, Renderer::miku, 10);
+        positions[index] = position;
+        pointObjects[index] = renderer_.makePoint(position, Renderer::miku, 10);
+
+        lineObject = renderer_.makeLine(positions[0], positions[1], Renderer::miku, 5);
+
+        auto text = fmt::format("Length: {}", lineObject->getLength());
+        textObject = renderer_.makeText({}, text, Renderer::miku);
     }
 };
-inline vtkStandardNewMacro(PickStyle);
+inline vtkStandardNewMacro(Selector);

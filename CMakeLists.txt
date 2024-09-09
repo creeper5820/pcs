@@ -14,7 +14,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(spdlog REQUIRED)
 find_package(Qt5 COMPONENTS Core REQUIRED)
-find_package(PCL 1.12 COMPONENTS io common filters REQUIRED)
+find_package(PCL COMPONENTS io common filters REQUIRED)
 find_package(VTK COMPONENTS 
   CommonColor
   CommonCore

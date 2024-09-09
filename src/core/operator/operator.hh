@@ -6,12 +6,15 @@
 namespace core::operators {
 class Operators : public util::Singleton<Operators> {
 public:
-    Operators(util::Singleton<Operators>::token);
+    explicit Operators(util::Singleton<Operators>::token);
     ~Operators();
     Operators(const Operators&) = delete;
     Operators& operator=(const Operators&) = delete;
 
     void connectWidget(QVTKOpenGLNativeWidget* interface);
+
+    void useNormalStyle();
+    void usePointPicker();
 
 private:
     struct Impl;
@@ -19,6 +22,4 @@ private:
 };
 };
 
-namespace core {
-using Operators = operators::Operators;
-}
+using Operators = core::operators::Operators;

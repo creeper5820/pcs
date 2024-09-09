@@ -23,7 +23,7 @@ namespace speed = spdlog;
 class CloudEditor : public QWidget, Ui::CloudEditor {
     Q_OBJECT
 public:
-    CloudEditor(QWidget* parent = nullptr)
+    explicit CloudEditor(QWidget* parent = nullptr)
         : QWidget(parent) {
         setupUi(this);
 
@@ -35,30 +35,35 @@ public:
         // custom context menu
         cloudList->setContextMenuPolicy(Qt::CustomContextMenu);
         connect(cloudList, &QWidget::customContextMenuRequested,
-            this, &CloudEditor::showListMenu);
+            this, &CloudEditor::onShowListMenu);
 
         // connect
         connect(refreshButton, &QPushButton::clicked,
-            this, &CloudEditor::refresh);
+            this, &CloudEditor::onRefresh);
         connect(loadButton, &QPushButton::clicked,
-            this, &CloudEditor::loadCloud);
+            this, &CloudEditor::onLoadCloud);
         connect(clearButton, &QPushButton::clicked,
-            this, &CloudEditor::removeAllCloud);
+            this, &CloudEditor::onClear);
+
         connect(cloudList, &QListWidget::itemClicked,
-            this, &CloudEditor::updateEditorMessage);
+            this, &CloudEditor::onItemClicked);
+
         connect(nameEditor, &QLineEdit::editingFinished,
-            this, &CloudEditor::applyCloudName);
+            this, &CloudEditor::onNameChanged);
         connect(frameEditor, &QLineEdit::editingFinished,
-            this, &CloudEditor::applyCloudFrame);
+            this, &CloudEditor::onFrameChanged);
         connect(colorEditor, &QLineEdit::editingFinished,
-            this, &CloudEditor::applyCloudColor);
+            this, &CloudEditor::onColorChanged);
         connect(pointSizeEditor, &QLineEdit::editingFinished,
-            this, &CloudEditor::applyPointSize);
+            this, &CloudEditor::onSizeChanged);
+
+        connect(visibleCheck, &QCheckBox::stateChanged,
+            this, &CloudEditor::onVisbleCheckClicked);
     }
 
 private slots:
     /// Operators
-    void loadCloud() {
+    void onLoadCloud() {
         const auto path = QFileDialog::getOpenFileName(this,
             "Open File", "", "PCD Files (*.pcd)");
         if (path.isEmpty() || paths_.contains(path))
@@ -74,31 +79,34 @@ private slots:
         listItem->setLabel(getNameFromPath(path));
     }
 
-    void removeSelectedCloud() {
+    void onRemoveSelected() {
         auto item = currentListItem();
         if (item == nullptr)
             return;
-        cloudList->takeItem(cloudList->row(item));
+        auto removed = cloudList->takeItem(
+            cloudList->row(item));
+        // 显式地删除元素，各版本Qt行为不同
+        delete removed;
     }
 
-    void refresh() {
+    void onRefresh() {
         cloudManager_.refresh();
     }
 
-    void removeAllCloud() {
+    void onClear() {
         cloudList->clear();
     }
 
     /// List Widget
-    void showListMenu() {
+    void onShowListMenu() const {
         auto menu = QMenu {};
         menu.addAction("delete", this,
-            &CloudEditor::removeSelectedCloud);
+            &CloudEditor::onRemoveSelected);
         menu.exec(QCursor::pos());
     }
 
     /// Editor
-    void updateEditorMessage() {
+    void onItemClicked() {
         auto item = currentListItem();
 
         if (item == nullptr)
@@ -112,27 +120,20 @@ private slots:
         frameEditor->setText(item->frame());
         pointSizeEditor->setText(sizeText);
         colorEditor->setText(colorText);
-
         visibleCheck->setChecked(item->visible());
     }
 
-    void applyCloudName() {
+    void onNameChanged() {
         auto input = nameEditor->text();
         auto target = input.contains(".") ? input : input + ".pcd";
         currentListItem()->setLabel(target);
     }
 
-    void applyCloudColor() {
+    void onColorChanged() {
         static const auto regexRGB = std::regex(
-            "\\s*(0(?:\\.0*)?|1(?:\\.0*)?|"
-            "\\d*\\.?\\d*|"
-            "0?\\.\\d*[1-9])\\s*,"
-            "\\s*(0(?:\\.0*)?|1(?:\\.0*)?|"
-            "\\d*\\.?\\d*|"
-            "0?\\.\\d*[1-9])\\s*,"
-            "\\s*(0(?:\\.0*)?|1(?:\\.0*)?|"
-            "\\d*\\.?\\d*|"
-            "0?\\.\\d*[1-9])\\s*");
+            "\\s*(0(?:\\.0*)?|1(?:\\.0*)?|\\d*\\.?\\d*|0?\\.\\d*[1-9])\\s*,"
+            "\\s*(0(?:\\.0*)?|1(?:\\.0*)?|\\d*\\.?\\d*|0?\\.\\d*[1-9])\\s*,"
+            "\\s*(0(?:\\.0*)?|1(?:\\.0*)?|\\d*\\.?\\d*|0?\\.\\d*[1-9])\\s*");
         static const auto regexHEX = std::regex(
             "^\\s*#([0-9|a-f|A-F]{2})([0-9|a-f|A-F]{2})([0-9|a-f|A-F]{2})\\s*$");
 
@@ -145,25 +146,27 @@ private slots:
             g = std::stod(match[2]);
             b = std::stod(match[3]);
         } else if (std::regex_match(text, match, regexHEX)) {
-            r = std::stoul(match[1], 0, 16) / 255.0;
-            g = std::stoul(match[2], 0, 16) / 255.0;
-            b = std::stoul(match[3], 0, 16) / 255.0;
+            // TODO: handle hex color
         } else {
-            speed::info("invalid color: {}", text);
+            speed::warn("invalid color: {}", text);
             return;
         }
         currentListItem()->setColor(r, g, b);
     }
 
-    void applyCloudFrame() {
+    void onFrameChanged() {
         currentListItem()->setFrame(frameEditor->text());
     }
 
-    void applyPointSize() {
-        auto text = pointSizeEditor->text();
-        auto size = text.toInt();
-        if (size > 0)
-            currentListItem()->setPointSize(size);
+    void onSizeChanged() {
+        const auto text = pointSizeEditor->text();
+        const auto size = text.toFloat();
+        currentListItem()->setPointSize(size);
+    }
+
+    void onVisbleCheckClicked() {
+        bool visible = visibleCheck->checkState();
+        currentListItem()->setVisible(visible);
     }
 
 private:

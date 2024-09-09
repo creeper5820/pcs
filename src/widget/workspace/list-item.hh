@@ -2,6 +2,7 @@
 
 #include "core/pointcloud/cloud.hh"
 #include "core/renderer/renderer.hh"
+#include "core/share/common.hh"
 
 #include <qlistwidget.h>
 
@@ -35,7 +36,7 @@ public:
         frame_ = frame;
     }
 
-    void setPointSize(double pointSize) {
+    void setPointSize(float pointSize) {
         package_->object->setPointSize(pointSize);
         renderer_.render();
         pointSize_ = pointSize;
@@ -62,15 +63,15 @@ public:
     QString path() const { return path_; }
     QString label() const { return text(); }
     QString frame() const { return frame_; }
-    RenderColor color() const { return color_; }
+    core::RenderColor color() const { return color_; }
     double pointSize() const { return pointSize_; }
     bool visible() const { return visible_; }
     bool pickable() const { return pickable_; }
 
 private:
     std::unique_ptr<CloudPackage> package_;
-    RenderColor color_ { 1, 1, 1 };
-    double pointSize_ { 2.0 };
+    core::RenderColor color_ { 1, 1, 1 };
+    float pointSize_ { 2.0 };
     bool visible_ { true };
     bool pickable_ { true };
 

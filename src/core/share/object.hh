@@ -9,8 +9,7 @@
 #include <vtkTextProperty.h>
 
 #include <functional>
-
-using RenderColor = std::tuple<double, double, double>;
+#include <utility>
 
 #define EnableObjectHashCompare(Object)                 \
     template <>                                         \
@@ -22,7 +21,7 @@ using RenderColor = std::tuple<double, double, double>;
 
 namespace core::renderer {
 inline std::function<void(vtkProp*)>
-    objectKiller([](vtkProp*) { });
+    objectKiller([](vtkProp*) {});
 
 template <typename Handler>
 concept vtkPropHandler = requires(Handler handler) {
@@ -31,8 +30,8 @@ concept vtkPropHandler = requires(Handler handler) {
 template <vtkPropHandler Handler>
 class Object {
 public:
-    Object(Handler handler)
-        : handler_(handler) {
+    explicit Object(Handler handler)
+        : handler_(std::move(handler)) {
     }
     ~Object() {
         objectKiller(handler_);
@@ -68,7 +67,7 @@ protected:
 template <vtkPropHandler Handler>
 class Object3D : public Object<Handler> {
 public:
-    Object3D(Handler handler)
+    explicit Object3D(Handler handler)
         : Object<Handler>(handler) {
     }
     inline void setPosition(double x, double y, double z) {
@@ -78,6 +77,16 @@ public:
         handler_->SetOrientation(x, y, z);
     }
 
+public:
+    inline Eigen::Vector3d getPosition() {
+        const auto position = handler_->GetPosition();
+        return { position[0], position[1], position[2] };
+    }
+    inline Eigen::Vector3d getOrientation() {
+        auto rotation = handler_->GetOrientation();
+        return { rotation[0], rotation[1], rotation[2] };
+    }
+
 protected:
     using Object<Handler>::handler_;
 };
@@ -85,7 +94,7 @@ protected:
 template <vtkPropHandler Handler>
 class Object2D : public Object<Handler> {
 public:
-    Object2D(Handler handler)
+    explicit Object2D(Handler handler)
         : Object<Handler>(handler) {
     }
     inline void setDraggable(bool flag) {
@@ -100,10 +109,10 @@ protected:
 using vtkActorHandler = vtkSmartPointer<vtkActor>;
 class PointObject final : public Object3D<vtkActorHandler> {
 public:
-    PointObject(vtkActorHandler handler)
-        : Object3D(handler) {
+    explicit PointObject(vtkActorHandler handler)
+        : Object3D(std::move(handler)) {
     }
-    inline void setPointSize(double size) {
+    inline void setPointSize(float size) {
         handler_->GetProperty()->SetPointSize(size);
     }
     inline void setColor(double r, double g, double b) {
@@ -112,10 +121,10 @@ public:
 };
 class CloudObject final : public Object3D<vtkActorHandler> {
 public:
-    CloudObject(vtkActorHandler handler)
-        : Object3D(handler) {
+    explicit CloudObject(vtkActorHandler handler)
+        : Object3D(std::move(handler)) {
     }
-    inline void setPointSize(double size) {
+    inline void setPointSize(float size) {
         handler_->GetProperty()->SetPointSize(size);
     }
     inline void setColor(double r, double g, double b) {
@@ -124,14 +133,28 @@ public:
 };
 class LineObject final : public Object3D<vtkActorHandler> {
 public:
-    LineObject(vtkActorHandler handler)
-        : Object3D(handler) {
+    explicit LineObject(vtkActorHandler handler)
+        : Object3D(std::move(handler)) {
     }
     inline void setColor(double r, double g, double b) {
         handler_->GetProperty()->SetColor(r, g, b);
     }
-    inline void setLineWidth(double width) {
+    inline void setLineWidth(float width) {
         handler_->GetProperty()->SetLineWidth(width);
+    }
+
+public:
+    inline double getLength() {
+        return handler_->GetLength();
+    }
+};
+class CubeObject final : public Object3D<vtkActorHandler> {
+public:
+    explicit CubeObject(vtkActorHandler handler)
+        : Object3D(std::move(handler)) {
+    }
+    inline void setColor(double r, double g, double b) {
+        handler_->GetProperty()->SetColor(r, g, b);
     }
 };
 
@@ -139,8 +162,8 @@ public:
 using vtkTextHandler = vtkSmartPointer<vtkTextActor>;
 class TextObject final : public Object2D<vtkTextHandler> {
 public:
-    TextObject(vtkTextHandler handler)
-        : Object2D(handler) {
+    explicit TextObject(vtkTextHandler handler)
+        : Object2D(std::move(handler)) {
     }
     inline void setFontSize(int size) {
         handler_->GetTextProperty()->SetFontSize(size);
@@ -165,8 +188,8 @@ public:
         LINE_SHAFT = vtkAxesActor::LINE_SHAFT,
         CUSTOM_SHAFT = vtkAxesActor::USER_DEFINED_SHAFT
     };
-    CoordinateObject(vtkAxesHandler handler)
-        : Object3D(handler) {
+    explicit CoordinateObject(vtkAxesHandler handler)
+        : Object3D(std::move(handler)) {
     }
     inline void setConeRadius(double radius) {
         handler_->SetConeRadius(radius);
@@ -180,6 +203,7 @@ public:
 };
 }
 
+/// vtkActor
 using PointObject = core::renderer::PointObject;
 EnableObjectHashCompare(PointObject);
 
@@ -189,8 +213,13 @@ EnableObjectHashCompare(CloudObject);
 using LineObject = core::renderer::LineObject;
 EnableObjectHashCompare(LineObject);
 
+using CubeObject = core::renderer::CubeObject;
+EnableObjectHashCompare(CubeObject);
+
+/// vtkTextActor
 using TextObject = core::renderer::TextObject;
 EnableObjectHashCompare(TextObject);
 
+/// vtkAxesActor
 using CoordinateObject = core::renderer::CoordinateObject;
 EnableObjectHashCompare(CoordinateObject);

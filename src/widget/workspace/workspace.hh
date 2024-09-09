@@ -1,6 +1,13 @@
 #pragma once
 
+#include "core/operator/interactor/point-picker.hh"
+#include "utility/common.hh"
+#include "widget/workspace/cloud-editor.hh"
+#include "widget/workspace/operator-bar.hh"
+#include "widget/workspace/view.hh"
+
 #include "qdatetime.h"
+#include <qaction.h>
 #include <qcoreapplication.h>
 #include <qmainwindow.h>
 #include <qmessagebox.h>
@@ -13,12 +20,6 @@
 #include <qstyle.h>
 #include <qwidget.h>
 #include <ui_workspace.h>
-
-#include "core/operator/interactor.hh"
-#include "utility/common.hh"
-#include "widget/workspace/cloud-editor.hh"
-#include "widget/workspace/operator-bar.hh"
-#include "widget/workspace/view.hh"
 
 namespace workspace {
 
@@ -52,9 +53,9 @@ public:
 
         // connect button with callback
         connect(button_exit, &QPushButton::clicked,
-            this, &Workspace::exitWorkspace);
+            this, &Workspace::onExitButtonClicked);
         connect(button_layout, &QPushButton::clicked,
-            this, &Workspace::toggleLayout);
+            this, &Workspace::onToggleLayoutButtonClicked);
 
         auto& point = core::operators::clickedPoint;
         auto& isClicked = core::operators::isClicked;
@@ -68,29 +69,39 @@ public:
                 isClicked = false;
             }
         });
+
+        // Title bar buttons
+        auto* menu = new QMenu();
+        menu->addAction("NormalStyle", [this] {
+            Operators::instance().useNormalStyle();
+        });
+        menu->addAction("PointPicker", [this] {
+            Operators::instance().usePointPicker();
+        });
+        button_settings->setMenu(menu);
     }
 
 private slots:
-    void
-    exitWorkspace() {
+    void onExitButtonClicked() {
         auto answer = QMessageBox::information(
             this, "info", "Exit?", QMessageBox::Ok | QMessageBox::No);
         if (answer == QMessageBox::Ok)
             QCoreApplication::exit(0);
     }
 
-    void toggleLayout() {
+    void onToggleLayoutButtonClicked() {
         constexpr auto k = 0.95;
-        static auto toggle { true };
+        static auto toggle { false };
         static auto current_size = size();
         static auto current_pos = pos();
 
         const auto screen = QGuiApplication::primaryScreen()->size();
-        const auto center = QPoint(
-            (1. - k) / 2. * screen.width(),
-            (1. - k) / 2. * screen.height());
+        const auto center = QPoint {
+            static_cast<int>((1. - k) / 2. * screen.width()),
+            static_cast<int>((1. - k) / 2. * screen.height())
+        };
 
-        if (toggle) {
+        if ((toggle = !toggle)) {
             current_size = size();
             current_pos = pos();
             setFixedSize(screen * k);
@@ -98,11 +109,10 @@ private slots:
         } else {
             setFixedSize(current_size);
             move(current_pos);
-        }
-        toggle = !toggle;
+        };
     }
 
-    inline void showStatusWithTime(const QString& message) {
+    void showStatusWithTime(const QString& message) {
         auto timeMessage = QTime::currentTime().toString("[ hh:mm:ss ]");
         messageBar->showMessage(timeMessage + " " + message);
     }

@@ -1,10 +1,14 @@
 #pragma once
 #include "core/renderer/renderer.hh"
+#include "core/share/object.hh"
+#include "core/share/objects.hh"
 
 #include <vtkAbstractPicker.h>
 #include <vtkAxesActor.h>
 #include <vtkBuffer.h>
+#include <vtkCubeSource.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkNew.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
@@ -56,7 +60,7 @@ public:
 
     /// Objects
     std::unique_ptr<CloudObject> makeCloud(const CloudBox& cloudBox,
-        const RenderColor& color, double pointSize) {
+        const RenderColor& color, float pointSize) {
         vtkNew<vtkPoints> points;
         for (const auto point : cloudBox.points())
             points->InsertNextPoint(point.x, point.y, point.z);
@@ -82,8 +86,7 @@ public:
     }
 
     std::unique_ptr<PointObject> makePoint(const Eigen::Vector3d& point,
-        const RenderColor& color, double size) {
-
+        const RenderColor& color, float size) {
         auto [r, g, b] = color;
 
         vtkNew<vtkPoints> points;
@@ -111,6 +114,36 @@ public:
         return std::make_unique<PointObject>(actor);
     }
 
+    std::unique_ptr<CubeObject> makeCube(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
+        const RenderColor& color, double alpha) {
+        auto [r, g, b] = color;
+
+        const auto center = (p1 + p2) / 2;
+        const auto xLength = std::abs(p1.x() - p2.x());
+        const auto yLength = std::abs(p1.y() - p2.y());
+        const auto zLength = std::abs(p1.z() - p2.z());
+
+        vtkNew<vtkCubeSource> cubeSource;
+        cubeSource->SetCenter(center.x(), center.y(), center.z());
+        cubeSource->SetXLength(xLength);
+        cubeSource->SetYLength(yLength);
+        cubeSource->SetZLength(zLength);
+        cubeSource->Update();
+
+        vtkNew<vtkPolyDataMapper> cubePolyDataMapper;
+        cubePolyDataMapper->SetInputData(cubeSource->GetOutput());
+
+        vtkNew<vtkActor> cubeActor;
+        cubeActor->SetMapper(cubePolyDataMapper);
+        cubeActor->GetProperty()->SetColor(r, g, b);
+        cubeActor->GetProperty()->SetOpacity(alpha);
+
+        renderer_->AddActor(cubeActor);
+        window_->Render();
+
+        return std::make_unique<CubeObject>(cubeActor);
+    }
+
     std::unique_ptr<TextObject> makeText(const Eigen::Vector3d& position, int fontSize,
         const RenderColor& color, const std::string& data) {
         auto [r, g, b] = color;
@@ -129,7 +162,7 @@ public:
     }
 
     std::unique_ptr<LineObject> makeLine(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
-        const RenderColor& color, double width) {
+        const RenderColor& color, float width) {
         auto [r, g, b] = color;
 
         vtkNew<vtkPoints> points;
@@ -159,8 +192,8 @@ public:
         return std::make_unique<LineObject>(actor);
     }
 
-    std::unique_ptr<CoordinateObject> makeCoordinate(const Eigen::Vector3d& center, double length,
-        double width, double alpha = 1.0) {
+    std::unique_ptr<CoordinateObject> makeCoordinate(const Eigen::Vector3d& center,
+        double length, double width) {
         vtkNew<vtkAxesActor> axesActor;
         axesActor->SetPosition(center.x(), center.y(), center.z());
         axesActor->SetTotalLength(length, length, length);
@@ -172,6 +205,15 @@ public:
         window_->Render();
 
         return std::make_unique<CoordinateObject>(axesActor);
+    }
+
+    // Select Helper
+    std::unique_ptr<CubeObjects> makeCloudSelectCube(const CloudBox& cloud, const RenderColor& color,
+        double resolution) {
+        auto cubeObjects = std::make_unique<CubeObjects>();
+        auto points = cloud.points();
+
+        return cubeObjects;
     }
 
 private:

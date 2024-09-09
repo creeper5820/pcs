@@ -14,5 +14,7 @@
         <file>pic/coordination.svg</file>
         <file>pic/rect.svg</file>
         <file>pic/default.svg</file>
+        <file>pic/selector.svg</file>
+        <file>pic/selection.svg</file>
     </qresource>
 </RCC>
