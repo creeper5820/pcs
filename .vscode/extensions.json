@@ -4,8 +4,6 @@
         "xaver.clang-format",
         "llvm-vs-code-extensions.vscode-clangd",
         "twxs.cmake",
-        "streetsidesoftware.code-spell-checker",
-        "andreoneti.qml-formatter",
-        "felgo.felgo"
+        "streetsidesoftware.code-spell-checker"
     ]
 }

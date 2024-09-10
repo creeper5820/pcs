@@ -1,24 +1,24 @@
 #pragma once
 
 #include "core/renderer/renderer.hh"
-#include "operators.hh"
+#include "widget/workspace/operators/button.hh"
 
 namespace workspace {
-class Coordinate : public Operator {
-private:
-    void onLeftMouseClick() override {
-        auto& renderer = Renderer::instance();
-        static auto flag = false;
+class CoordinateButton : public OperateButton {
+public:
+    CoordinateButton(const QString& url)
+        : OperateButton(url) {
+    }
+
+protected:
+    void onLeftMouseClicked() override {
+        static auto& renderer = Renderer::instance();
         static auto coordinate = renderer.makeCoordinate({}, 10, 0.2);
+        static auto flag = false;
         coordinate->setVisible(flag = !flag);
         renderer.render();
     }
-
-    void showCustomMenu() override {
-    }
-
-    QIcon makeIconPixmap() override {
-        return QPixmap(":pic/coordination.svg");
+    void onRightMouseClicked() override {
     }
 };
 }

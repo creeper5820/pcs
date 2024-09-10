@@ -21,7 +21,7 @@
 
 namespace core::renderer {
 inline std::function<void(vtkProp*)>
-    objectKiller([](vtkProp*) {});
+    objectKiller([](vtkProp*) { });
 
 template <typename Handler>
 concept vtkPropHandler = requires(Handler handler) {

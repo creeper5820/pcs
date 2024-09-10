@@ -1,24 +1,30 @@
 #pragma once
 
-#include "operators.hh"
-#include "ui_operator.h"
-
-#include <qmenu.h>
+#include "ui_selector.h"
+#include "widget/workspace/operators/button.hh"
+#include <qwidget.h>
 
 namespace workspace {
-class SelectPanel : public Operator, Ui::Operator {
+class SelectPanel : public QWidget, Ui::Selector {
+public:
+    SelectPanel(QWidget* parent = nullptr)
+        : QWidget(parent) {
+        Selector::setupUi(this);
+    }
+
 private:
-    void onLeftMouseClick() override {
+};
+
+class SelectButton : public OperateButton {
+public:
+    SelectButton(const QString& url)
+        : OperateButton(url) {
     }
 
-    void showCustomMenu() override {
-        auto menu = QMenu {};
-        menu.addAction("delete", [] {});
-        menu.exec(QCursor::pos());
+protected:
+    void onLeftMouseClicked() override {
     }
-
-    QIcon makeIconPixmap() override {
-        return QPixmap(":pic/selection.svg");
+    void onRightMouseClicked() override {
     }
 };
 }

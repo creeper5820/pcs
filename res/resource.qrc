@@ -4,6 +4,7 @@
         <file>qss/button/about.qss</file>
         <file>qss/button/layout.qss</file>
         <file>qss/button/common.qss</file>
+        <file>qss/button/operate.qss</file>
         <file>qss/bar/menu.qss</file>
         <file>qss/bar/status.qss</file>
         <file>qss/normal/viewer.qss</file>

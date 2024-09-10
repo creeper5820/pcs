@@ -108,7 +108,6 @@ private slots:
     /// Editor
     void onItemClicked() {
         auto item = currentListItem();
-
         if (item == nullptr)
             return;
 
@@ -124,9 +123,11 @@ private slots:
     }
 
     void onNameChanged() {
-        auto input = nameEditor->text();
-        auto target = input.contains(".") ? input : input + ".pcd";
-        currentListItem()->setLabel(target);
+        if (currentListItem()) {
+            auto input = nameEditor->text();
+            auto target = input.contains(".") ? input : input + ".pcd";
+            currentListItem()->setLabel(target);
+        }
     }
 
     void onColorChanged() {
@@ -137,36 +138,43 @@ private slots:
         static const auto regexHEX = std::regex(
             "^\\s*#([0-9|a-f|A-F]{2})([0-9|a-f|A-F]{2})([0-9|a-f|A-F]{2})\\s*$");
 
-        double r, g, b;
-        const auto text = colorEditor->text().toStdString();
+        if (currentListItem()) {
+            double r, g, b;
+            const auto text = colorEditor->text().toStdString();
 
-        auto match = std::smatch();
-        if (std::regex_match(text, match, regexRGB)) {
-            r = std::stod(match[1]);
-            g = std::stod(match[2]);
-            b = std::stod(match[3]);
-        } else if (std::regex_match(text, match, regexHEX)) {
-            // TODO: handle hex color
-        } else {
-            speed::warn("invalid color: {}", text);
-            return;
+            auto match = std::smatch();
+            if (std::regex_match(text, match, regexRGB)) {
+                r = std::stod(match[1]);
+                g = std::stod(match[2]);
+                b = std::stod(match[3]);
+            } else if (std::regex_match(text, match, regexHEX)) {
+                // TODO: handle hex color
+            } else {
+                speed::warn("invalid color: {}", text);
+                return;
+            }
+            currentListItem()->setColor(r, g, b);
         }
-        currentListItem()->setColor(r, g, b);
     }
 
     void onFrameChanged() {
-        currentListItem()->setFrame(frameEditor->text());
+        if (currentListItem())
+            currentListItem()->setFrame(frameEditor->text());
     }
 
     void onSizeChanged() {
-        const auto text = pointSizeEditor->text();
-        const auto size = text.toFloat();
-        currentListItem()->setPointSize(size);
+        if (currentListItem()) {
+            const auto text = pointSizeEditor->text();
+            const auto size = text.toFloat();
+            currentListItem()->setPointSize(size);
+        }
     }
 
     void onVisbleCheckClicked() {
-        bool visible = visibleCheck->checkState();
-        currentListItem()->setVisible(visible);
+        if (currentListItem()) {
+            bool visible = visibleCheck->checkState();
+            currentListItem()->setVisible(visible);
+        }
     }
 
 private:

@@ -1,12 +1,18 @@
+#pragma once
+
 #include <QMouseEvent>
 #include <QPushButton>
+
+#include "utility/common.hh"
 
 namespace workspace {
 class OperateButton : public QPushButton {
 public:
     explicit OperateButton(const QString& url)
         : QPushButton() {
-        this->setIcon(QPixmap(url));
+        QPushButton::setIcon(QPixmap(url));
+        QPushButton::setStyleSheet(util::style(
+            ":/qss/button/operate.qss"));
     }
 
 protected:

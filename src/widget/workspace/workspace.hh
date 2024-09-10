@@ -6,9 +6,9 @@
 #include "widget/workspace/operator-bar.hh"
 #include "widget/workspace/view.hh"
 
-#include "qdatetime.h"
 #include <qaction.h>
 #include <qcoreapplication.h>
+#include <qdatetime.h>
 #include <qmainwindow.h>
 #include <qmessagebox.h>
 #include <qnamespace.h>
@@ -41,6 +41,9 @@ public:
             util::style(":qss/bar/menu.qss"));
         messageBar->setStyleSheet(
             util::style(":qss/bar/status.qss"));
+
+        auto screenSize = QGuiApplication::primaryScreen()->size();
+        QMainWindow::setFixedSize(screenSize * 0.8);
 
         // layout
         auto& layout = workspaceLayout;
