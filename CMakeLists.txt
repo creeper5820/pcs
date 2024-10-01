@@ -29,25 +29,25 @@ find_package(VTK COMPONENTS
 )
 
 list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "ui/")
-file(GLOB_RECURSE PROJECT_CPP "src/*.cc")
-file(GLOB_RECURSE PROJECT_HPP "src/*.hh")
+file(GLOB_RECURSE PROJECT_CC "src/*.cc")
+file(GLOB_RECURSE PROJECT_HH "src/*.hh")
 
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/src
-    ${Qt5Core_INCLUDE_DIRS} 
-    ${PCL_INCLUDE_DIRS} 
+    ${Qt5Core_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
 )
 
 add_definitions(
-    ${Qt5Core_DEFINITIONS} 
-    ${PCL_DEFINITIONS} 
+    ${Qt5Core_DEFINITIONS}
+    ${PCL_DEFINITIONS}
 )
 
 add_executable(
     ${PROJECT_NAME}
-    ${PROJECT_CPP}
-    ${PROJECT_HPP}
+    ${PROJECT_CC}
+    ${PROJECT_HH}
     "res/resource.qrc"
 )
 

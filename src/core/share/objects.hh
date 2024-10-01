@@ -1,6 +1,8 @@
 #pragma once
 #include "core/share/object.hh"
 
+#include <memory>
+
 namespace core::renderer {
 
 class CubeObjects {

@@ -15,32 +15,6 @@ inline void message(Args... args) {
     ((std::cout << '[' << args << ']'), ...) << std::endl;
 }
 
-inline void bind_vtk(std::shared_ptr<pcl::visualization::PCLVisualizer>& view,
-    QVTKOpenGLNativeWidget* vtk, const std::string& name) {
-    using namespace pcl::visualization;
-
-#if VTK_MAJOR_VERSION > 8
-    auto render = vtkSmartPointer<vtkRenderer>::New();
-    auto window = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    window->AddRenderer(render);
-    view = std::make_shared<PCLVisualizer>(render, window, "view", false);
-    vtk->setRenderWindow(view->getRenderWindow());
-    view->setupInteractor(vtk->interactor(), vtk->renderWindow());
-#else
-    viewer.reset(new PCLVisualizer(name, false));
-    vtk->SetRenderWindow(viewer_->getRenderWindow());
-    viewer->setupInteractor(vtk->GetInteractor(), vtk->GetRenderWindow());
-#endif
-}
-
-inline void refresh_vtk(QVTKOpenGLNativeWidget* vtk) {
-#if VTK_MAJOR_VERSION > 8
-    vtk->renderWindow()->Render();
-#else
-    vtk->update();
-#endif
-}
-
 inline const QString style(const QString& url) {
     QFile style { url };
     style.open(QFile::ReadOnly | QFile::Text);

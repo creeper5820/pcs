@@ -7,6 +7,8 @@
         "Dragable",
         "Interactor",
         "Pickable",
-        "Pixmap"
+        "Pixmap",
+        "QVTK",
+        "XYZRGB"
     ]
 }

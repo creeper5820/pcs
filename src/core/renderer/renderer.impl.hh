@@ -9,6 +9,7 @@
 #include <vtkCubeSource.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkNew.h>
+#include <vtkPlaneSource.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
@@ -59,10 +60,10 @@ public:
     }
 
     /// Objects
-    std::unique_ptr<CloudObject> makeCloud(const CloudBox& cloudBox,
+    std::unique_ptr<CloudObject> makeCloud(const CloudSource& cloud,
         const RenderColor& color, float pointSize) {
         vtkNew<vtkPoints> points;
-        for (const auto point : cloudBox.points())
+        for (const auto point : cloud.points())
             points->InsertNextPoint(point.x, point.y, point.z);
 
         vtkNew<vtkPolyData> polyData;
@@ -78,6 +79,7 @@ public:
 
         vtkNew<vtkActor> actor;
         actor->SetMapper(mapper);
+        actor->GetProperty()->SetPointSize(pointSize);
 
         renderer_->AddActor(actor);
         window_->Render();
@@ -114,8 +116,66 @@ public:
         return std::make_unique<PointObject>(actor);
     }
 
-    std::unique_ptr<CubeObject> makeCube(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
-        const RenderColor& color, double alpha) {
+    std::unique_ptr<LineObject> makeLine(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
+        const RenderColor& color, float width) {
+        auto [r, g, b] = color;
+
+        vtkNew<vtkPoints> points;
+        points->InsertNextPoint(p1.x(), p1.y(), p1.z());
+        points->InsertNextPoint(p2.x(), p2.y(), p2.z());
+
+        vtkNew<vtkPolyData> polyData;
+        polyData->SetPoints(points);
+
+        vtkNew<vtkCellArray> lines;
+        lines->InsertNextCell(2);
+        lines->InsertCellPoint(0);
+        lines->InsertCellPoint(1);
+        polyData->SetLines(lines);
+
+        vtkNew<vtkPolyDataMapper> mapper;
+        mapper->SetInputData(polyData);
+
+        vtkNew<vtkActor> actor;
+        actor->SetMapper(mapper);
+        actor->GetProperty()->SetColor(r, g, b);
+        actor->GetProperty()->SetLineWidth(width);
+
+        renderer_->AddActor(actor);
+        window_->Render();
+
+        return std::make_unique<LineObject>(actor);
+    }
+
+    std::unique_ptr<PlaneObject> makePlane(
+        const Eigen::Vector3d& p0,
+        const Eigen::Vector3d& p1,
+        const Eigen::Vector3d& p2) {
+
+        vtkNew<vtkPlaneSource> planeSource;
+        planeSource->SetOrigin(p0.x(), p0.y(), p0.z());
+        planeSource->SetPoint1(p1.x(), p1.y(), p1.z());
+        planeSource->SetPoint2(p2.x(), p2.y(), p2.z());
+        planeSource->Update();
+
+        vtkNew<vtkPolyDataMapper> mapper;
+        mapper->SetInputData(planeSource->GetOutput());
+
+        vtkNew<vtkActor> actor;
+        actor->SetMapper(mapper);
+
+        renderer_->AddActor(actor);
+        window_->Render();
+
+        return std::make_unique<PlaneObject>(actor);
+    }
+
+    std::unique_ptr<CubeObject> makeCube(
+        const Eigen::Vector3d& p1,
+        const Eigen::Vector3d& p2,
+        const RenderColor& color,
+        double alpha) {
+
         auto [r, g, b] = color;
 
         const auto center = (p1 + p2) / 2;
@@ -161,37 +221,6 @@ public:
         return std::make_unique<TextObject>(textActor);
     }
 
-    std::unique_ptr<LineObject> makeLine(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
-        const RenderColor& color, float width) {
-        auto [r, g, b] = color;
-
-        vtkNew<vtkPoints> points;
-        points->InsertNextPoint(p1.x(), p1.y(), p1.z());
-        points->InsertNextPoint(p2.x(), p2.y(), p2.z());
-
-        vtkNew<vtkPolyData> polyData;
-        polyData->SetPoints(points);
-
-        vtkNew<vtkCellArray> lines;
-        lines->InsertNextCell(2);
-        lines->InsertCellPoint(0);
-        lines->InsertCellPoint(1);
-        polyData->SetLines(lines);
-
-        vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputData(polyData);
-
-        vtkNew<vtkActor> actor;
-        actor->SetMapper(mapper);
-        actor->GetProperty()->SetColor(r, g, b);
-        actor->GetProperty()->SetLineWidth(width);
-
-        renderer_->AddActor(actor);
-        window_->Render();
-
-        return std::make_unique<LineObject>(actor);
-    }
-
     std::unique_ptr<CoordinateObject> makeCoordinate(const Eigen::Vector3d& center,
         double length, double width) {
         vtkNew<vtkAxesActor> axesActor;
@@ -208,8 +237,8 @@ public:
     }
 
     // Select Helper
-    std::unique_ptr<CubeObjects> makeCloudSelectCube(const CloudBox& cloud, const RenderColor& color,
-        double resolution) {
+    std::unique_ptr<CubeObjects> makeCloudSelectCube(const CloudSource& cloud,
+        const RenderColor& color, double resolution) {
         auto cubeObjects = std::make_unique<CubeObjects>();
         auto points = cloud.points();
 

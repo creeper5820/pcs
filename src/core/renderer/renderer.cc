@@ -31,7 +31,7 @@ void Renderer::removeObject(Object<Handler>& object) {
     pimpl_->removeObject(object);
 }
 
-std::unique_ptr<CloudObject> Renderer::makeCloud(const CloudBox& item,
+std::unique_ptr<CloudObject> Renderer::makeCloud(const CloudSource& item,
     RenderColor color, float pointSize) {
     return pimpl_->makeCloud(item, color, pointSize);
 }

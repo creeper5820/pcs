@@ -76,6 +76,9 @@ public:
     inline void setOrientation(double x, double y, double z) {
         handler_->SetOrientation(x, y, z);
     }
+    inline void setColor(double r, double g, double b) {
+        handler_->GetProperty()->SetColor(r, g, b);
+    }
 
 public:
     inline Eigen::Vector3d getPosition() {
@@ -115,9 +118,6 @@ public:
     inline void setPointSize(float size) {
         handler_->GetProperty()->SetPointSize(size);
     }
-    inline void setColor(double r, double g, double b) {
-        handler_->GetProperty()->SetColor(r, g, b);
-    }
 };
 class CloudObject final : public Object3D<vtkActorHandler> {
 public:
@@ -127,17 +127,11 @@ public:
     inline void setPointSize(float size) {
         handler_->GetProperty()->SetPointSize(size);
     }
-    inline void setColor(double r, double g, double b) {
-        handler_->GetProperty()->SetColor(r, g, b);
-    }
 };
 class LineObject final : public Object3D<vtkActorHandler> {
 public:
     explicit LineObject(vtkActorHandler handler)
         : Object3D(std::move(handler)) {
-    }
-    inline void setColor(double r, double g, double b) {
-        handler_->GetProperty()->SetColor(r, g, b);
     }
     inline void setLineWidth(float width) {
         handler_->GetProperty()->SetLineWidth(width);
@@ -146,6 +140,12 @@ public:
 public:
     inline double getLength() {
         return handler_->GetLength();
+    }
+};
+class PlaneObject final : public Object3D<vtkActorHandler> {
+public:
+    explicit PlaneObject(vtkActorHandler handler)
+        : Object3D(std::move(handler)) {
     }
 };
 class CubeObject final : public Object3D<vtkActorHandler> {
@@ -212,6 +212,9 @@ EnableObjectHashCompare(CloudObject);
 
 using LineObject = core::renderer::LineObject;
 EnableObjectHashCompare(LineObject);
+
+using PanelObject = core::renderer::PlaneObject;
+EnableObjectHashCompare(PanelObject);
 
 using CubeObject = core::renderer::CubeObject;
 EnableObjectHashCompare(CubeObject);

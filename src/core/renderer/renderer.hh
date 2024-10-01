@@ -28,8 +28,8 @@ public:
     static constexpr auto black = RenderColor { 0.0, 0.0, 0.0 };
     static constexpr auto miku = RenderColor { 0.2235294117647059, 0.7725490196078432, 0.7333333333333333 };
 
-    std::unique_ptr<CloudObject> makeCloud(const CloudBox& item, RenderColor color = white,
-        float pointSize = 2.0);
+    std::unique_ptr<CloudObject> makeCloud(const CloudSource& item, RenderColor color = white,
+        float pointSize = 1.0);
 
     std::unique_ptr<PointObject> makePoint(const Eigen::Vector3d& point,
         const RenderColor& color = white, float size = 1.0);

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(picker)
+project(examples)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,13 +16,18 @@ find_package(VTK COMPONENTS
   CommonColor
   CommonCore
   CommonDataModel
+  CommonTransforms
   FiltersSources
+  FiltersGeometry
   InteractionStyle
+  RenderingAnnotation
   RenderingContextOpenGL2
   RenderingCore
   RenderingFreeType
   RenderingGL2PSOpenGL2
   RenderingOpenGL2
+  ImagingCore
+  ImagingSources
 )
 
 include_directories(
@@ -30,21 +35,38 @@ include_directories(
 )
 
 add_definitions(
-    ${PCL_DEFINITIONS} 
+  ${PCL_DEFINITIONS} 
 )
 
+### PICLER
 add_executable(
-    ${PROJECT_NAME}
-    picker.cc
+   picker
+  picker.cc
 )
 
 target_link_libraries(
-    ${PROJECT_NAME} PRIVATE
-    ${VTK_LIBRARIES}
-    ${PCL_LIBRARIES} 
+  picker PRIVATE
+  ${VTK_LIBRARIES}
+  ${PCL_LIBRARIES}
 )
 
 vtk_module_autoinit(
-  TARGETS ${PROJECT_NAME}
+  TARGETS picker
+  MODULES ${VTK_LIBRARIES}
+)
+
+### GRID
+add_executable(
+  grid
+  grid.cc
+)
+
+target_link_libraries(
+  grid PRIVATE
+  ${VTK_LIBRARIES}
+)
+
+vtk_module_autoinit(
+  TARGETS grid
   MODULES ${VTK_LIBRARIES}
 )

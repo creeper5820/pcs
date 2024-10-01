@@ -48,4 +48,4 @@ private:
 };
 }
 
-using CloudBox = core::cloud::CloudSource;
+using CloudSource = core::cloud::CloudSource;
