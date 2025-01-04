@@ -1,23 +1,23 @@
 #pragma once
 
-#include <QVTKOpenGLNativeWidget.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <qfileinfo.h>
+#define PIMPL_DEFINTION(Class)                                                                     \
+public:                                                                                            \
+    Class();                                                                                       \
+    ~Class();                                                                                      \
+    Class(const Class&) = delete;                                                                  \
+    Class& operator=(const Class&) = delete;                                                       \
+                                                                                                   \
+private:                                                                                           \
+    struct Impl;                                                                                   \
+    Impl* pimpl_;
 
-#if VTK_MAJOR_VERSION > 8
-#include <vtkGenericOpenGLRenderWindow.h>
-#endif
-
-namespace util {
-template <typename... Args>
-    requires requires(Args... args) { ((std::cout << args), ...); }
-inline void message(Args... args) {
-    ((std::cout << '[' << args << ']'), ...) << std::endl;
-}
-
-inline const QString style(const QString& url) {
-    QFile style { url };
-    style.open(QFile::ReadOnly | QFile::Text);
-    return style.readAll();
-}
-};
+#define WIDGET_PIMPL_DEFINTION(Class)                                                              \
+public:                                                                                            \
+    Class(QWidget* parent = nullptr);                                                              \
+    ~Class();                                                                                      \
+    Class(const Class&) = delete;                                                                  \
+    Class& operator=(const Class&) = delete;                                                       \
+                                                                                                   \
+private:                                                                                           \
+    struct Impl;                                                                                   \
+    Impl* pimpl_;

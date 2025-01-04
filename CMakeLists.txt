@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22)
 
-project(pcs)
+project(pcs VERSION 0.1 LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,13 +8,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_BUILD_TYPE "Release")
 add_compile_options(-Os -O3)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
 find_package(spdlog REQUIRED)
-find_package(Qt5 COMPONENTS Core REQUIRED)
-find_package(PCL COMPONENTS io common filters REQUIRED)
+find_package(PCL 1.14 REQUIRED COMPONENTS io common filters)
 find_package(VTK COMPONENTS 
   CommonColor
   CommonCore
@@ -28,35 +23,31 @@ find_package(VTK COMPONENTS
   RenderingOpenGL2
 )
 
-list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "ui/")
-file(GLOB_RECURSE PROJECT_CC "src/*.cc")
-file(GLOB_RECURSE PROJECT_HH "src/*.hh")
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+find_package(yaml-cpp REQUIRED)
+find_package(creeper-qt REQUIRED)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/src
-    ${Qt5Core_INCLUDE_DIRS}
-    ${PCL_INCLUDE_DIRS}
-)
-
-add_definitions(
-    ${Qt5Core_DEFINITIONS}
-    ${PCL_DEFINITIONS}
-)
+file(GLOB_RECURSE PROJECT_CC CONFIGURE_DEPENDS "src/*.cc")
+file(GLOB_RECURSE PROJECT_HH CONFIGURE_DEPENDS "src/*.hh")
+include_directories(src)
 
 add_executable(
-    ${PROJECT_NAME}
-    ${PROJECT_CC}
-    ${PROJECT_HH}
-    "res/resource.qrc"
+  ${PROJECT_NAME}
+  ${PROJECT_CC}
+  ${PROJECT_HH}
+  "res/point-cloud-shop.qrc"
 )
 
-target_link_libraries(
-    ${PROJECT_NAME} 
-    ${PCL_LIBRARIES} 
-    ${VTK_LIBRARIES}
-    Qt5::Core
-    spdlog::spdlog
+target_link_libraries(${PROJECT_NAME}
+  Qt5::Widgets yaml-cpp
+  creeper-qt::creeper-qt
+  spdlog::spdlog
+  ${PCL_LIBRARIES} 
+  ${VTK_LIBRARIES}
 )
 
 vtk_module_autoinit(

@@ -29,29 +29,19 @@ std::unique_ptr<CloudPackage> CloudManager::makePackage(const std::string& path)
     return pimpl_->makePackage(path);
 }
 
-/// Select
-int CloudManager::addSelectCubeArea(Eigen::Vector3d corner[2]) {
-    return {};
-}
-int CloudManager::addSelectCubeArea(Eigen::Vector3d center, double length) {
-    return {};
-}
-int CloudManager::addSelectSphereArea(Eigen::Vector3d center, double radius) {
-    return {};
-}
-void CloudManager::removeSelectArea(int index) {
-}
-void CloudManager::removeAllSelectArea() {
+std::unique_ptr<CloudPackage> CloudManager::makePackage(const QString& path) {
+    return pimpl_->makePackage(path.toStdString());
 }
 
+/// Select
+int CloudManager::addSelectCubeArea(Eigen::Vector3d corner[2]) { return {}; }
+int CloudManager::addSelectCubeArea(Eigen::Vector3d center, double length) { return {}; }
+int CloudManager::addSelectSphereArea(Eigen::Vector3d center, double radius) { return {}; }
+void CloudManager::removeSelectArea(int index) { }
+void CloudManager::removeAllSelectArea() { }
+
 /// Operators after selecting
-void CloudManager::removeAllSelectCloud() {
-}
-void CloudManager::removeSelectCloud(int index) {
-}
-int CloudManager::extractAllSelectCloud() {
-    return {};
-}
-int CloudManager::extractSelectCloud(int index) {
-    return {};
-}
+void CloudManager::removeAllSelectCloud() { }
+void CloudManager::removeSelectCloud(int index) { }
+int CloudManager::extractAllSelectCloud() { return {}; }
+int CloudManager::extractSelectCloud(int index) { return {}; }

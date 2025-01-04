@@ -1,13 +1,13 @@
 #include "qapplication.h"
-#include "widget/workspace/workspace.hh"
+
+#include "qt/workspace/main-window.hh"
 
 int main(int argc, char* argv[]) {
-    using namespace workspace;
-
+    creeper::Theme::setTheme("common-green");
     auto app = QApplication { argc, argv };
 
-    auto w = Workspace {};
-    w.show();
+    auto window = qt::Workspace {};
+    window.show();
 
     return app.exec();
 }

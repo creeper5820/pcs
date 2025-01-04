@@ -17,38 +17,24 @@ public:
     }
 
     /// Select
-    int addSelectCubeArea(Eigen::Vector3d corner[2]) {
-        return {};
-    }
+    int addSelectCubeArea(Eigen::Vector3d corner[2]) { return {}; }
 
-    int addSelectCubeArea(Eigen::Vector3d center, double length) {
-        return {};
-    }
+    int addSelectCubeArea(Eigen::Vector3d center, double length) { return {}; }
 
-    int addSelectSphereArea(Eigen::Vector3d center, double radius) {
-        return {};
-    }
+    int addSelectSphereArea(Eigen::Vector3d center, double radius) { return {}; }
 
-    void removeAllSelectArea() {
-    }
+    void removeAllSelectArea() { }
 
-    void removeSelectArea(int index) {
-    }
+    void removeSelectArea(int index) { }
 
     /// Operators after selecting
-    void removeAllSelectCloud() {
-    }
+    void removeAllSelectCloud() { }
 
-    void removeSelectCloud(int index) {
-    }
+    void removeSelectCloud(int index) { }
 
-    int extractAllSelectCloud() {
-        return {};
-    }
+    int extractAllSelectCloud() { return {}; }
 
-    int extractSelectCloud(int index) {
-        return {};
-    }
+    int extractSelectCloud(int index) { return {}; }
 
 private:
     std::unordered_map<CloudObject, std::unique_ptr<CloudSource>> pointClouds_;

@@ -26,7 +26,10 @@ public:
 
     void refresh();
 
-    std::unique_ptr<CloudPackage> makePackage(const std::string& path);
+    [[nodiscard("package life circle follows RAII!")]] std::unique_ptr<CloudPackage> makePackage(
+        const std::string& path);
+    [[nodiscard("package life circle follows RAII!")]] std::unique_ptr<CloudPackage> makePackage(
+        const QString& path);
 
     /// Select
     int addSelectPointArea(Eigen::Vector3d point);

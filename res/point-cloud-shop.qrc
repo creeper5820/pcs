@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/">
+    <qresource prefix="/pcs">
         <file>qss/button/exit.qss</file>
         <file>qss/button/about.qss</file>
         <file>qss/button/layout.qss</file>
@@ -17,5 +17,6 @@
         <file>pic/default.svg</file>
         <file>pic/selector.svg</file>
         <file>pic/selection.svg</file>
+        <file>pic/edit.png</file>
     </qresource>
 </RCC>
