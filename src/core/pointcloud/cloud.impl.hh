@@ -11,9 +11,7 @@ struct CloudManager::Impl {
 public:
     /// CRUD
     std::unique_ptr<CloudPackage> makePackage(const std::string& path) {
-        auto source = std::make_unique<CloudSource>(path);
-        auto object = renderer_.makeCloud(*source);
-        return std::make_unique<CloudPackage>(std::move(source), std::move(object));
+        return std::make_unique<CloudPackage>(path);
     }
 
     /// Select

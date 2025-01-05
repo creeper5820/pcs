@@ -45,23 +45,18 @@ public:
         spdlog::info("connect widget with renderer");
     }
 
-    void resetCamera() {
-        renderer_->ResetCamera();
-    }
+    void resetCamera() { renderer_->ResetCamera(); }
 
-    void render() {
-        window_->Render();
-    }
+    void render() { window_->Render(); }
 
-    template <vtkPropHandler Handler>
-    void removeObject(Object<Handler>& object) {
+    template <vtkPropHandler Handler> void removeObject(Object<Handler>& object) {
         renderer_->RemoveActor(object.handler());
         window_->Render();
     }
 
     /// Objects
-    std::unique_ptr<CloudObject> makeCloud(const CloudSource& cloud,
-        const RenderColor& color, float pointSize) {
+    std::unique_ptr<CloudObject> makeCloud(
+        const CloudSource& cloud, const RenderColor& color, float pointSize) {
         vtkNew<vtkPoints> points;
         for (const auto point : cloud.points())
             points->InsertNextPoint(point.x, point.y, point.z);
@@ -87,8 +82,8 @@ public:
         return std::make_unique<CloudObject>(actor);
     }
 
-    std::unique_ptr<PointObject> makePoint(const Eigen::Vector3d& point,
-        const RenderColor& color, float size) {
+    std::unique_ptr<PointObject> makePoint(
+        const Eigen::Vector3d& point, const RenderColor& color, float size) {
         auto [r, g, b] = color;
 
         vtkNew<vtkPoints> points;
@@ -148,9 +143,7 @@ public:
     }
 
     std::unique_ptr<PlaneObject> makePlane(
-        const Eigen::Vector3d& p0,
-        const Eigen::Vector3d& p1,
-        const Eigen::Vector3d& p2) {
+        const Eigen::Vector3d& p0, const Eigen::Vector3d& p1, const Eigen::Vector3d& p2) {
 
         vtkNew<vtkPlaneSource> planeSource;
         planeSource->SetOrigin(p0.x(), p0.y(), p0.z());
@@ -170,11 +163,8 @@ public:
         return std::make_unique<PlaneObject>(actor);
     }
 
-    std::unique_ptr<CubeObject> makeCube(
-        const Eigen::Vector3d& p1,
-        const Eigen::Vector3d& p2,
-        const RenderColor& color,
-        double alpha) {
+    std::unique_ptr<CubeObject> makeCube(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2,
+        const RenderColor& color, double alpha) {
 
         auto [r, g, b] = color;
 
@@ -221,8 +211,8 @@ public:
         return std::make_unique<TextObject>(textActor);
     }
 
-    std::unique_ptr<CoordinateObject> makeCoordinate(const Eigen::Vector3d& center,
-        double length, double width) {
+    std::unique_ptr<CoordinateObject> makeCoordinate(
+        const Eigen::Vector3d& center, double length, double width) {
         vtkNew<vtkAxesActor> axesActor;
         axesActor->SetPosition(center.x(), center.y(), center.z());
         axesActor->SetTotalLength(length, length, length);
@@ -237,8 +227,8 @@ public:
     }
 
     // Select Helper
-    std::unique_ptr<CubeObjects> makeCloudSelectCube(const CloudSource& cloud,
-        const RenderColor& color, double resolution) {
+    std::unique_ptr<CubeObjects> makeCloudSelectCube(
+        const CloudSource& cloud, const RenderColor& color, double resolution) {
         auto cubeObjects = std::make_unique<CubeObjects>();
         auto points = cloud.points();
 

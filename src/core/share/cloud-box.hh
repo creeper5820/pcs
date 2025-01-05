@@ -9,7 +9,7 @@ namespace core::cloud {
 struct CloudSource {
 public:
     template <typename PointT>
-    CloudSource(std::shared_ptr<pcl::PointCloud<PointT>> cloud) {
+    explicit CloudSource(std::shared_ptr<pcl::PointCloud<PointT>> cloud) {
         if (cloud == nullptr) {
             loaded_ = false;
         } else {
@@ -19,7 +19,7 @@ public:
         }
     };
 
-    CloudSource(const std::string& path)
+    explicit CloudSource(const std::string& path)
         : filePath_(path) {
         cloud_ = std::make_shared<core::RenderCloud>();
         auto status = pcl::io::loadPCDFile(path, *cloud_);
@@ -30,8 +30,7 @@ public:
     CloudSource& operator=(const CloudSource&) = delete;
 
     bool save(const std::string& path) {
-        if (!pcl::io::savePCDFileBinary(path, *cloud_))
-            return true;
+        if (!pcl::io::savePCDFileBinary(path, *cloud_)) return true;
         return false;
     }
 

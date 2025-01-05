@@ -1,6 +1,6 @@
 #pragma once
-#include "core/share/cloud-box.hh"
-#include "core/share/object.hh"
+
+#include "async-package.hh"
 #include "utility/single.hh"
 
 #include <QVTKOpenGLNativeWidget.h>
@@ -8,11 +8,6 @@
 #include <pcl/point_types.h>
 
 namespace core::cloud {
-
-struct CloudPackage {
-    std::unique_ptr<CloudSource> source;
-    std::unique_ptr<CloudObject> object;
-};
 
 class CloudManager : public util::Singleton<CloudManager> {
 public:

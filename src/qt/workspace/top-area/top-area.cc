@@ -9,22 +9,9 @@ using namespace creeper;
 
 struct TopArea::Impl {
     Impl() {
-        main.setRadius(16);
+        main.setRadius(15);
         main.setIconRatio(1);
         main.setIcon(QIcon(":/pcs/pic/edit.png"));
-        connect(&main, &RoundIconButton::clicked, []() {
-            static auto themes = std::array {
-                Theme::common::blue,
-                Theme::common::green,
-                Theme::common::grey,
-                Theme::common::purple,
-            };
-            static auto index = 0;
-            Theme::setTheme(themes[index++]);
-            Theme::reloadTheme();
-
-            if (index >= themes.size()) index = 0;
-        });
 
         file.setText("文件");
         file.setFont(QFont("Nowar Warcraft Sans CN", 8));
@@ -51,9 +38,23 @@ struct TopArea::Impl {
         help.setFixedSize(45, 30);
         help.disableBackground();
 
-        name.setPlaceholderText("这是一个文件名");
+        name.setPlaceholderText("Point Cloud Shop");
         name.setFont(QFont("Nowar Warcraft Sans CN", 8));
         name.setFixedSize(200, 30);
+
+        connect(&main, &RoundIconButton::clicked, []() {
+            static auto themes = std::array {
+                Theme::common::blue,
+                Theme::common::green,
+                Theme::common::grey,
+                Theme::common::purple,
+            };
+            static auto index = 0;
+            Theme::setTheme(themes[index++]);
+            Theme::reloadTheme();
+
+            if (index >= themes.size()) index = 0;
+        });
     };
 
     RoundIconButton main;
