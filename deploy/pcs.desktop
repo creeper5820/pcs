@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=PointCloud Studio
+GenericName=Point Cloud Editor
+Comment=An advanced point cloud editing tool built with Qt and VTK
+Exec=pcs
+Icon=pointcloudstudio
+Terminal=false
+Categories=Graphics;Science;Engineering;
+MimeType=application/x-pointcloud;
