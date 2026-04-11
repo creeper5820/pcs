@@ -39,7 +39,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
     auto current = std::make_shared<pcs::PointsHandle*>();
 
-    auto location_list = new QStringListModel {};
+    auto location_list = new QStringListModel { };
 
     const auto ThemeManager = theme::pro::ThemeManager { manager };
     const auto font         = QFont { "WenQuanYi Micro Hei Mono", 10 };
@@ -49,7 +49,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
             assets.open_pointcloud_file(*result);
 
-            auto locations = QStringList {};
+            auto locations = QStringList { };
             auto generator = assets.get_pointcloud_locations();
             for (auto const& location : generator) {
                 locations.append(location.data());
@@ -168,7 +168,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
                     ThemeManager,
                     text::pro::Font { font },
                     MutableForward {
-                        text::pro::Text {},
+                        text::pro::Text { },
                         prop,
                     },
                 },
@@ -243,8 +243,8 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
     return new FilledCard {
         card::pro::ThemeManager { manager },
-        MutableForward {
-            card::pro::FixedWidth { 0 },
+        MutableTransform {
+            [](auto& widget, const auto& width) { widget.setFixedWidth(width); },
             state.panel_width,
         },
         card::pro::Radius { 0 },

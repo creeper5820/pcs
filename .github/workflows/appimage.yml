@@ -11,6 +11,9 @@ on:
       - deploy/**
       - .github/workflows/appimage.yml
 
+permissions:
+  contents: write
+
 concurrency:
   group: appimage-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -24,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure
         run: >-
@@ -38,8 +41,48 @@ jobs:
         run: ./deploy/deploy-linux.sh build/appimage pcs release-appimage
 
       - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pcs-appimage-x86_64
           path: release-appimage/pcs-x86_64.AppImage
           if-no-files-found: error
+
+  publish-release:
+    needs: build-appimage
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download AppImage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: pcs-appimage-x86_64
+          path: release-artifact
+
+      - name: Generate checksum
+        run: |
+          set -euo pipefail
+          appimage="release-artifact/pcs-x86_64.AppImage"
+          checksum="release-artifact/pcs-x86_64.AppImage.sha256"
+          printf '%s  pcs-x86_64.AppImage\n' "$(sha256sum "${appimage}" | cut -d' ' -f1)" > "${checksum}"
+
+      - name: Publish AppImage release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: appimage-latest
+          name: PCS AppImage
+          body: |
+            自动构建的 Linux AppImage。
+
+            下载后赋予执行权限即可运行：
+            `chmod +x pcs-x86_64.AppImage && ./pcs-x86_64.AppImage`
+          files: |
+            release-artifact/pcs-x86_64.AppImage
+            release-artifact/pcs-x86_64.AppImage.sha256
+          target_commitish: ${{ github.sha }}
+          update_release_body: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

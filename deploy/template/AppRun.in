@@ -5,19 +5,22 @@ self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fontconfig_dir="${XDG_CACHE_HOME:-${TMPDIR:-/tmp}/pcs-cache}/fontconfig"
 fontconfig_file="${fontconfig_dir}/fonts.conf"
 fontconfig_template="${self_dir}/etc/fonts/fonts.conf.in"
+user_font_dir="${XDG_DATA_HOME:-${HOME:-${TMPDIR:-/tmp}}/.local/share}/fonts"
+legacy_user_font_dir="${HOME:-${TMPDIR:-/tmp}}/.fonts"
 
 mkdir -p "${fontconfig_dir}/cache"
 
 sed \
     -e "s|__APPDIR__|${self_dir}|g" \
     -e "s|__FONTCONFIG_CACHE__|${fontconfig_dir}/cache|g" \
+    -e "s|__USER_FONT_DIR__|${user_font_dir}|g" \
+    -e "s|__LEGACY_USER_FONT_DIR__|${legacy_user_font_dir}|g" \
     "${fontconfig_template}" > "${fontconfig_file}"
 
 export APPDIR="${self_dir}"
 export LD_LIBRARY_PATH="${self_dir}/usr/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 export QT_PLUGIN_PATH="${self_dir}/usr/plugins${QT_PLUGIN_PATH:+:${QT_PLUGIN_PATH}}"
 export QT_QPA_PLATFORM_PLUGIN_PATH="${self_dir}/usr/plugins/platforms"
-export QT_QPA_FONTDIR="${self_dir}/usr/share/fonts/qt-bundle"
 export FONTCONFIG_PATH="${fontconfig_dir}"
 export FONTCONFIG_FILE="${fontconfig_file}"
 export XDG_DATA_DIRS="${self_dir}/usr/share${XDG_DATA_DIRS:+:${XDG_DATA_DIRS}}"

@@ -2,7 +2,12 @@
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
     <dir>__APPDIR__/usr/share/fonts</dir>
+    <dir>/usr/share/fonts</dir>
+    <dir>/usr/local/share/fonts</dir>
+    <dir>__USER_FONT_DIR__</dir>
+    <dir>__LEGACY_USER_FONT_DIR__</dir>
     <cachedir>__FONTCONFIG_CACHE__</cachedir>
+    <include ignore_missing="yes">/etc/fonts/conf.d</include>
     <alias>
         <family>sans-serif</family>
         <prefer><family>DejaVu Sans</family></prefer>

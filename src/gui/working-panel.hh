@@ -13,7 +13,7 @@ struct WorkingPanelState {
     pcs::AssetsManager& assets;
     pcs::Renderer& renderer;
 
-    creeper::MutableDouble panel_width { 300 };
+    creeper::MutableDouble panel_width { 300. };
 
     bool pointcloud_visibility = true;
 };
