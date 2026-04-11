@@ -3,12 +3,11 @@
 
 namespace util {
 
-template <typename T>
-class Singleton {
+template <typename T> class Singleton {
 public:
     static T& instance();
 
-    Singleton(const Singleton&) = delete;
+    Singleton(const Singleton&)           = delete;
     Singleton& operator=(const Singleton) = delete;
 
 protected:
@@ -16,10 +15,8 @@ protected:
     Singleton() = default;
 };
 
-template <typename T>
-inline T& Singleton<T>::instance() {
-    static const std::unique_ptr<T>
-        instance { new T { token {} } };
+template <typename T> inline T& Singleton<T>::instance() {
+    static const std::unique_ptr<T> instance { new T { token {} } };
     return *instance;
 }
 
