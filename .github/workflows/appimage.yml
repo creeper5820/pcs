@@ -1,0 +1,45 @@
+name: AppImage
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - CMakeLists.txt
+      - src/**
+      - deploy/**
+      - .github/workflows/appimage.yml
+
+concurrency:
+  group: appimage-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-appimage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: creeper5820/pcs-deploy:v1.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build/appimage -GNinja
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build/appimage --parallel "$(nproc)"
+
+      - name: Package AppImage
+        run: ./deploy/deploy-linux.sh build/appimage pcs release-appimage
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcs-appimage-x86_64
+          path: release-appimage/pcs-x86_64.AppImage
+          if-no-files-found: error
