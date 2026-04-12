@@ -40,15 +40,6 @@ readonly SKIPPED_LIBRARY_PATTERNS=(
 	"libEGL.so*"
 	"libdrm.so*"
 	"libgbm.so*"
-	"libICE.so*"
-	"libSM.so*"
-	"libX11.so*"
-	"libX11-xcb.so*"
-	"libXau.so*"
-	"libXdmcp.so*"
-	"libxcb*.so*"
-	"libxkbcommon.so*"
-	"libxkbcommon-x11.so*"
 	"libwayland-*.so*"
 )
 
