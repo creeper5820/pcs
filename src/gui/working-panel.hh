@@ -15,6 +15,6 @@ struct WorkingPanelState {
 
     creeper::MutableDouble panel_width { 300. };
 
-    bool pointcloud_visibility = true;
+    bool assets_visibility = true;
 };
 auto WorkingPanelComponent(WorkingPanelState&) noexcept -> QPointer<QWidget>;

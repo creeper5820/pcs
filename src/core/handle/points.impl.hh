@@ -7,6 +7,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <cstdint>
+
 using namespace pcs;
 
 using Point      = pcl::PointXYZ;
@@ -26,7 +28,24 @@ struct PointsHandle::Impl final {
             return std::unexpected { "Failed to read pointcloud from filesystem" };
         }
         unit = std::make_unique<PointsUnit>(points->points);
-        return {};
+        return { };
+    }
+
+    auto load_from_positions(std::vector<PointsHandle::Position> const& positions) noexcept
+        -> std::expected<void, std::string_view> {
+        points = std::make_shared<PointCloud>();
+        points->points.reserve(positions.size());
+
+        for (const auto& [x, y, z] : positions) {
+            points->points.emplace_back(
+                static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
+        }
+
+        points->width  = static_cast<std::uint32_t>(points->points.size());
+        points->height = 1;
+
+        unit = std::make_unique<PointsUnit>(points->points);
+        return { };
     }
 
     auto save_into_filesystem(std::string const& path) noexcept
@@ -37,6 +56,6 @@ struct PointsHandle::Impl final {
         if (error_code == pcl::io::savePCDFile(path, *points, false)) {
             return std::unexpected { "Failed to save pointcloud to filesystem" };
         }
-        return {};
+        return { };
     }
 };

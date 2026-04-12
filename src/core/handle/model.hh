@@ -4,12 +4,15 @@
 #include "utility/pimpl.hh"
 
 #include <expected>
-#include <vector>
+#include <tuple>
+
+#include <vtk/vtkPolyData.h>
+#include <vtk/vtkSmartPointer.h>
 
 namespace pcs {
 
-struct PointsHandle {
-    PCS_PIMPL_DEFINITION(PointsHandle)
+struct ModelHandle {
+    PCS_PIMPL_DEFINITION(ModelHandle)
 
 public:
     using Position = std::tuple<double, double, double>;
@@ -21,17 +24,14 @@ public:
     auto get_overall_color() const noexcept -> std::tuple<double, double, double>;
 
     auto get_points_size() const noexcept -> std::size_t;
+    auto get_polys_size() const noexcept -> std::size_t;
 
     auto set_visibility(bool) noexcept -> void;
 
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view>;
 
-    auto load_from_positions(std::vector<Position> const& points) noexcept
-        -> std::expected<void, std::string_view>;
-
-    auto save_into_filesystem(std::string const& path) noexcept
-        -> std::expected<void, std::string_view>;
+    auto poly_data() const noexcept -> vtkSmartPointer<vtkPolyData>;
 
     auto attach_renderer(Renderer&) noexcept -> void;
 
