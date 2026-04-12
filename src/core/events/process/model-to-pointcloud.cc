@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <format>
-
 #include <vtk/vtkPoints.h>
 #include <vtk/vtkPolyDataPointSampler.h>
 #include <vtk/vtkTriangleFilter.h>
@@ -61,7 +59,7 @@ auto ConvertModelToPointcloud::runtime_exec(std::unique_ptr<Context> context) no
         return std::unexpected { "Failed to sample pointcloud from model" };
     }
 
-    auto positions = std::vector<PointsHandle::Position> { };
+    auto positions = std::vector<std::tuple<double, double, double>> { };
     positions.reserve(points->GetNumberOfPoints());
 
     for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i) {
@@ -70,15 +68,7 @@ auto ConvertModelToPointcloud::runtime_exec(std::unique_ptr<Context> context) no
         positions.emplace_back(point[0], point[1], point[2]);
     }
 
-    auto handle = std::make_unique<PointsHandle>();
-    auto result = handle->load_from_positions(positions);
-    if (!result.has_value()) {
-        return std::unexpected {
-            std::format("Pointcloud unit created failed: {}", result.error()),
-        };
-    }
-
-    return handle;
+    return positions;
 }
 
 }

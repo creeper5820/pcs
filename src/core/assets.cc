@@ -273,6 +273,14 @@ struct AssetsManager::Impl {
             return std::unexpected { result.error() };
         }
 
+        auto sampled_points = std::move(result).value();
+
+        auto pointcloud  = std::make_unique<PointsHandle>();
+        auto load_result = pointcloud->load_from_positions(sampled_points);
+        if (!load_result.has_value()) {
+            return std::unexpected { std::string { load_result.error() } };
+        }
+
         auto derived_name = std::filesystem::path(asset->name);
         if (derived_name.empty()) {
             derived_name = "converted-pointcloud.pcd";
@@ -281,7 +289,7 @@ struct AssetsManager::Impl {
         }
 
         auto new_id = register_pointcloud(
-            std::move(result.value()), derived_name.filename().string(), { }, false);
+            std::move(pointcloud), derived_name.filename().string(), { }, false);
 
         return new_id;
     }
