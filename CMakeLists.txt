@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(pcs VERSION 0.1 LANGUAGES C CXX)
 
+enable_testing()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
@@ -19,9 +21,13 @@ find_package(VTK COMPONENTS
     CommonColor
     CommonCore
     CommonDataModel
+    FiltersCore
+    FiltersGeneral
+    FiltersModeling
     FiltersSources
     GUISupportQt
     InteractionStyle
+    IOGeometry
     RenderingAnnotation
     RenderingContextOpenGL2
     RenderingCore
@@ -71,3 +77,5 @@ vtk_module_autoinit(
     TARGETS ${PROJECT_NAME}
     MODULES ${VTK_LIBRARIES}
 )
+
+add_subdirectory(test)

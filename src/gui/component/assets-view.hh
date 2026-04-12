@@ -9,6 +9,7 @@
 #include <creeper-qt/widget/text.hh>
 #include <creeper-qt/widget/widget.hh>
 
+#include <QSignalBlocker>
 #include <qfileinfo.h>
 #include <qlistview.h>
 #include <qstringlistmodel.h>
@@ -20,7 +21,8 @@ struct AssetsView : public creeper::FilledCard {
     pcs::AssetsManager& assets;
 
     QStringListModel& string_list;
-    std::function<void(std::string_view)> selection_callback;
+    std::function<void(std::string const&)> selection_callback;
+    QListView* list_view = nullptr;
 
     explicit AssetsView(auto& theme, auto& assets, auto& string_list, auto f) noexcept
         : theme { theme }
@@ -32,17 +34,25 @@ struct AssetsView : public creeper::FilledCard {
         auto theme_prop = theme::pro::ThemeManager { theme };
         auto font       = QFont { "WenQuanYi Micro Hei Mono", 10 };
 
-        struct FilenameDelegate : public QStyledItemDelegate {
-            using QStyledItemDelegate::QStyledItemDelegate;
+        struct AssetDelegate : public QStyledItemDelegate {
+            pcs::AssetsManager& assets;
+
+            explicit AssetDelegate(pcs::AssetsManager& assets)
+                : assets { assets } { }
+
             QString displayText(const QVariant& value, const QLocale&) const override {
-                return QFileInfo(value.toString()).fileName();
+                auto id = value.toString().toStdString();
+                if (auto display = assets.get_asset_display_name(id)) {
+                    return QString::fromStdString(*display);
+                }
+                return value.toString();
             }
         };
 
-        auto NativeListView = new QListView;
-        NativeListView->setModel(&string_list);
-        NativeListView->setItemDelegate(new FilenameDelegate);
-        NativeListView->setStyleSheet(R"(
+        list_view = new QListView;
+        list_view->setModel(&string_list);
+        list_view->setItemDelegate(new AssetDelegate(assets));
+        list_view->setStyleSheet(R"(
             QListView {
                 font: 10pt "WenQuanYi Micro Hei";
                 border: 0px solid #cccccc;
@@ -64,14 +74,11 @@ struct AssetsView : public creeper::FilledCard {
                 color: #000000;
             }
         )");
-        QObject::connect(NativeListView, &QListView::clicked, //
-            [this, NativeListView](const QModelIndex& index) {
-                const auto model   = NativeListView->model();
-                const auto data    = model->data(index, Qt::DisplayRole);
-                const auto str     = data.toString();
-                const auto std_str = str.toStdString();
-                const auto view    = std::string_view { std_str };
-                selection_callback(view);
+        QObject::connect(list_view, &QListView::clicked, //
+            [this](const QModelIndex& index) {
+                const auto model = list_view->model();
+                const auto data  = model->data(index, Qt::DisplayRole);
+                selection_callback(data.toString().toStdString());
             });
 
         auto props = std::tuple {
@@ -86,10 +93,27 @@ struct AssetsView : public creeper::FilledCard {
                     text::pro::Text { "Assets View" },
                     text::pro::Alignment { Qt::AlignHCenter },
                 },
-                col::pro::Item { NativeListView },
+                col::pro::Item { list_view },
                 col::pro::Stretch { 255 },
             },
         };
         FilledCard::apply(props);
+    }
+
+    auto select_asset(std::string const& id) noexcept -> void {
+        const auto ids = string_list.stringList();
+        const auto key = QString::fromStdString(id);
+
+        for (int row = 0; row < ids.size(); ++row) {
+            if (ids[row] != key) {
+                continue;
+            }
+
+            const auto index   = string_list.index(row);
+            const auto blocker = QSignalBlocker { list_view };
+            list_view->setCurrentIndex(index);
+            selection_callback(id);
+            return;
+        }
     }
 };

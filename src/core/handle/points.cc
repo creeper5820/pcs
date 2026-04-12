@@ -1,6 +1,8 @@
 #include "core/handle/points.impl.hh"
 #include "core/renderer.vtk.hh"
 
+using namespace pcs;
+
 PointsHandle::PointsHandle() noexcept
     : pimpl { std::make_unique<Impl>() } { }
 
@@ -40,6 +42,10 @@ auto PointsHandle::detach_renderer(Renderer& r) noexcept -> void {
 auto PointsHandle::load_from_filesystem(std::string const& path) noexcept
     -> std::expected<void, std::string_view> {
     return pimpl->load_from_filesystem(path);
+}
+auto PointsHandle::load_from_positions(std::vector<Position> const& points) noexcept
+    -> std::expected<void, std::string_view> {
+    return pimpl->load_from_positions(points);
 }
 auto PointsHandle::save_into_filesystem(std::string const& path) noexcept
     -> std::expected<void, std::string_view> {

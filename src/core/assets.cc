@@ -1,104 +1,423 @@
 #include "assets.hh"
 
-#include "core/handle/points.hh"
+#include "core/events/process/model-to-pointcloud.hh"
 
-#include <generator>
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
+#include <format>
+#include <ranges>
 #include <spdlog/spdlog.h>
+#include <unordered_map>
+#include <vector>
 
 using namespace pcs;
+
+namespace {
+
+auto kind_label(AssetKind kind) noexcept -> std::string_view {
+    switch (kind) {
+    case AssetKind::Pointcloud:
+        return "PointCloud";
+    case AssetKind::Model:
+        return "Model";
+    }
+
+    return "Unknown";
+}
+
+auto normalized_extension(std::string const& location) -> std::string {
+    auto extension = std::filesystem::path(location).extension().string();
+    std::ranges::transform(extension, extension.begin(),
+        [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    return extension;
+}
+
+auto inferred_name(std::string const& location, std::string_view fallback) -> std::string {
+    if (location.empty()) {
+        return std::string { fallback };
+    }
+
+    return std::filesystem::path(location).filename().string();
+}
+
+}
 
 struct AssetsManager::Impl {
     Renderer& renderer;
 
-    struct PointsAsset {
-        std::unique_ptr<PointsHandle> unit;
-        bool use_default = true;
+    explicit Impl(Renderer& renderer) noexcept
+        : renderer { renderer } { }
 
-        auto release_unit(Renderer& renderer) noexcept {
-            // 释放渲染单元
-            unit->detach_renderer(renderer);
+    struct Asset {
+        std::string id;
+        std::string name;
+        std::string location;
+        bool visible   = true;
+        bool persisted = true;
+
+        virtual ~Asset() = default;
+
+        virtual auto kind() const noexcept -> AssetKind       = 0;
+        virtual auto release_unit(Renderer&) noexcept -> void = 0;
+        virtual auto set_visibility(bool on) noexcept -> void = 0;
+    };
+
+    struct PointcloudAsset final : Asset {
+        std::unique_ptr<PointsHandle> unit;
+
+        auto kind() const noexcept -> AssetKind override { return AssetKind::Pointcloud; }
+
+        auto release_unit(Renderer& renderer) noexcept -> void override {
+            if (unit) {
+                unit->detach_renderer(renderer);
+            }
+        }
+
+        auto set_visibility(bool on) noexcept -> void override {
+            visible = on;
+            unit->set_visibility(on);
         }
     };
 
-    std::tuple<double, double, double> default_point_color;
+    struct ModelAsset final : Asset {
+        std::unique_ptr<ModelHandle> unit;
 
-    std::unordered_map<std::string, std::unique_ptr<PointsAsset>> pointclouds;
+        auto kind() const noexcept -> AssetKind override { return AssetKind::Model; }
 
-    auto get_pointcloud_locations() const noexcept -> std::generator<std::string_view> {
-        for (const auto& [key, _] : pointclouds) {
-            co_yield std::string_view { key };
+        auto release_unit(Renderer& renderer) noexcept -> void override {
+            if (unit) {
+                unit->detach_renderer(renderer);
+            }
         }
+
+        auto set_visibility(bool on) noexcept -> void override {
+            visible = on;
+            unit->set_visibility(on);
+        }
+    };
+
+    std::tuple<double, double, double> default_point_color { 1.0, 1.0, 1.0 };
+
+    std::unordered_map<std::string, std::unique_ptr<Asset>> assets;
+    std::vector<std::string> asset_order;
+    std::size_t next_asset_id = 0;
+
+    auto create_asset_id(AssetKind kind) noexcept -> std::string {
+        return std::format(
+            "{}-{}", kind == AssetKind::Pointcloud ? "pointcloud" : "model", next_asset_id++);
     }
 
-    auto clean_pointclouds() noexcept {
-        for (auto& [_, asset] : pointclouds) {
-            asset->release_unit(renderer);
+    auto get_asset(std::string const& id) const noexcept -> Asset const* {
+        if (auto iter = assets.find(id); iter != assets.end()) {
+            return iter->second.get();
         }
-        pointclouds.clear();
-        renderer.render_window();
-    }
-    auto set_pointclouds_visibility(bool on) noexcept -> void {
-        for (auto& [_, asset] : pointclouds) {
-            asset->unit->set_visibility(on);
-        }
-        renderer.render_window();
+
+        return nullptr;
     }
 
-    auto open_pointcloud_file(std::string const& location) noexcept {
+    auto get_asset(std::string const& id) noexcept -> Asset* {
+        if (auto iter = assets.find(id); iter != assets.end()) {
+            return iter->second.get();
+        }
+
+        return nullptr;
+    }
+
+    auto get_pointcloud_asset(std::string const& id) noexcept -> PointcloudAsset* {
+        auto* asset = get_asset(id);
+        if (asset == nullptr || asset->kind() != AssetKind::Pointcloud) {
+            return nullptr;
+        }
+
+        return static_cast<PointcloudAsset*>(asset);
+    }
+
+    auto get_model_asset(std::string const& id) noexcept -> ModelAsset* {
+        auto* asset = get_asset(id);
+        if (asset == nullptr || asset->kind() != AssetKind::Model) {
+            return nullptr;
+        }
+
+        return static_cast<ModelAsset*>(asset);
+    }
+
+    auto get_asset_path_label(Asset const& asset) const -> std::string {
+        if (asset.location.empty()) {
+            return "<memory>";
+        }
+
+        return asset.location;
+    }
+
+    auto get_asset_display_name(Asset const& asset) const -> std::string {
+        auto label = std::format("{} [{}]", asset.name, kind_label(asset.kind()));
+        if (!asset.persisted) {
+            label += " [memory]";
+        }
+        return label;
+    }
+
+    auto register_pointcloud(std::unique_ptr<PointsHandle> pointcloud, std::string const& name,
+        std::string const& location, bool persisted) noexcept -> std::string {
+        auto asset       = std::make_unique<PointcloudAsset>();
+        asset->id        = create_asset_id(AssetKind::Pointcloud);
+        asset->name      = name;
+        asset->location  = location;
+        asset->persisted = persisted;
+        asset->unit      = std::move(pointcloud);
 
         auto [r, g, b] = default_point_color;
+        asset->unit->attach_renderer(renderer);
+        asset->unit->set_overall_color(r, g, b);
+        asset->unit->set_visibility(asset->visible);
 
-        auto points = std::make_unique<PointsHandle>();
-        auto result = points->load_from_filesystem(location);
+        auto id = asset->id;
+        asset_order.emplace_back(id);
+        assets[id] = std::move(asset);
+
+        renderer.render_window();
+        return id;
+    }
+
+    auto register_model(std::unique_ptr<ModelHandle> model, std::string const& name,
+        std::string const& location) noexcept -> std::string {
+        auto asset      = std::make_unique<ModelAsset>();
+        asset->id       = create_asset_id(AssetKind::Model);
+        asset->name     = name;
+        asset->location = location;
+        asset->unit     = std::move(model);
+
+        asset->unit->attach_renderer(renderer);
+        asset->unit->set_visibility(asset->visible);
+
+        auto id = asset->id;
+        asset_order.emplace_back(id);
+        assets[id] = std::move(asset);
+
+        renderer.render_window();
+        return id;
+    }
+
+    auto open_pointcloud_file(std::string const& location) noexcept -> void {
+        auto pointcloud = std::make_unique<PointsHandle>();
+        auto result     = pointcloud->load_from_filesystem(location);
 
         if (!result.has_value()) {
-            spdlog::error("Failed to open: {}", result.error());
-        } else {
-            auto asset  = std::make_unique<PointsAsset>();
-            asset->unit = std::move(points);
-
-            auto& pointcloud = asset->unit;
-            pointcloud->attach_renderer(renderer);
-            pointcloud->set_overall_color(r, g, b);
-
-            renderer.render_window();
-            pointclouds[location] = std::move(asset);
+            spdlog::error("Failed to open pointcloud: {}", result.error());
+            return;
         }
+
+        register_pointcloud(
+            std::move(pointcloud), inferred_name(location, "pointcloud.pcd"), location, true);
+    }
+
+    auto open_model_file(std::string const& location) noexcept -> void {
+        auto model  = std::make_unique<ModelHandle>();
+        auto result = model->load_from_filesystem(location);
+
+        if (!result.has_value()) {
+            spdlog::error("Failed to open model: {}", result.error());
+            return;
+        }
+
+        register_model(std::move(model), inferred_name(location, "model.obj"), location);
+    }
+
+    auto open_file(std::string const& location) noexcept -> void {
+        const auto extension = normalized_extension(location);
+
+        if (extension == ".pcd") {
+            open_pointcloud_file(location);
+            return;
+        }
+
+        if (extension == ".obj") {
+            open_model_file(location);
+            return;
+        }
+
+        spdlog::error("Unsupported asset file: {}", location);
+    }
+
+    auto clean_assets() noexcept -> void {
+        for (auto& [_, asset] : assets) {
+            asset->release_unit(renderer);
+        }
+
+        assets.clear();
+        asset_order.clear();
+        renderer.render_window();
+    }
+
+    auto get_asset_ids() const noexcept -> std::generator<std::string_view> {
+        for (auto const& id : asset_order) {
+            if (assets.contains(id)) {
+                co_yield std::string_view { id };
+            }
+        }
+    }
+
+    auto convert_model_to_pointcloud(std::string const& id) noexcept
+        -> std::expected<std::string, std::string> {
+        auto* asset = get_model_asset(id);
+        if (asset == nullptr || asset->unit == nullptr) {
+            return std::unexpected { "Model asset is not loaded" };
+        }
+
+        auto context       = std::make_unique<event::ConvertModelToPointcloud::Context>();
+        context->poly_data = asset->unit->poly_data();
+
+        auto result = event::ConvertModelToPointcloud::runtime_exec(std::move(context));
+        if (!result.has_value()) {
+            return std::unexpected { result.error() };
+        }
+
+        auto derived_name = std::filesystem::path(asset->name);
+        if (derived_name.empty()) {
+            derived_name = "converted-pointcloud.pcd";
+        } else {
+            derived_name.replace_extension(".pcd");
+        }
+
+        auto new_id = register_pointcloud(
+            std::move(result.value()), derived_name.filename().string(), { }, false);
+
+        return new_id;
+    }
+
+    auto save_pointcloud_asset(std::string const& id, std::string const& path) noexcept
+        -> std::expected<void, std::string> {
+        auto* asset = get_pointcloud_asset(id);
+        if (asset == nullptr || asset->unit == nullptr) {
+            return std::unexpected { "Pointcloud asset is not loaded" };
+        }
+
+        auto result = asset->unit->save_into_filesystem(path);
+        if (!result.has_value()) {
+            return std::unexpected { std::string { result.error() } };
+        }
+
+        asset->location  = path;
+        asset->name      = std::filesystem::path(path).filename().string();
+        asset->persisted = true;
+
+        return { };
+    }
+
+    auto set_asset_visibility(std::string const& id, bool on) noexcept -> bool {
+        auto* asset = get_asset(id);
+        if (asset == nullptr) {
+            return false;
+        }
+
+        asset->set_visibility(on);
+        renderer.render_window();
+        return true;
     }
 
     auto set_default_pointcloud_color(double r, double g, double b) noexcept {
-        for (auto& [name, asset] : pointclouds) {
-            if (asset->use_default) {
+        default_point_color = std::tie(r, g, b);
+
+        for (auto const& id : asset_order) {
+            auto* asset = get_pointcloud_asset(id);
+            if (asset != nullptr && asset->unit != nullptr) {
                 asset->unit->set_overall_color(r, g, b);
             }
         }
-        default_point_color = std::tie(r, g, b);
+
         renderer.render_window();
     }
 };
 
-auto AssetsManager::get_pointcloud_locations() const noexcept -> std::generator<std::string_view> {
-    return pimpl->get_pointcloud_locations();
+auto AssetsManager::get_asset_ids() const noexcept -> std::generator<std::string_view> {
+    return pimpl->get_asset_ids();
 }
-auto AssetsManager::get_pointcloud_handle(std::string const& key) noexcept
-    -> std::optional<PointsHandle*> {
-    if (pimpl->pointclouds.contains(key) && pimpl->pointclouds[key]->unit) {
-        return pimpl->pointclouds[key]->unit.get();
+
+auto AssetsManager::get_asset_kind(std::string const& id) const noexcept
+    -> std::optional<AssetKind> {
+    if (auto* asset = pimpl->get_asset(id)) {
+        return asset->kind();
     }
+
     return std::nullopt;
+}
+
+auto AssetsManager::get_asset_display_name(std::string const& id) const noexcept
+    -> std::optional<std::string> {
+    if (auto* asset = pimpl->get_asset(id)) {
+        return pimpl->get_asset_display_name(*asset);
+    }
+
+    return std::nullopt;
+}
+
+auto AssetsManager::get_asset_name(std::string const& id) const noexcept
+    -> std::optional<std::string> {
+    if (auto* asset = pimpl->get_asset(id)) {
+        return asset->name;
+    }
+
+    return std::nullopt;
+}
+
+auto AssetsManager::get_asset_path(std::string const& id) const noexcept
+    -> std::optional<std::string> {
+    if (auto* asset = pimpl->get_asset(id)) {
+        return pimpl->get_asset_path_label(*asset);
+    }
+
+    return std::nullopt;
+}
+
+auto AssetsManager::is_asset_visible(std::string const& id) const noexcept -> std::optional<bool> {
+    if (auto* asset = pimpl->get_asset(id)) {
+        return asset->visible;
+    }
+
+    return std::nullopt;
+}
+
+auto AssetsManager::get_pointcloud_handle(std::string const& id) noexcept
+    -> std::optional<PointsHandle*> {
+    if (auto* asset = pimpl->get_pointcloud_asset(id)) {
+        return asset->unit.get();
+    }
+
+    return std::nullopt;
+}
+
+auto AssetsManager::get_model_handle(std::string const& id) noexcept
+    -> std::optional<ModelHandle*> {
+    if (auto* asset = pimpl->get_model_asset(id)) {
+        return asset->unit.get();
+    }
+
+    return std::nullopt;
+}
+
+auto AssetsManager::set_asset_visibility(std::string const& id, bool on) noexcept -> bool {
+    return pimpl->set_asset_visibility(id, on);
+}
+
+auto AssetsManager::convert_model_to_pointcloud(std::string const& id) noexcept
+    -> std::expected<std::string, std::string> {
+    return pimpl->convert_model_to_pointcloud(id);
+}
+
+auto AssetsManager::save_pointcloud_asset(std::string const& id, std::string const& path) noexcept
+    -> std::expected<void, std::string> {
+    return pimpl->save_pointcloud_asset(id, path);
 }
 
 auto AssetsManager::update_renderer() const noexcept -> void { pimpl->renderer.render_window(); }
 
-auto AssetsManager::open_pointcloud_file(std::string const& location) noexcept -> void {
-    pimpl->open_pointcloud_file(location);
+auto AssetsManager::open_file(std::string const& location) noexcept -> void {
+    pimpl->open_file(location);
 }
-auto AssetsManager::clean_pointclouds() noexcept -> void {
-    pimpl->clean_pointclouds(); //
-}
-auto AssetsManager::set_pointclouds_visibility(bool on) noexcept -> void {
-    pimpl->set_pointclouds_visibility(on);
-}
+
+auto AssetsManager::clean_assets() noexcept -> void { pimpl->clean_assets(); }
+
 auto AssetsManager::set_default_point_color(double r, double g, double b) noexcept -> void {
     pimpl->set_default_pointcloud_color(r, g, b);
 }
