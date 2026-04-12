@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 project(pcs VERSION 0.1 LANGUAGES C CXX)
 
 enable_testing()
+option(PCS_BUILD_TESTS "Build project tests" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,7 +28,6 @@ find_package(VTK COMPONENTS
     FiltersSources
     GUISupportQt
     InteractionStyle
-    IOGeometry
     RenderingAnnotation
     RenderingContextOpenGL2
     RenderingCore
@@ -78,4 +78,6 @@ vtk_module_autoinit(
     MODULES ${VTK_LIBRARIES}
 )
 
-add_subdirectory(test)
+if(PCS_BUILD_TESTS)
+    add_subdirectory(test)
+endif()

@@ -36,7 +36,7 @@ auto main() -> int {
         return EXIT_FAILURE;
     }
 
-    const auto points_size = result.value()->get_points_size();
+    const auto points_size = result.value().size();
     if (points_size <= 4) {
         std::cerr << "sampled points too few: " << points_size << '\n';
         return EXIT_FAILURE;

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "core/events/common.hh"
-#include "core/handle/points.hh"
 
 #include <expected>
+#include <tuple>
+#include <vector>
 
 #include <vtk/vtkPolyData.h>
 #include <vtk/vtkSmartPointer.h>
@@ -11,7 +12,8 @@
 namespace pcs::event {
 
 struct ConvertModelToPointcloud {
-    using Result = std::expected<std::unique_ptr<PointsHandle>, std::string>;
+    using Position = std::tuple<double, double, double>;
+    using Result   = std::expected<std::vector<Position>, std::string>;
 
     struct Context {
         static constexpr EventMeta meta {
