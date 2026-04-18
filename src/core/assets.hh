@@ -1,7 +1,10 @@
 #pragma once
 
 #include "core/handle/model.hh"
+#include "core/handle/png-map.hh"
 #include "core/handle/points.hh"
+#include "core/map/model-pointcloud-data.hh"
+#include "core/map/png-map-data.hh"
 #include "core/renderer.hh"
 
 #include "utility/pimpl.hh"
@@ -15,6 +18,7 @@ namespace pcs {
 enum class AssetKind {
     Pointcloud,
     Model,
+    PngMap,
 };
 
 class AssetsManager final {
@@ -38,14 +42,33 @@ public:
 
     auto get_pointcloud_handle(std::string const& id) noexcept -> std::optional<PointsHandle*>;
     auto get_model_handle(std::string const& id) noexcept -> std::optional<ModelHandle*>;
+    auto get_png_map_handle(std::string const& id) noexcept -> std::optional<PngMapHandle*>;
 
     auto set_asset_visibility(std::string const& id, bool on) noexcept -> bool;
 
-    auto convert_model_to_pointcloud(std::string const& id) noexcept
+    auto convert_model_to_pointcloud(
+        std::string const& id, ModelToPointcloudParameters const& = { }) noexcept
         -> std::expected<std::string, std::string>;
+
+    auto generate_png_map_from_pointcloud(std::string const& id, PngMapParameters const&) noexcept
+        -> std::expected<std::string, std::string>;
+
+    auto upsert_generated_png_map(std::string const& source_id, PngMapData const&) noexcept
+        -> std::expected<std::string, std::string>;
+
+    auto create_png_map_asset_from_data(std::string const& source_id, PngMapData const&) noexcept
+        -> std::expected<std::string, std::string>;
+
+    auto replace_png_map_asset_data(std::string const& id, PngMapData const&) noexcept
+        -> std::expected<void, std::string>;
 
     auto save_pointcloud_asset(std::string const& id, std::string const& path) noexcept
         -> std::expected<void, std::string>;
+
+    auto save_png_map_asset(std::string const& id, std::string const& path) noexcept
+        -> std::expected<void, std::string>;
+
+    auto remove_asset(std::string const& id) noexcept -> bool;
 
     auto set_default_point_color(double, double, double) noexcept -> void;
 };

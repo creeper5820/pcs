@@ -99,7 +99,7 @@ public:
             // C 键居中
             auto shortcut_c = new QShortcut { Qt::Key_C, window };
             QObject::connect(shortcut_c, &QShortcut::activated,
-                [this] { window->apply(widget::pro::MoveCenter {}); });
+                [this] { window->apply(widget::pro::MoveCenter { }); });
 
             sp::info("App gui are loaded");
         }
@@ -181,8 +181,8 @@ private:
     auto exit_application_with_confirment() noexcept -> void {
         auto confirmation_box = QMessageBox {
             QMessageBox::Question,
-            "Confirm Exit",
-            "Are you sure you want to exit this application ?",
+            "确认退出",
+            "确认退出当前应用吗？",
             QMessageBox::Yes | QMessageBox::No,
             window,
         };

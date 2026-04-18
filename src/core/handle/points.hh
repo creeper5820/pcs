@@ -4,6 +4,7 @@
 #include "utility/pimpl.hh"
 
 #include <expected>
+#include <tuple>
 #include <vector>
 
 namespace pcs {
@@ -17,10 +18,12 @@ public:
     auto set_position(double x, double y, double z) noexcept -> void;
     auto get_position() const noexcept -> Position;
 
-    auto set_overall_color(double r, double g, double b) noexcept -> void;
-    auto get_overall_color() const noexcept -> std::tuple<double, double, double>;
+    auto set_overall_color(double r, double g, double b, double a = 1.0) noexcept -> void;
+    auto get_overall_color() const noexcept -> std::tuple<double, double, double, double>;
 
     auto get_points_size() const noexcept -> std::size_t;
+
+    auto get_positions() const noexcept -> std::vector<Position>;
 
     auto set_visibility(bool) noexcept -> void;
 
