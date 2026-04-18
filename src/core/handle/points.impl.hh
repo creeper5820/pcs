@@ -58,4 +58,18 @@ struct PointsHandle::Impl final {
         }
         return { };
     }
+
+    auto get_positions() const noexcept -> std::vector<PointsHandle::Position> {
+        auto result = std::vector<PointsHandle::Position> { };
+        if (points == nullptr) {
+            return result;
+        }
+
+        result.reserve(points->points.size());
+        for (const auto& point : points->points) {
+            result.emplace_back(point.x, point.y, point.z);
+        }
+
+        return result;
+    }
 };
