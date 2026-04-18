@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/events/common.hh"
-#include "core/map/model-pointcloud-data.hh"
 
 #include <expected>
 #include <tuple>
@@ -23,7 +22,8 @@ struct ConvertModelToPointcloud {
         };
 
         vtkSmartPointer<vtkPolyData> poly_data;
-        ModelToPointcloudParameters parameters;
+        double sample_distance = 0.0;
+        double unit_scale      = 1.0;
     };
 
     static auto runtime_exec(std::unique_ptr<Context>) noexcept -> Result;
