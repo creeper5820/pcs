@@ -23,6 +23,7 @@ struct ConvertModelToPointcloud {
 
         vtkSmartPointer<vtkPolyData> poly_data;
         double sample_distance = 0.0;
+        double unit_scale      = 1.0;
     };
 
     static auto runtime_exec(std::unique_ptr<Context>) noexcept -> Result;

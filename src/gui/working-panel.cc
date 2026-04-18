@@ -346,12 +346,9 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
                 auto* handle = result.value();
 
                 *asset_size = QString::number(handle->get_points_size());
-                *asset_info = assets.get_asset_path(id).value_or("Unknown") == "<memory>" ? "State:"
-                                                                                            " Memor"
-                                                                                            "y"
-                                                                                          : "State:"
-                                                                                            " Save"
-                                                                                            "d";
+                *asset_info = assets.get_asset_path(id).value_or("Unknown") == "<memory>" //
+                    ? "State: Memory"
+                    : "State: Saved";
 
                 std::tie(*asset_color[0], *asset_color[1], *asset_color[2]) =
                     handle->get_overall_color();
