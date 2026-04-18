@@ -11,7 +11,6 @@
 
 #include <QSignalBlocker>
 #include <qfileinfo.h>
-#include <qitemselectionmodel.h>
 #include <qlistview.h>
 #include <qstringlistmodel.h>
 #include <qstyleditemdelegate.h>
@@ -53,68 +52,32 @@ struct AssetsView : public creeper::FilledCard {
         list_view = new QListView;
         list_view->setModel(&string_list);
         list_view->setItemDelegate(new AssetDelegate(assets));
-
-        const auto sync_list_qss = [this](const ThemeManager& manager) {
-            if (manager.color_mode() == ColorMode::DARK) {
-                list_view->setStyleSheet(R"(
-                    QListView {
-                        font: 10pt "WenQuanYi Micro Hei";
-                        border: 1px solid #2f3a46;
-                        border-radius: 5px;
-                        background-color: #1f242b;
-                        padding: 2px;
-                    }
-                    QListView::item {
-                        height: 20px;
-                        padding-left: 5px;
-                        color: #d6dbe3;
-                    }
-                    QListView::item:hover {
-                        background-color: #2b3440;
-                    }
-                    QListView::item:selected {
-                        background-color: #385d85;
-                        border-left: 4px solid #6ca5ff;
-                        color: #f2f6ff;
-                    }
-                )");
-                return;
+        list_view->setStyleSheet(R"(
+            QListView {
+                font: 10pt "WenQuanYi Micro Hei";
+                border: 0px solid #cccccc;
+                border-radius: 5px;
+                background-color: #f9f9f9;
+                padding: 2px;
             }
-
-            list_view->setStyleSheet(R"(
-                QListView {
-                    font: 10pt "WenQuanYi Micro Hei";
-                    border: 1px solid #d5dce5;
-                    border-radius: 5px;
-                    background-color: #f9f9f9;
-                    padding: 2px;
-                }
-                QListView::item {
-                    height: 20px;
-                    padding-left: 5px;
-                    color: #333333;
-                }
-                QListView::item:hover {
-                    background-color: #e6f7ff;
-                }
-                QListView::item:selected {
-                    background-color: #bae7ff;
-                    border-left: 4px solid #1890ff;
-                    color: #000000;
-                }
-            )");
-        };
-
-        sync_list_qss(theme);
-        theme.append_handler(list_view, sync_list_qss);
-
-        QObject::connect(list_view->selectionModel(), &QItemSelectionModel::currentChanged,
-            [this](const QModelIndex& current, const QModelIndex&) {
-                if (!current.isValid()) {
-                    return;
-                }
-
-                const auto data = current.data(Qt::DisplayRole);
+            QListView::item {
+                height: 20px;
+                padding-left: 5px;
+                color: #333333;
+            }
+            QListView::item:hover {
+                background-color: #e6f7ff;
+            }
+            QListView::item:selected {
+                background-color: #bae7ff;
+                border-left: 4px solid #1890ff;
+                color: #000000;
+            }
+        )");
+        QObject::connect(list_view, &QListView::clicked, //
+            [this](const QModelIndex& index) {
+                const auto model = list_view->model();
+                const auto data  = model->data(index, Qt::DisplayRole);
                 selection_callback(data.toString().toStdString());
             });
 
@@ -127,7 +90,7 @@ struct AssetsView : public creeper::FilledCard {
                 col::pro::Item<Text> {
                     theme_prop,
                     text::pro::Font { font },
-                    text::pro::Text { "资产列表" },
+                    text::pro::Text { "Assets View" },
                     text::pro::Alignment { Qt::AlignHCenter },
                 },
                 col::pro::Item { list_view },
@@ -146,9 +109,8 @@ struct AssetsView : public creeper::FilledCard {
                 continue;
             }
 
-            const auto index             = string_list.index(row);
-            const auto list_blocker      = QSignalBlocker { list_view };
-            const auto selection_blocker = QSignalBlocker { list_view->selectionModel() };
+            const auto index   = string_list.index(row);
+            const auto blocker = QSignalBlocker { list_view };
             list_view->setCurrentIndex(index);
             selection_callback(id);
             return;

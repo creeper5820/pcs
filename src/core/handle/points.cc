@@ -16,23 +16,16 @@ auto PointsHandle::get_position() const noexcept -> Position {
     return std::make_tuple(position[0], position[1], position[2]);
 }
 
-auto PointsHandle::set_overall_color(double r, double g, double b, double a) noexcept -> void {
+auto PointsHandle::set_overall_color(double r, double g, double b) noexcept -> void {
     pimpl->unit->set_color(r, g, b);
-    pimpl->unit->set_alpha(a);
 }
-auto PointsHandle::get_overall_color() const noexcept
-    -> std::tuple<double, double, double, double> {
+auto PointsHandle::get_overall_color() const noexcept -> std::tuple<double, double, double> {
     auto c = pimpl->unit->actor()->GetProperty()->GetColor();
-    auto a = pimpl->unit->actor()->GetProperty()->GetOpacity();
-    return std::make_tuple(c[0], c[1], c[2], a);
+    return std::make_tuple(c[0], c[1], c[2]);
 }
 
 auto PointsHandle::get_points_size() const noexcept -> std::size_t {
     return pimpl->unit->get_points_size();
-}
-
-auto PointsHandle::get_positions() const noexcept -> std::vector<Position> {
-    return pimpl->get_positions();
 }
 
 auto PointsHandle::set_visibility(bool on) noexcept -> void {
