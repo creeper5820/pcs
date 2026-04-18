@@ -65,7 +65,8 @@ auto ConvertModelToPointcloud::runtime_exec(std::unique_ptr<Context> context) no
     for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i) {
         auto point = std::array<double, 3> { };
         points->GetPoint(i, point.data());
-        positions.emplace_back(point[0], point[1], point[2]);
+        positions.emplace_back(point[0] * context->unit_scale, point[1] * context->unit_scale,
+            point[2] * context->unit_scale);
     }
 
     return positions;

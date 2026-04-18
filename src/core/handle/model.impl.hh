@@ -16,6 +16,8 @@
 
 namespace {
 
+constexpr auto kObjToSceneScale = 0.001;
+
 auto parse_index_token(std::string_view token, std::size_t vertex_count) noexcept
     -> std::optional<vtkIdType> {
     const auto slash = token.find('/');
@@ -65,7 +67,8 @@ auto load_obj_poly_data(std::string const& path) noexcept
             auto y = double { };
             auto z = double { };
             if (stream >> x >> y >> z) {
-                points->InsertNextPoint(x, y, z);
+                points->InsertNextPoint(
+                    x * kObjToSceneScale, y * kObjToSceneScale, z * kObjToSceneScale);
             }
             continue;
         }
