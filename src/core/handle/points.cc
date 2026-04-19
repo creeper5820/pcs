@@ -1,5 +1,4 @@
 #include "core/handle/points.impl.hh"
-#include "core/renderer.vtk.hh"
 
 using namespace pcs;
 
@@ -35,15 +34,20 @@ auto PointsHandle::get_positions() const noexcept -> std::vector<Position> {
     return pimpl->get_positions();
 }
 
+auto PointsHandle::pick_position(Renderer& renderer, int display_x, int display_y) const noexcept
+    -> std::optional<PointsHandle::Position> {
+    return renderer.pick_points_unit(*pimpl->unit, display_x, display_y);
+}
+
 auto PointsHandle::set_visibility(bool on) noexcept -> void {
     pimpl->unit->set_visibility(on); //
 }
 
 auto PointsHandle::attach_renderer(Renderer& r) noexcept -> void {
-    r.vtk_context().attach_unit(pimpl->unit->actor());
+    r.attach_points_unit(*pimpl->unit);
 }
 auto PointsHandle::detach_renderer(Renderer& r) noexcept -> void {
-    r.vtk_context().detach_unit(pimpl->unit->actor());
+    r.detach_points_unit(*pimpl->unit);
 }
 
 auto PointsHandle::load_from_filesystem(std::string const& path) noexcept

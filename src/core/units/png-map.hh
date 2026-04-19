@@ -17,8 +17,11 @@ public:
 
     auto actor() noexcept -> SmartPointer<vtkActor>;
     auto area_actor() noexcept -> SmartPointer<vtkActor>;
+    auto actor() const noexcept -> SmartPointer<vtkActor>;
+    auto area_actor() const noexcept -> SmartPointer<vtkActor>;
 
     auto set_visibility(bool on) noexcept -> void;
+    auto update_pixels(std::vector<std::uint8_t> const& pixels) noexcept -> bool;
 
 private:
     auto initialize(PngMapData const&) noexcept -> void;

@@ -12,6 +12,8 @@
 #include <expected>
 #include <generator>
 #include <optional>
+#include <tuple>
+#include <vector>
 
 namespace pcs {
 
@@ -29,8 +31,6 @@ public:
 
     auto update_renderer() const noexcept -> void;
 
-    auto open_file(std::string const& location) noexcept -> void;
-
     auto clean_assets() noexcept -> void;
 
     auto get_asset_ids() const noexcept -> std::generator<std::string_view>;
@@ -44,10 +44,22 @@ public:
     auto get_model_handle(std::string const& id) noexcept -> std::optional<ModelHandle*>;
     auto get_png_map_handle(std::string const& id) noexcept -> std::optional<PngMapHandle*>;
 
+    auto register_pointcloud_asset(std::unique_ptr<PointsHandle>, std::string const& name,
+        std::string const& location, bool persisted = true) noexcept -> std::string;
+    auto register_model_asset(
+        std::unique_ptr<ModelHandle>, std::string const& name, std::string const& location) noexcept
+        -> std::string;
+    auto register_png_map_asset(std::unique_ptr<PngMapHandle>, std::string const& name,
+        std::string const& location, bool persisted = true) noexcept -> std::string;
+
     auto set_asset_visibility(std::string const& id, bool on) noexcept -> bool;
 
     auto convert_model_to_pointcloud(
         std::string const& id, ModelToPointcloudParameters const& = { }) noexcept
+        -> std::expected<std::string, std::string>;
+
+    auto upsert_generated_pointcloud(std::string const& source_id,
+        std::vector<std::tuple<double, double, double>> const& points) noexcept
         -> std::expected<std::string, std::string>;
 
     auto generate_png_map_from_pointcloud(std::string const& id, PngMapParameters const&) noexcept
