@@ -1,13 +1,11 @@
 #pragma once
 
+#include "core/map/model-data.hh"
 #include "core/renderer.hh"
 #include "utility/pimpl.hh"
 
 #include <expected>
 #include <tuple>
-
-#include <vtk/vtkPolyData.h>
-#include <vtk/vtkSmartPointer.h>
 
 namespace pcs {
 
@@ -31,7 +29,7 @@ public:
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view>;
 
-    auto poly_data() const noexcept -> vtkSmartPointer<vtkPolyData>;
+    auto model_data() const noexcept -> ModelData const&;
 
     auto attach_renderer(Renderer&) noexcept -> void;
 

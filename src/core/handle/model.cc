@@ -1,5 +1,4 @@
 #include "core/handle/model.impl.hh"
-#include "core/renderer.vtk.hh"
 
 using namespace pcs;
 
@@ -41,12 +40,12 @@ auto ModelHandle::load_from_filesystem(std::string const& path) noexcept
     return pimpl->load_from_filesystem(path);
 }
 
-auto ModelHandle::poly_data() const noexcept -> vtkSmartPointer<vtkPolyData> { return pimpl->data; }
+auto ModelHandle::model_data() const noexcept -> ModelData const& { return pimpl->data; }
 
 auto ModelHandle::attach_renderer(Renderer& r) noexcept -> void {
-    r.vtk_context().attach_unit(pimpl->unit->actor());
+    r.attach_model_unit(*pimpl->unit);
 }
 
 auto ModelHandle::detach_renderer(Renderer& r) noexcept -> void {
-    r.vtk_context().detach_unit(pimpl->unit->actor());
+    r.detach_model_unit(*pimpl->unit);
 }

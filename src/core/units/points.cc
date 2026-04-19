@@ -39,6 +39,8 @@ auto PointsUnit::initialize(SmartPointer<vtkPoints> points) noexcept -> void {
 
 auto PointsUnit::actor() noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
 
+auto PointsUnit::actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
+
 auto PointsUnit::get_points_size() const noexcept -> std::size_t {
     return pimpl->points->GetNumberOfPoints();
 }

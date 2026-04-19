@@ -4,11 +4,8 @@
 #include "core/events/process/pointcloud-to-png-map.hh"
 
 #include <algorithm>
-#include <cctype>
 #include <filesystem>
 #include <format>
-#include <ranges>
-#include <spdlog/spdlog.h>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
@@ -29,22 +26,6 @@ auto kind_label(AssetKind kind) noexcept -> std::string_view {
 
     return "Unknown";
 }
-
-auto normalized_extension(std::string const& location) -> std::string {
-    auto extension = std::filesystem::path(location).extension().string();
-    std::ranges::transform(extension, extension.begin(),
-        [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-    return extension;
-}
-
-auto inferred_name(std::string const& location, std::string_view fallback) -> std::string {
-    if (location.empty()) {
-        return std::string { fallback };
-    }
-
-    return std::filesystem::path(location).filename().string();
-}
-
 }
 
 struct AssetsManager::Impl {
@@ -262,47 +243,6 @@ struct AssetsManager::Impl {
         return id;
     }
 
-    auto open_pointcloud_file(std::string const& location) noexcept -> void {
-        auto pointcloud = std::make_unique<PointsHandle>();
-        auto result     = pointcloud->load_from_filesystem(location);
-
-        if (!result.has_value()) {
-            spdlog::error("Failed to open pointcloud: {}", result.error());
-            return;
-        }
-
-        register_pointcloud(
-            std::move(pointcloud), inferred_name(location, "pointcloud.pcd"), location, true);
-    }
-
-    auto open_model_file(std::string const& location) noexcept -> void {
-        auto model  = std::make_unique<ModelHandle>();
-        auto result = model->load_from_filesystem(location);
-
-        if (!result.has_value()) {
-            spdlog::error("Failed to open model: {}", result.error());
-            return;
-        }
-
-        register_model(std::move(model), inferred_name(location, "model.obj"), location);
-    }
-
-    auto open_file(std::string const& location) noexcept -> void {
-        const auto extension = normalized_extension(location);
-
-        if (extension == ".pcd") {
-            open_pointcloud_file(location);
-            return;
-        }
-
-        if (extension == ".obj") {
-            open_model_file(location);
-            return;
-        }
-
-        spdlog::error("Unsupported asset file: {}", location);
-    }
-
     auto clean_assets() noexcept -> void {
         for (auto& [_, asset] : assets) {
             asset->release_unit(renderer);
@@ -416,7 +356,7 @@ struct AssetsManager::Impl {
         }
 
         auto context        = std::make_unique<event::ConvertModelToPointcloud::Context>();
-        context->poly_data  = asset->unit->poly_data();
+        context->model      = asset->unit->model_data();
         context->parameters = parameters;
 
         auto result = event::ConvertModelToPointcloud::runtime_exec(std::move(context));
@@ -696,6 +636,23 @@ auto AssetsManager::get_png_map_handle(std::string const& id) noexcept
     return std::nullopt;
 }
 
+auto AssetsManager::register_pointcloud_asset(std::unique_ptr<PointsHandle> pointcloud,
+    std::string const& name, std::string const& location, bool persisted) noexcept
+    -> std::string {
+    return pimpl->register_pointcloud(std::move(pointcloud), name, location, persisted);
+}
+
+auto AssetsManager::register_model_asset(std::unique_ptr<ModelHandle> model,
+    std::string const& name, std::string const& location) noexcept -> std::string {
+    return pimpl->register_model(std::move(model), name, location);
+}
+
+auto AssetsManager::register_png_map_asset(std::unique_ptr<PngMapHandle> png_map,
+    std::string const& name, std::string const& location, bool persisted) noexcept
+    -> std::string {
+    return pimpl->register_png_map(std::move(png_map), name, location, persisted);
+}
+
 auto AssetsManager::set_asset_visibility(std::string const& id, bool on) noexcept -> bool {
     return pimpl->set_asset_visibility(id, on);
 }
@@ -709,6 +666,12 @@ auto AssetsManager::convert_model_to_pointcloud(
 auto AssetsManager::generate_png_map_from_pointcloud(std::string const& id,
     PngMapParameters const& parameters) noexcept -> std::expected<std::string, std::string> {
     return pimpl->generate_png_map_from_pointcloud(id, parameters);
+}
+
+auto AssetsManager::upsert_generated_pointcloud(std::string const& source_id,
+    std::vector<std::tuple<double, double, double>> const& points) noexcept
+    -> std::expected<std::string, std::string> {
+    return pimpl->upsert_generated_pointcloud(source_id, points);
 }
 
 auto AssetsManager::create_png_map_asset_from_data(std::string const& source_id,
@@ -741,10 +704,6 @@ auto AssetsManager::remove_asset(std::string const& id) noexcept -> bool {
 }
 
 auto AssetsManager::update_renderer() const noexcept -> void { pimpl->renderer.render_window(); }
-
-auto AssetsManager::open_file(std::string const& location) noexcept -> void {
-    pimpl->open_file(location);
-}
 
 auto AssetsManager::clean_assets() noexcept -> void { pimpl->clean_assets(); }
 
