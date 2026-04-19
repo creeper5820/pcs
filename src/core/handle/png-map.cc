@@ -24,12 +24,26 @@ auto PngMapHandle::save_into_filesystem(std::string const& path) const noexcept
     return pimpl->save_into_filesystem(path);
 }
 
+auto PngMapHandle::export_to_ros_directory(std::string const& directory) const noexcept
+    -> std::expected<void, std::string_view> {
+    return pimpl->export_to_ros_directory(directory);
+}
+
 auto PngMapHandle::get_width() const noexcept -> std::size_t { return pimpl->data.width; }
 auto PngMapHandle::get_height() const noexcept -> std::size_t { return pimpl->data.height; }
 auto PngMapHandle::get_resolution() const noexcept -> double { return pimpl->data.resolution; }
 auto PngMapHandle::get_plane_z() const noexcept -> double { return pimpl->data.plane_z; }
 auto PngMapHandle::get_origin_x() const noexcept -> double { return pimpl->data.origin_x; }
 auto PngMapHandle::get_origin_y() const noexcept -> double { return pimpl->data.origin_y; }
+auto PngMapHandle::get_frame_config() const noexcept -> PngMapFrameConfig {
+    return pimpl->data.frame_config;
+}
+auto PngMapHandle::set_frame_config(PngMapFrameConfig const& config) noexcept -> bool {
+    return pimpl->set_frame_config(config);
+}
+auto PngMapHandle::transform_view() const noexcept -> PngMapTransformView {
+    return make_png_map_transform_view(pimpl->data);
+}
 
 auto PngMapHandle::copy_pixels() const noexcept -> std::vector<std::uint8_t> {
     return pimpl->copy_pixels();

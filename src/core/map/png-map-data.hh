@@ -6,6 +6,19 @@
 
 namespace pcs {
 
+enum class PngMapOriginMode {
+    Center,
+    Corner1,
+    Corner2,
+    Corner3,
+    Corner4,
+};
+
+struct PngMapFrameConfig {
+    double yaw_deg = 0.0;
+    PngMapOriginMode origin_mode { PngMapOriginMode::Center };
+};
+
 struct PngMapParameters {
     double resolution        = 0.1;
     std::size_t points_limit = 5;
@@ -29,6 +42,8 @@ struct PngMapData {
 
     double z_area_start = 0.0;
     double z_area_end   = 1.0;
+
+    PngMapFrameConfig frame_config { };
 };
 
 }

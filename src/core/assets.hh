@@ -80,6 +80,9 @@ public:
     auto save_png_map_asset(std::string const& id, std::string const& path) noexcept
         -> std::expected<void, std::string>;
 
+    auto export_png_map_asset(std::string const& id, std::string const& directory) noexcept
+        -> std::expected<void, std::string>;
+
     auto remove_asset(std::string const& id) noexcept -> bool;
 
     auto set_default_point_color(double, double, double) noexcept -> void;

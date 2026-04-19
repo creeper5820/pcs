@@ -1,5 +1,7 @@
 #include "gui/context/features.hh"
 
+#include "core/map/png-map-transform.hh"
+
 #include "core/events/render/model.hh"
 #include "core/events/render/points.hh"
 #include "gui/interaction/picker-mode.hh"
@@ -136,15 +138,18 @@ auto register_default_features(AppModules& modules) noexcept -> void {
             const auto width  = static_cast<std::uintmax_t>(handle->get_width());
             const auto height = static_cast<std::uintmax_t>(handle->get_height());
             const auto path   = assets.get_asset_path(id).value_or(std::string { });
+            const auto config = handle->get_frame_config();
 
             return pcs::gui::working::AssetDetails {
                 .type = "PNG 地图",
                 .size = asset_size_mb_text(path, width * height),
-                .info = QString("尺寸: %1 x %2 像素, 分辨率: %3 米/像素, Z: %4")
+                .info = QString("尺寸: %1 x %2 像素, 分辨率: %3 米/像素, Yaw: %4, 原点: %5")
                             .arg(static_cast<qulonglong>(width))
                             .arg(static_cast<qulonglong>(height))
                             .arg(handle->get_resolution(), 0, 'f', 3)
-                            .arg(handle->get_plane_z(), 0, 'f', 3),
+                            .arg(config.yaw_deg, 0, 'f', 3)
+                            .arg(QString::fromStdString(std::string {
+                                png_map_origin_mode_label(config.origin_mode) })),
             };
         });
 

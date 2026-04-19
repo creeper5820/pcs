@@ -41,6 +41,21 @@ auto save_png_map_location(std::string const& suggested_name) noexcept
     return location.toStdString();
 }
 
+auto export_png_map_directory(std::string const& suggested_name) noexcept
+    -> std::expected<std::string, std::string_view> {
+    auto folder_name = std::filesystem::path(suggested_name).stem();
+    if (folder_name.empty()) {
+        folder_name = "map";
+    }
+
+    const auto parent = QFileDialog::getExistingDirectory(nullptr, "选择导出目录");
+    if (parent.isEmpty()) {
+        return std::unexpected { "用户取消导出 PNG 地图" };
+    }
+
+    return (std::filesystem::path(parent.toStdString()) / folder_name).string();
+}
+
 auto parse_double_input(creeper::OutlinedTextField& input, double fallback, double minimum) noexcept
     -> double {
     auto parsed = double { };

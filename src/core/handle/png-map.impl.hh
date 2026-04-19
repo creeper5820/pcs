@@ -6,6 +6,9 @@
 #include <QImage>
 
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 
 using namespace pcs;
 
@@ -78,6 +81,63 @@ struct PngMapHandle::Impl final {
         }
 
         return { };
+    }
+
+    auto export_to_ros_directory(std::string const& directory) const noexcept
+        -> std::expected<void, std::string_view> {
+        if (data.width == 0 || data.height == 0 || data.pixels.empty()) {
+            return std::unexpected { "PNG map is not loaded" };
+        }
+
+        auto base = std::filesystem::path(directory);
+        if (base.empty()) {
+            return std::unexpected { "ROS export directory is empty" };
+        }
+
+        auto error = std::error_code { };
+        std::filesystem::create_directories(base, error);
+        if (error) {
+            return std::unexpected { "Failed to create ROS export directory" };
+        }
+
+        const auto image_path = (base / "map.png").string();
+        auto image_result     = save_into_filesystem(image_path);
+        if (!image_result.has_value()) {
+            return image_result;
+        }
+
+        auto yaml = std::ofstream { base / "map.yaml", std::ios::out | std::ios::trunc };
+        if (!yaml.is_open()) {
+            return std::unexpected { "Failed to create ROS map yaml" };
+        }
+
+        const auto ros_origin = png_map_ros_origin(make_png_map_transform_view(data));
+        yaml << std::fixed << std::setprecision(6);
+        yaml << "image: map.png\n";
+        yaml << "mode: trinary\n";
+        yaml << "resolution: " << data.resolution << "\n";
+        yaml << "origin: [" << ros_origin[0] << ", " << ros_origin[1] << ", " << ros_origin[2]
+             << "]\n";
+        yaml << "negate: 0\n";
+        yaml << "occupied_thresh: 0.650000\n";
+        yaml << "free_thresh: 0.196000\n";
+        yaml.close();
+
+        if (!yaml) {
+            return std::unexpected { "Failed to write ROS map yaml" };
+        }
+
+        return { };
+    }
+
+    auto set_frame_config(PngMapFrameConfig const& config) noexcept -> bool {
+        data.frame_config = config;
+        if (unit == nullptr) {
+            return false;
+        }
+
+        unit->update_frame_config(data);
+        return true;
     }
 
     auto copy_pixels() const noexcept -> std::vector<std::uint8_t> { return data.pixels; }

@@ -15,6 +15,9 @@ auto save_pointcloud_location(std::string const& suggested_name) noexcept
 auto save_png_map_location(std::string const& suggested_name) noexcept
     -> std::expected<std::string, std::string_view>;
 
+auto export_png_map_directory(std::string const& suggested_name) noexcept
+    -> std::expected<std::string, std::string_view>;
+
 auto parse_double_input(creeper::OutlinedTextField& input, double fallback, double minimum) noexcept
     -> double;
 

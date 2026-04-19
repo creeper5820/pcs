@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/map/png-map-data.hh"
+#include "core/map/png-map-transform.hh"
 #include "core/renderer.hh"
 #include "utility/pimpl.hh"
 
@@ -23,6 +24,8 @@ public:
     auto load_from_data(PngMapData const&) noexcept -> std::expected<void, std::string_view>;
     auto save_into_filesystem(std::string const& path) const noexcept
         -> std::expected<void, std::string_view>;
+    auto export_to_ros_directory(std::string const& directory) const noexcept
+        -> std::expected<void, std::string_view>;
 
     auto get_width() const noexcept -> std::size_t;
     auto get_height() const noexcept -> std::size_t;
@@ -30,6 +33,9 @@ public:
     auto get_plane_z() const noexcept -> double;
     auto get_origin_x() const noexcept -> double;
     auto get_origin_y() const noexcept -> double;
+    auto get_frame_config() const noexcept -> PngMapFrameConfig;
+    auto set_frame_config(PngMapFrameConfig const&) noexcept -> bool;
+    auto transform_view() const noexcept -> PngMapTransformView;
 
     auto copy_pixels() const noexcept -> std::vector<std::uint8_t>;
     auto overwrite_pixels(std::vector<std::uint8_t> const&) noexcept -> bool;

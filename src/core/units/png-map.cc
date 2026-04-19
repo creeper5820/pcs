@@ -1,13 +1,19 @@
 #include "png-map.hh"
 
+#include "core/map/png-map-transform.hh"
+
 #include <algorithm>
 
+#include <vtk/vtkAxesActor.h>
 #include <vtk/vtkCubeSource.h>
 #include <vtk/vtkImageData.h>
+#include <vtk/vtkProperty.h>
 #include <vtk/vtkPlaneSource.h>
 #include <vtk/vtkPointData.h>
 #include <vtk/vtkPolyDataMapper.h>
+#include <vtk/vtkSphereSource.h>
 #include <vtk/vtkTexture.h>
+#include <vtk/vtkTransform.h>
 
 namespace pcs {
 
@@ -20,6 +26,11 @@ struct PngMapUnit::Impl {
     SmartPointer<vtkPolyDataMapper> area_mapper;
     SmartPointer<vtkActor> actor;
     SmartPointer<vtkActor> area_actor;
+    SmartPointer<vtkAxesActor> frame_axes;
+    SmartPointer<vtkTransform> frame_transform;
+    SmartPointer<vtkSphereSource> frame_origin;
+    SmartPointer<vtkPolyDataMapper> frame_origin_mapper;
+    SmartPointer<vtkActor> frame_origin_actor;
 
     auto update_pixels(std::vector<std::uint8_t> const& pixels) -> bool {
         if (image == nullptr) {
@@ -97,6 +108,52 @@ struct PngMapUnit::Impl {
         area_actor->GetProperty()->SetLineWidth(2.0);
         area_actor->GetProperty()->LightingOff();
         area_actor->PickableOff();
+
+        frame_axes = vtkAxesActor::New();
+        frame_axes->AxisLabelsOff();
+        frame_axes->PickableOff();
+
+        frame_transform = vtkTransform::New();
+        frame_axes->SetUserTransform(frame_transform);
+
+        frame_origin = vtkSphereSource::New();
+        frame_origin_mapper = vtkPolyDataMapper::New();
+        frame_origin_mapper->SetInputConnection(frame_origin->GetOutputPort());
+
+        frame_origin_actor = vtkActor::New();
+        frame_origin_actor->SetMapper(frame_origin_mapper);
+        frame_origin_actor->PickableOff();
+        frame_origin_actor->GetProperty()->LightingOff();
+        frame_origin_actor->GetProperty()->SetColor(1.0, 0.85, 0.1);
+        update_frame(map);
+    }
+
+    auto update_frame(PngMapData const& map) -> void {
+        if (frame_axes == nullptr) {
+            return;
+        }
+
+        const auto view   = make_png_map_transform_view(map);
+        const auto anchor = png_map_anchor_world(view);
+        const auto span_x = static_cast<double>(map.width) * map.resolution;
+        const auto span_y = static_cast<double>(map.height) * map.resolution;
+        const auto length = std::clamp(std::min(span_x, span_y) * 0.15, 0.2, 5.0);
+        const auto marker_radius = std::clamp(length * 0.05, 0.02, 0.2);
+        constexpr auto kFrameZOffset = 1e-3;
+
+        frame_axes->SetTotalLength(length, length, length * 0.6);
+        frame_transform->Identity();
+        frame_transform->Translate(anchor[0], anchor[1], map.plane_z + kFrameZOffset);
+        frame_transform->RotateZ(map.frame_config.yaw_deg);
+        frame_transform->Modified();
+
+        frame_origin->SetCenter(anchor[0], anchor[1], map.plane_z + kFrameZOffset);
+        frame_origin->SetRadius(marker_radius);
+        frame_origin->SetThetaResolution(24);
+        frame_origin->SetPhiResolution(24);
+        frame_origin->Update();
+        frame_origin_actor->Modified();
+        frame_axes->Modified();
     }
 };
 
@@ -111,17 +168,35 @@ auto PngMapUnit::actor() noexcept -> SmartPointer<vtkActor> { return pimpl->acto
 
 auto PngMapUnit::area_actor() noexcept -> SmartPointer<vtkActor> { return pimpl->area_actor; }
 
+auto PngMapUnit::frame_actor() noexcept -> vtkProp* { return pimpl->frame_axes; }
+
+auto PngMapUnit::frame_origin_actor() noexcept -> SmartPointer<vtkActor> {
+    return pimpl->frame_origin_actor;
+}
+
 auto PngMapUnit::actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
 
 auto PngMapUnit::area_actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->area_actor; }
 
+auto PngMapUnit::frame_actor() const noexcept -> vtkProp* { return pimpl->frame_axes; }
+
+auto PngMapUnit::frame_origin_actor() const noexcept -> SmartPointer<vtkActor> {
+    return pimpl->frame_origin_actor;
+}
+
 auto PngMapUnit::set_visibility(bool on) noexcept -> void {
     pimpl->actor->SetVisibility(on);
     pimpl->area_actor->SetVisibility(on);
+    pimpl->frame_axes->SetVisibility(on);
+    pimpl->frame_origin_actor->SetVisibility(on);
 }
 
 auto PngMapUnit::update_pixels(std::vector<std::uint8_t> const& pixels) noexcept -> bool {
     return pimpl->update_pixels(pixels);
+}
+
+auto PngMapUnit::update_frame_config(PngMapData const& map) noexcept -> void {
+    pimpl->update_frame(map);
 }
 
 PngMapUnit::~PngMapUnit() noexcept = default;

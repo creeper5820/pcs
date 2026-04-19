@@ -1,6 +1,7 @@
 #include "gui/interaction/png-edit-mode.hh"
 
 #include "core/handle/png-map.hh"
+#include "core/map/png-map-transform.hh"
 #include "gui/interaction/png-edit-tools.hh"
 
 #include <algorithm>
@@ -32,33 +33,13 @@ namespace {
         -> std::optional<PixelPoint> {
         const auto [wx, wy, _] = world;
 
-        const auto resolution = handle.get_resolution();
-        if (resolution <= 0.0) {
-            return std::nullopt;
-        }
-
-        const auto px = static_cast<int>(std::llround((wx - handle.get_origin_x()) / resolution));
-        const auto py = static_cast<int>(std::llround((wy - handle.get_origin_y()) / resolution));
-
-        if (px < 0 || py < 0) {
-            return std::nullopt;
-        }
-
-        if (static_cast<std::size_t>(px) >= handle.get_width()
-            || static_cast<std::size_t>(py) >= handle.get_height()) {
-            return std::nullopt;
-        }
-
-        return PixelPoint { px, py };
+        return png_map_pixel_from_world(
+            handle.transform_view(), std::array<double, 3> { wx, wy, handle.get_plane_z() });
     }
 
     auto from_pixel(PngMapHandle const& handle, PixelPoint point) noexcept
         -> std::array<double, 3> {
-        const auto x =
-            handle.get_origin_x() + static_cast<double>(point.x) * handle.get_resolution();
-        const auto y =
-            handle.get_origin_y() + static_cast<double>(point.y) * handle.get_resolution();
-        return std::array<double, 3> { x, y, handle.get_plane_z() };
+        return png_map_frame_from_pixel(handle.transform_view(), point);
     }
 
 }

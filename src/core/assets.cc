@@ -501,6 +501,23 @@ struct AssetsManager::Impl {
         return { };
     }
 
+    auto export_png_map_asset(std::string const& id, std::string const& directory) noexcept
+        -> std::expected<void, std::string> {
+        auto* asset = get_png_map_asset(id);
+        if (asset == nullptr || asset->unit == nullptr) {
+            return std::unexpected { "PNG map asset is not loaded" };
+        }
+
+        auto result = asset->unit->export_to_ros_directory(directory);
+        if (!result.has_value()) {
+            return std::unexpected { std::string { result.error() } };
+        }
+
+        asset->location  = directory;
+        asset->persisted = true;
+        return { };
+    }
+
     auto remove_asset(std::string const& id) noexcept -> bool {
         auto iter = assets.find(id);
         if (iter == assets.end()) {
@@ -697,6 +714,11 @@ auto AssetsManager::save_pointcloud_asset(std::string const& id, std::string con
 auto AssetsManager::save_png_map_asset(std::string const& id, std::string const& path) noexcept
     -> std::expected<void, std::string> {
     return pimpl->save_png_map_asset(id, path);
+}
+
+auto AssetsManager::export_png_map_asset(std::string const& id, std::string const& directory) noexcept
+    -> std::expected<void, std::string> {
+    return pimpl->export_png_map_asset(id, directory);
 }
 
 auto AssetsManager::remove_asset(std::string const& id) noexcept -> bool {

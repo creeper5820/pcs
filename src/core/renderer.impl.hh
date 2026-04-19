@@ -51,11 +51,15 @@ public:
     auto attach_png_map_unit(PngMapUnit const& unit) noexcept {
         vtk_context.attach_unit(unit.actor());
         vtk_context.attach_unit(unit.area_actor());
+        vtk_context.attach_unit(unit.frame_actor());
+        vtk_context.attach_unit(unit.frame_origin_actor());
     }
 
     auto detach_png_map_unit(PngMapUnit const& unit) noexcept {
         vtk_context.detach_unit(unit.actor());
         vtk_context.detach_unit(unit.area_actor());
+        vtk_context.detach_unit(unit.frame_actor());
+        vtk_context.detach_unit(unit.frame_origin_actor());
     }
 
     auto pick_points_unit(PointsUnit const& unit, int display_x, int display_y) noexcept

@@ -4,6 +4,7 @@
 #include "core/map/png-map-data.hh"
 
 #include <vtk/vtkActor.h>
+#include <vtk/vtkProp.h>
 
 namespace pcs {
 
@@ -17,11 +18,16 @@ public:
 
     auto actor() noexcept -> SmartPointer<vtkActor>;
     auto area_actor() noexcept -> SmartPointer<vtkActor>;
+    auto frame_actor() noexcept -> vtkProp*;
+    auto frame_origin_actor() noexcept -> SmartPointer<vtkActor>;
     auto actor() const noexcept -> SmartPointer<vtkActor>;
     auto area_actor() const noexcept -> SmartPointer<vtkActor>;
+    auto frame_actor() const noexcept -> vtkProp*;
+    auto frame_origin_actor() const noexcept -> SmartPointer<vtkActor>;
 
     auto set_visibility(bool on) noexcept -> void;
     auto update_pixels(std::vector<std::uint8_t> const& pixels) noexcept -> bool;
+    auto update_frame_config(PngMapData const& map) noexcept -> void;
 
 private:
     auto initialize(PngMapData const&) noexcept -> void;
