@@ -4,6 +4,18 @@
 #include <creeper-qt/layout/linear.hh>
 #include <creeper-qt/widget/cards/filled-card.hh>
 
+#include <QFont>
+#include <QFontMetrics>
+#include <QLabel>
+#include <QMouseEvent>
+#include <QPainterPath>
+#include <QRegion>
+
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+
+#include <algorithm>
+
 using namespace creeper;
 
 template <class T>
@@ -13,7 +25,7 @@ struct Rounded : public T {
     auto resizeEvent(QResizeEvent* event) -> void override {
         T::resizeEvent(event);
 
-        auto path = QPainterPath {};
+        auto path = QPainterPath { };
         path.addRoundedRect(this->rect(), rounded_radius, rounded_radius);
 
         auto mask = QRegion(path.toFillPolygon().toPolygon());
@@ -23,12 +35,181 @@ struct Rounded : public T {
     double rounded_radius = 10;
 };
 
-auto VisualizationWindowComponent(VisualizationWindowState& state) noexcept -> QPointer<QWidget> {
+class InteractiveVtkWindow : public Rounded<pcs::QtVtkWindow> {
+public:
+    explicit InteractiveVtkWindow(pcs::gui::interaction::Mouse* mouse) noexcept
+        : mouse { mouse } {
+        setMouseTracking(true);
 
+        status_label = new QLabel { this };
+        status_label->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        status_label->setStyleSheet("QLabel {"
+                                    "color: white;"
+                                    "background: rgba(0, 0, 0, 160);"
+                                    "padding: 6px 8px;"
+                                    "border-radius: 8px;"
+                                    "}");
+
+        auto font = QFont { "WenQuanYi Micro Hei", 10 };
+        font.setStyleHint(QFont::SansSerif);
+        status_label->setFont(font);
+        status_label->show();
+    }
+
+    auto set_status_text(QString text) noexcept -> void {
+        status_text = std::move(text);
+        update_status_label();
+    }
+
+    auto sync_interaction_state() noexcept -> void {
+        auto* interactor = renderWindow() != nullptr ? renderWindow()->GetInteractor() : nullptr;
+        if (interactor == nullptr) {
+            return;
+        }
+
+        if (allow_camera_interaction()) {
+            interactor->Enable();
+            return;
+        }
+
+        interactor->Disable();
+    }
+
+protected:
+    auto resizeEvent(QResizeEvent* event) -> void override {
+        Rounded<pcs::QtVtkWindow>::resizeEvent(event);
+        update_status_label();
+    }
+
+    auto mouseMoveEvent(QMouseEvent* event) -> void override {
+        emit_move(*event);
+        if (allow_camera_interaction()) {
+            Rounded<pcs::QtVtkWindow>::mouseMoveEvent(event);
+            return;
+        }
+
+        event->accept();
+    }
+
+    auto mousePressEvent(QMouseEvent* event) -> void override {
+        emit_click(*event);
+        if (allow_camera_interaction()) {
+            Rounded<pcs::QtVtkWindow>::mousePressEvent(event);
+            return;
+        }
+
+        event->accept();
+    }
+
+    auto mouseReleaseEvent(QMouseEvent* event) -> void override {
+        if (allow_camera_interaction()) {
+            Rounded<pcs::QtVtkWindow>::mouseReleaseEvent(event);
+            return;
+        }
+
+        event->accept();
+    }
+
+private:
+    auto allow_camera_interaction() const noexcept -> bool {
+        if (mouse == nullptr) {
+            return true;
+        }
+        return mouse->allows_camera_interaction();
+    }
+
+    auto update_status_label() noexcept -> void {
+        if (status_label == nullptr) {
+            return;
+        }
+
+        if (status_text.isEmpty()) {
+            status_label->hide();
+            return;
+        }
+
+        status_label->show();
+
+        constexpr auto kMargin      = 12;
+        constexpr auto kPaddingLeft = 16;
+
+        const auto max_text_width = std::max(120, width() - kMargin * 2 - kPaddingLeft);
+        auto metrics              = QFontMetrics { status_label->font() };
+        auto text                 = metrics.elidedText(status_text, Qt::ElideRight, max_text_width);
+        status_label->setText(text);
+        status_label->adjustSize();
+
+        const auto h = status_label->height();
+        status_label->move(kMargin, std::max(0, height() - kMargin - h));
+    }
+
+    auto emit_move(QMouseEvent const& event) noexcept -> void {
+        if (mouse == nullptr) {
+            return;
+        }
+
+        mouse->emit_move(pcs::gui::interaction::MouseEvent {
+            .x         = event.position().toPoint().x(),
+            .y         = event.position().toPoint().y(),
+            .modifiers = event.modifiers(),
+            .buttons   = event.buttons(),
+        });
+    }
+
+    auto emit_click(QMouseEvent const& event) noexcept -> void {
+        if (mouse == nullptr) {
+            return;
+        }
+
+        const auto payload = pcs::gui::interaction::MouseEvent {
+            .x         = event.position().toPoint().x(),
+            .y         = event.position().toPoint().y(),
+            .modifiers = event.modifiers(),
+            .buttons   = event.buttons(),
+        };
+
+        if (event.button() == Qt::LeftButton) {
+            mouse->emit_lclick(payload);
+            return;
+        }
+        if (event.button() == Qt::RightButton) {
+            mouse->emit_rclick(payload);
+            return;
+        }
+    }
+
+    pcs::gui::interaction::Mouse* mouse = nullptr;
+    QLabel* status_label                = nullptr;
+    QString status_text;
+};
+
+auto VisualizationWindowComponent(VisualizationWindowState& state) noexcept -> QPointer<QWidget> {
     const auto QtVtkWindowComponent = [&] {
-        auto window = new Rounded<pcs::QtVtkWindow> {};
+        auto window = new InteractiveVtkWindow { state.mouse };
 
         state.renderer.connect_ui(*window);
+        window->sync_interaction_state();
+
+        if (state.mouse != nullptr) {
+            state.mouse->set_status_sink(
+                [guard = QPointer<InteractiveVtkWindow> { window }](QString const& text) {
+                    if (guard != nullptr) {
+                        guard->set_status_text(text);
+                    }
+                });
+            state.mouse->set_mode_sink(
+                [guard = QPointer<InteractiveVtkWindow> { window }](auto) {
+                    if (guard != nullptr) {
+                        guard->sync_interaction_state();
+                    }
+                });
+            state.mouse->set_png_edit_tool_sink(
+                [guard = QPointer<InteractiveVtkWindow> { window }](auto) {
+                    if (guard != nullptr) {
+                        guard->sync_interaction_state();
+                    }
+                });
+        }
 
         return window;
     };

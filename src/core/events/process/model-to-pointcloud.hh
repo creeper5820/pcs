@@ -1,14 +1,12 @@
 #pragma once
 
 #include "core/events/common.hh"
+#include "core/map/model-data.hh"
 #include "core/map/model-pointcloud-data.hh"
 
 #include <expected>
 #include <tuple>
 #include <vector>
-
-#include <vtk/vtkPolyData.h>
-#include <vtk/vtkSmartPointer.h>
 
 namespace pcs::event {
 
@@ -22,7 +20,7 @@ struct ConvertModelToPointcloud {
             .consuming = true,
         };
 
-        vtkSmartPointer<vtkPolyData> poly_data;
+        ModelData model;
         ModelToPointcloudParameters parameters;
     };
 

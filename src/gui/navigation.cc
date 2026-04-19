@@ -8,6 +8,8 @@
 #include <creeper-qt/widget/cards/outlined-card.hh>
 #include <creeper-qt/widget/image.hh>
 
+#include <qpointer.h>
+
 using namespace creeper;
 
 auto NavigationComponent(NavigationState& state) noexcept -> QPointer<QWidget> {
@@ -23,6 +25,42 @@ auto NavigationComponent(NavigationState& state) noexcept -> QPointer<QWidget> {
         ib::FixedSize { IconButton::kSmallContainerSize },
         ib::Font { state.icon_font.c_str(), IconButton::kSmallFontIconSize },
     };
+
+    const auto picker_enabled = [&state] {
+        if (state.picker_mode_getter) {
+            return state.picker_mode_getter();
+        }
+        return false;
+    };
+
+    const auto picker_button_type =
+        picker_enabled() ? ib::TypesToggleSelected : ib::TypesToggleUnselected;
+
+    auto picker_button = new IconButton {
+        common_button,
+        picker_button_type,
+        ib::ColorFilled,
+        ib::FontIcon { "ads_click" },
+        ib::ToolTip { "切换坐标拾取模式" },
+        ib::Clickable { [&](IconButton& self) {
+            if (!state.picker_mode_getter || !state.picker_mode_setter) {
+                return;
+            }
+
+            const auto next = !state.picker_mode_getter();
+            state.picker_mode_setter(next);
+            self.set_selected(next);
+        } },
+    };
+
+    if (state.mouse != nullptr) {
+        state.mouse->set_mode_sink([guard = QPointer<IconButton> { picker_button }](
+                                       ::pcs::gui::interaction::MouseModeId mode) {
+            if (guard != nullptr) {
+                guard->set_selected(mode == ::pcs::gui::interaction::MouseModeId::Picker);
+            }
+        });
+    }
 
     const auto AvatarComponent = new Image {
         im::FixedSize { 60, 60 },
@@ -71,6 +109,7 @@ auto NavigationComponent(NavigationState& state) noexcept -> QPointer<QWidget> {
                     },
                 },
             },
+            col::pro::Item { { 0, Qt::AlignHCenter }, picker_button },
 
             col::pro::Stretch { 255 },
 

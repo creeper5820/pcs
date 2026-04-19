@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gui/interaction/mouse.hh"
+
 #include <creeper-qt/utility/theme/theme.hh>
 
 #include <qpointer.h>
@@ -9,6 +11,7 @@ struct NavigationState {
     creeper::ThemeManager& manager;
 
     std::string icon_font;
+    pcs::gui::interaction::Mouse* mouse = nullptr;
 
     struct ButtonContext {
         std::string_view name;
@@ -16,6 +19,9 @@ struct NavigationState {
         std::function<void()> callback;
     };
     std::vector<ButtonContext> buttons_context;
+
+    std::function<void(bool)> picker_mode_setter;
+    std::function<bool()> picker_mode_getter;
 
     std::function<void()> function_quit;
 };

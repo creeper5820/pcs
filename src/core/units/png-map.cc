@@ -21,6 +21,31 @@ struct PngMapUnit::Impl {
     SmartPointer<vtkActor> actor;
     SmartPointer<vtkActor> area_actor;
 
+    auto update_pixels(std::vector<std::uint8_t> const& pixels) -> bool {
+        if (image == nullptr) {
+            return false;
+        }
+
+        auto dimensions   = image->GetDimensions();
+        const auto width  = static_cast<std::size_t>(dimensions[0]);
+        const auto height = static_cast<std::size_t>(dimensions[1]);
+        if (pixels.size() != width * height) {
+            return false;
+        }
+
+        for (std::size_t y = 0; y < height; ++y) {
+            for (std::size_t x = 0; x < width; ++x) {
+                auto* pixel = static_cast<unsigned char*>(
+                    image->GetScalarPointer(static_cast<int>(x), static_cast<int>(y), 0));
+                pixel[0] = pixels[y * width + x];
+            }
+        }
+
+        image->Modified();
+        texture->Modified();
+        return true;
+    }
+
     auto initialize(PngMapData const& map) {
         image = vtkImageData::New();
         image->SetDimensions(static_cast<int>(map.width), static_cast<int>(map.height), 1);
@@ -86,9 +111,17 @@ auto PngMapUnit::actor() noexcept -> SmartPointer<vtkActor> { return pimpl->acto
 
 auto PngMapUnit::area_actor() noexcept -> SmartPointer<vtkActor> { return pimpl->area_actor; }
 
+auto PngMapUnit::actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
+
+auto PngMapUnit::area_actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->area_actor; }
+
 auto PngMapUnit::set_visibility(bool on) noexcept -> void {
     pimpl->actor->SetVisibility(on);
     pimpl->area_actor->SetVisibility(on);
+}
+
+auto PngMapUnit::update_pixels(std::vector<std::uint8_t> const& pixels) noexcept -> bool {
+    return pimpl->update_pixels(pixels);
 }
 
 PngMapUnit::~PngMapUnit() noexcept = default;

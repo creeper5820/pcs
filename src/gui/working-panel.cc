@@ -35,28 +35,15 @@ constexpr auto kPanelWidthScale = 1.3;
 constexpr auto kPanelMinWidth   = 416;
 constexpr auto kPanelMaxWidth   = 728;
 
-static auto open_asset_location() noexcept -> std::expected<std::string, std::string_view> {
-    const auto location = QFileDialog::getOpenFileName(
-        nullptr, "打开资产", "", "资产文件 (*.pcd *.obj);;点云文件 (*.pcd);;模型文件 (*.obj)");
+static auto open_asset_location(QString const& filter) noexcept
+    -> std::expected<std::string, std::string_view> {
+    const auto location = QFileDialog::getOpenFileName(nullptr, "打开资产", "", filter);
 
     if (location.isEmpty()) {
         return std::unexpected { "用户取消了文件选择" };
     }
 
     return location.toStdString();
-}
-
-auto asset_kind_text(pcs::AssetKind kind) noexcept -> QString {
-    switch (kind) {
-    case pcs::AssetKind::Pointcloud:
-        return "点云";
-    case pcs::AssetKind::Model:
-        return "模型";
-    case pcs::AssetKind::PngMap:
-        return "PNG 地图";
-    }
-
-    return "未知";
 }
 
 auto fold_text_for_panel(QString const& value, int wrap_after = 36) noexcept -> QString {
@@ -91,44 +78,16 @@ auto fold_text_for_panel(QString const& value, int wrap_after = 36) noexcept -> 
     return folded;
 }
 
-auto trim_decimal_zeros(QString text) noexcept -> QString {
-    while (text.contains('.') && text.endsWith('0')) {
-        text.chop(1);
-    }
-    if (text.endsWith('.')) {
-        text.chop(1);
-    }
-    if (text == "-0") {
-        return "0";
-    }
-    return text;
-}
-
-auto format_size_mb(std::uintmax_t bytes) noexcept -> QString {
-    const auto mb = static_cast<double>(bytes) / (1024.0 * 1024.0);
-    return trim_decimal_zeros(QString::number(mb, 'f', 2));
-}
-
-auto asset_size_mb_text(std::string const& path, std::uintmax_t fallback_bytes) noexcept
-    -> QString {
-    if (!path.empty() && path != "<memory>") {
-        auto error      = std::error_code { };
-        const auto size = std::filesystem::file_size(path, error);
-        if (!error) {
-            return format_size_mb(size);
-        }
-    }
-
-    return format_size_mb(fallback_bytes);
-}
-
 }
 
 auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidget> {
     auto& manager = state.manager;
     auto& assets  = state.assets;
+    auto* mouse   = state.mouse;
 
     auto current_asset_id = std::make_shared<std::string>();
+    auto* open_control    = state.open_control;
+    auto* asset_details_registry = state.asset_details_registry;
 
     auto location_list = new QStringListModel { };
 
@@ -170,14 +129,16 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         }
     };
 
-    action_host = new pcs::gui::working::ActionPanelHost(
-        pcs::gui::working::ActionPanelContext {
-            .manager             = &manager,
-            .assets              = &assets,
-            .refresh_assets_list = refresh_assets_list,
-            .select_asset        = select_asset,
-        },
-        font);
+    auto panel_context                = pcs::gui::working::ActionPanelContext { };
+    panel_context.manager             = &manager;
+    panel_context.assets              = &assets;
+    panel_context.runtime             = &state.runtime;
+    panel_context.mouse               = mouse;
+    panel_context.refresh_assets_list = refresh_assets_list;
+    panel_context.select_asset        = select_asset;
+
+    action_host =
+        new pcs::gui::working::ActionPanelHost(panel_context, state.action_panel_registry, font);
 
     const auto prop_row = [&](auto name, auto& prop) {
         return new Row {
@@ -189,7 +150,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
                 text::pro::Text { name },
                 text::pro::Font { font },
                 text::pro::Alignment { Qt::AlignTop | Qt::AlignLeft },
-                widget::pro::FixedWidth { 54 },
+                widget::pro::FixedWidth { 82 },
             },
             row::pro::Item<Text> {
                 { 1, Qt::AlignTop },
@@ -252,13 +213,9 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         return new Row {
             row::pro::Spacing { 10 },
             row::pro::Margin { 5 },
-            row::pro::Item<Text> {
-                theme_manager,
-                text::pro::Text { "操作:" },
-                text::pro::Font { font },
-            },
             row::pro::Item { visibility_button->data() },
             row::pro::Item { delete_button->data() },
+            row::pro::Stretch { 255 },
         };
     };
 
@@ -302,9 +259,12 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
             return;
         }
 
+        if (mouse != nullptr) {
+            mouse->set_selected_asset(id, *kind);
+        }
+
         *current_asset_id = id;
         *asset_name       = QString::fromStdString(assets.get_asset_name(id).value_or("未知"));
-        *asset_type       = asset_kind_text(*kind);
         *asset_path       = QString::fromStdString(assets.get_asset_path(id).value_or("未知"));
 
         const auto visible = assets.is_asset_visible(id).value_or(true);
@@ -320,53 +280,18 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
         action_host->bind_asset(*kind, id);
 
-        switch (*kind) {
-        case pcs::AssetKind::Pointcloud:
-            if (auto result = assets.get_pointcloud_handle(id)) {
-                auto* handle               = result.value();
-                const auto points_count    = static_cast<std::uintmax_t>(handle->get_points_size());
-                const auto path            = assets.get_asset_path(id).value_or(std::string { });
-                const auto estimated_bytes = points_count * 3U * sizeof(float);
-
-                *asset_size = asset_size_mb_text(path, estimated_bytes);
-
-                const auto is_memory = path == "<memory>";
-                *asset_info          = QString("点数: %1 点, 状态: %2")
-                                           .arg(static_cast<qulonglong>(points_count))
-                                           .arg(is_memory ? "内存中" : "已保存");
+        if (asset_details_registry != nullptr) {
+            if (auto details = asset_details_registry->provide(*kind, assets, id)) {
+                *asset_type = details->type;
+                *asset_size = details->size;
+                *asset_info = details->info;
+                return;
             }
-            break;
-        case pcs::AssetKind::Model:
-            if (auto result = assets.get_model_handle(id)) {
-                auto* handle        = result.value();
-                const auto vertices = static_cast<std::uintmax_t>(handle->get_points_size());
-                const auto faces    = static_cast<std::uintmax_t>(handle->get_polys_size());
-                const auto path     = assets.get_asset_path(id).value_or(std::string { });
-                const auto estimated_bytes =
-                    vertices * 3U * sizeof(float) + faces * 3U * sizeof(std::uint32_t);
-
-                *asset_size = asset_size_mb_text(path, estimated_bytes);
-                *asset_info = QString("顶点: %1 点, 面数: %2 面")
-                                  .arg(static_cast<qulonglong>(vertices))
-                                  .arg(static_cast<qulonglong>(faces));
-            }
-            break;
-        case pcs::AssetKind::PngMap:
-            if (auto result = assets.get_png_map_handle(id)) {
-                auto* handle      = result.value();
-                const auto width  = static_cast<std::uintmax_t>(handle->get_width());
-                const auto height = static_cast<std::uintmax_t>(handle->get_height());
-                const auto path   = assets.get_asset_path(id).value_or(std::string { });
-
-                *asset_size = asset_size_mb_text(path, width * height);
-                *asset_info = QString("尺寸: %1 x %2 像素, 分辨率: %3 米/像素, Z: %4")
-                                  .arg(static_cast<qulonglong>(width))
-                                  .arg(static_cast<qulonglong>(height))
-                                  .arg(handle->get_resolution(), 0, 'f', 3)
-                                  .arg(handle->get_plane_z(), 0, 'f', 3);
-            }
-            break;
         }
+
+        *asset_type = "未知";
+        *asset_size = "未知";
+        *asset_info = "未知";
     };
 
     *assets_view = new AssetsView {
@@ -383,6 +308,10 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         *asset_path       = "未知";
         *asset_size       = "未知";
         *asset_info       = "未知";
+
+        if (mouse != nullptr) {
+            mouse->clear_selected_asset();
+        }
 
         if (visibility_button != nullptr && *visibility_button != nullptr) {
             sync_visibility_button(false);
@@ -431,10 +360,20 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
     });
 
     const auto open_location = [=, &assets] {
+        if (open_control == nullptr) {
+            QMessageBox::warning(nullptr, "打开失败", "未注册任何可打开的资产格式。");
+            return;
+        }
+
         const auto previous_last = last_asset_id();
 
-        if (auto result = open_asset_location()) {
-            assets.open_file(*result);
+        if (auto result = open_asset_location(open_control->dialog_filter())) {
+            if (auto open_result = open_control->open(*result); !open_result.has_value()) {
+                QMessageBox::warning(nullptr, "打开失败",
+                    QString::fromStdString(open_result.error()));
+                return;
+            }
+
             refresh_assets_list();
 
             const auto current_last = last_asset_id();
@@ -476,7 +415,9 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
             widget::pro::Layout<Col> {
                 col::pro::Margin { 0 },
                 col::pro::Spacing { 5 },
+                col::pro::Alignment { Qt::AlignHCenter },
                 col::pro::Item<IconButton> {
+                    { 0, Qt::AlignHCenter },
                     icon_button::pro::ThemeManager { manager },
                     icon_button::pro::FixedSize { IconButton::kSmallContainerSize },
                     icon_button::pro::FontIcon { icon },
@@ -487,6 +428,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
                     icon_button::pro::ShapeSquare,
                 },
                 col::pro::Item<Text> {
+                    { 0, Qt::AlignHCenter },
                     text::pro::ThemeManager { manager },
                     text::pro::Text { name },
                     text::pro::FixedWidth { 50 },

@@ -80,7 +80,7 @@ public:
     template <class Points>
         requires details::unit::points::points_trait<Points>
     explicit PointsUnit(Points const& points) noexcept
-        : pcs::PointsUnit {} {
+        : pcs::PointsUnit { } {
         using namespace details::unit::points;
 
         auto vtk_points = vtkPoints::New();
@@ -92,6 +92,7 @@ public:
     }
 
     auto actor() noexcept -> SmartPointer<vtkActor>;
+    auto actor() const noexcept -> SmartPointer<vtkActor>;
 
     auto get_points_size() const noexcept -> std::size_t;
 

@@ -4,6 +4,7 @@
 #include "utility/pimpl.hh"
 
 #include <expected>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -24,6 +25,9 @@ public:
     auto get_points_size() const noexcept -> std::size_t;
 
     auto get_positions() const noexcept -> std::vector<Position>;
+
+    auto pick_position(Renderer&, int display_x, int display_y) const noexcept
+        -> std::optional<Position>;
 
     auto set_visibility(bool) noexcept -> void;
 

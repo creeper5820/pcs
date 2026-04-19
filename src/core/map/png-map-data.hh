@@ -12,7 +12,7 @@ struct PngMapParameters {
     double height_limit      = 0.1;
     double influence_radius  = 0.08;
     double z_area_start      = 0.0;
-    double z_area_end        = 0.2;
+    double z_area_end        = 1.0;
 };
 
 struct PngMapData {
@@ -28,7 +28,7 @@ struct PngMapData {
     double plane_z = -0.02;
 
     double z_area_start = 0.0;
-    double z_area_end   = 0.2;
+    double z_area_end   = 1.0;
 };
 
 }

@@ -1,9 +1,8 @@
 #include "app.hh"
 
-#include "core/assets.hh"
-#include "core/renderer.hh"
-#include "core/runtime.hh"
-
+#include "gui/context/features.hh"
+#include "gui/context/modules.hh"
+#include "gui/context/states.hh"
 #include "gui/navigation.hh"
 #include "gui/visualization-window.hh"
 #include "gui/working-panel.hh"
@@ -45,9 +44,8 @@ public:
 
         // App modules loading
         {
-            runtime  = std::make_unique<Runtime>();
-            renderer = std::make_unique<Renderer>();
-            assets   = std::make_unique<AssetsManager>(*renderer);
+            modules = gui::context::make_app_modules();
+            gui::context::register_default_features(modules);
 
             sp::info("App modules are loaded");
         }
@@ -58,11 +56,21 @@ public:
             manager->set_theme_pack(kBlueMikuThemePack);
             manager->set_color_mode(ColorMode::LIGHT);
 
+            states = gui::context::make_app_states(*manager, modules);
+
             {
-                navigation_state = std::make_unique<NavigationState>(*manager);
+                navigation_state = std::move(states.navigation);
 
                 navigation_state->icon_font     = material::round::font;
+                navigation_state->mouse         = modules.mouse.get();
                 navigation_state->function_quit = [this] { exit_application_with_confirment(); };
+                navigation_state->picker_mode_getter = [this] {
+                    return modules.mouse->mode() == gui::interaction::MouseModeId::Picker;
+                };
+                navigation_state->picker_mode_setter = [this](bool on) {
+                    modules.mouse->set_mode(on ? gui::interaction::MouseModeId::Picker
+                                               : gui::interaction::MouseModeId::None);
+                };
 
                 auto& contexts = navigation_state->buttons_context;
                 contexts.emplace_back("3d window", "home", [this] { });
@@ -70,24 +78,23 @@ public:
                     "switch theme", "format_paint", [this] { switch_next_theme(); });
             }
             {
-                visualization_window_state =
-                    std::make_unique<VisualizationWindowState>(*manager, *renderer);
+                visualization_window_state = std::move(states.visualization);
             }
             {
-                working_panel_state =
-                    std::make_unique<WorkingPanelState>(*manager, *assets, *renderer);
+                working_panel_state = std::move(states.working);
             }
 
             window = MainWindowComponent();
 
             const auto& colorscheme = manager->theme_pack().dark;
             const auto& background  = colorscheme.background;
-            renderer->set_background(background.redF(), background.greenF(), background.blueF());
+            modules.renderer->set_background(
+                background.redF(), background.greenF(), background.blueF());
 
             const auto point = colorscheme.primary;
-            assets->set_default_point_color(point.redF(), point.greenF(), point.blueF());
+            modules.assets->set_default_point_color(point.redF(), point.greenF(), point.blueF());
 
-            renderer->render_window();
+            modules.renderer->render_window();
 
             manager->apply_theme();
 
@@ -123,11 +130,10 @@ private:
     std::unique_ptr<NavigationState> navigation_state;
     std::unique_ptr<VisualizationWindowState> visualization_window_state;
     std::unique_ptr<WorkingPanelState> working_panel_state;
+    gui::context::AppStates states;
 
     std::unique_ptr<ThemeManager> manager;
-    std::unique_ptr<Runtime> runtime;
-    std::unique_ptr<Renderer> renderer;
-    std::unique_ptr<AssetsManager> assets;
+    gui::context::AppModules modules;
 
     auto MainWindowComponent() noexcept -> QPointer<MainWindow> {
         namespace mwp = main_window::pro;

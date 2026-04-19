@@ -1,6 +1,11 @@
 #include "model.hh"
 
+#include <vtk/vtkCellArray.h>
+#include <vtk/vtkPoints.h>
+#include <vtk/vtkPolyData.h>
 #include <vtk/vtkPolyDataMapper.h>
+
+#include <array>
 
 namespace pcs {
 
@@ -9,8 +14,28 @@ struct ModelUnit::Impl {
     SmartPointer<vtkPolyDataMapper> mapper;
     SmartPointer<vtkActor> actor;
 
-    auto initialize(SmartPointer<vtkPolyData> poly_data) {
-        data = std::move(poly_data);
+    auto initialize(ModelData const& model) {
+        auto points = vtkSmartPointer<vtkPoints>::New();
+        points->SetDataTypeToDouble();
+
+        for (auto const& vertex : model.vertices) {
+            points->InsertNextPoint(vertex[0], vertex[1], vertex[2]);
+        }
+
+        auto polys = vtkSmartPointer<vtkCellArray>::New();
+        for (auto const& face : model.faces) {
+            const auto triangle = std::array<vtkIdType, 3> {
+                static_cast<vtkIdType>(face[0]),
+                static_cast<vtkIdType>(face[1]),
+                static_cast<vtkIdType>(face[2]),
+            };
+
+            polys->InsertNextCell(static_cast<vtkIdType>(triangle.size()), triangle.data());
+        }
+
+        data = vtkPolyData::New();
+        data->SetPoints(points);
+        data->SetPolys(polys);
 
         mapper = vtkPolyDataMapper::New();
         mapper->SetInputData(data);
@@ -20,16 +45,16 @@ struct ModelUnit::Impl {
     }
 };
 
-ModelUnit::ModelUnit(SmartPointer<vtkPolyData> poly_data) noexcept
+ModelUnit::ModelUnit(ModelData const& model) noexcept
     : pimpl { std::make_unique<Impl>() } {
-    initialize(std::move(poly_data));
+    initialize(model);
 }
 
-auto ModelUnit::initialize(SmartPointer<vtkPolyData> poly_data) noexcept -> void {
-    pimpl->initialize(std::move(poly_data));
-}
+auto ModelUnit::initialize(ModelData const& model) noexcept -> void { pimpl->initialize(model); }
 
 auto ModelUnit::actor() noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
+
+auto ModelUnit::actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
 
 auto ModelUnit::get_points_size() const noexcept -> std::size_t {
     return pimpl->data->GetNumberOfPoints();
