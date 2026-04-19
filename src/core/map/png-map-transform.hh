@@ -29,14 +29,12 @@ auto png_map_origin_pixel(PngMapTransformView const& view) noexcept -> PixelPoin
 auto png_map_anchor_world(PngMapTransformView const& view) noexcept -> std::array<double, 3>;
 auto png_map_world_from_pixel(PngMapTransformView const& view, PixelPoint point) noexcept
     -> std::array<double, 3>;
-auto png_map_frame_from_world(
-    PngMapTransformView const& view, std::array<double, 3> const& world) noexcept
-    -> std::array<double, 3>;
+auto png_map_frame_from_world(PngMapTransformView const& view,
+    std::array<double, 3> const& world) noexcept -> std::array<double, 3>;
 auto png_map_frame_from_pixel(PngMapTransformView const& view, PixelPoint point) noexcept
     -> std::array<double, 3>;
-auto png_map_pixel_from_world(
-    PngMapTransformView const& view, std::array<double, 3> const& world) noexcept
-    -> std::optional<PixelPoint>;
+auto png_map_pixel_from_world(PngMapTransformView const& view,
+    std::array<double, 3> const& world) noexcept -> std::optional<PixelPoint>;
 auto png_map_ros_origin(PngMapTransformView const& view) noexcept -> std::array<double, 3>;
 
 }

@@ -2,9 +2,9 @@
 
 #include "core/assets.hh"
 
+#include <functional>
 #include <optional>
 #include <string>
-#include <functional>
 #include <unordered_map>
 
 #include <QString>
@@ -19,7 +19,8 @@ struct AssetDetails {
 
 class AssetDetailsRegistry {
 public:
-    using Provider = std::function<std::optional<AssetDetails>(pcs::AssetsManager&, std::string const&)>;
+    using Provider =
+        std::function<std::optional<AssetDetails>(pcs::AssetsManager&, std::string const&)>;
 
     auto register_provider(pcs::AssetKind, Provider) noexcept -> void;
     auto provide(pcs::AssetKind, pcs::AssetsManager&, std::string const&) const noexcept

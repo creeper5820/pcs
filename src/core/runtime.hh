@@ -27,7 +27,7 @@ public:
         const auto& meta = context->meta;
         // Do something for record
 
-        auto promise = std::promise<R> {};
+        auto promise = std::promise<R> { };
         auto future  = promise.get_future();
 
         struct Instantiated : public Task {

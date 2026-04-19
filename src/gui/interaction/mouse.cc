@@ -152,7 +152,8 @@ auto Mouse::set_selected_asset(std::string id, pcs::AssetKind kind) noexcept -> 
     };
 
     auto iter = modes.find(current_mode);
-    if (iter != modes.end() && iter->second != nullptr && !iter->second->supports_selection(asset)) {
+    if (iter != modes.end() && iter->second != nullptr
+        && !iter->second->supports_selection(asset)) {
         set_mode(MouseModeId::None);
     }
 }
@@ -161,12 +162,15 @@ auto Mouse::clear_selected_asset() noexcept -> void {
     asset.reset();
 
     auto iter = modes.find(current_mode);
-    if (iter != modes.end() && iter->second != nullptr && !iter->second->supports_selection(asset)) {
+    if (iter != modes.end() && iter->second != nullptr
+        && !iter->second->supports_selection(asset)) {
         set_mode(MouseModeId::None);
     }
 }
 
-auto Mouse::selected_asset() const noexcept -> std::optional<MouseSelection> const& { return asset; }
+auto Mouse::selected_asset() const noexcept -> std::optional<MouseSelection> const& {
+    return asset;
+}
 
 auto Mouse::start_png_origin_pick(PngOriginPickRequest request) noexcept -> void {
     png_origin_pick = std::move(request);

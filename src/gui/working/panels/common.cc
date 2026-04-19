@@ -137,13 +137,13 @@ auto compact_text_field_measurements() noexcept -> creeper::OutlinedTextField::M
 }
 
 auto compact_slider_measurements() noexcept -> creeper::slider::internal::Slider::Measurements {
-    auto measurements = creeper::slider::internal::Slider::Measurements::Xs();
-    measurements.track_height = 8;
-    measurements.handle_height = 18;
-    measurements.handle_width = 4;
-    measurements.track_shape = 4;
+    auto measurements                   = creeper::slider::internal::Slider::Measurements::Xs();
+    measurements.track_height           = 8;
+    measurements.handle_height          = 18;
+    measurements.handle_width           = 4;
+    measurements.track_shape            = 4;
     measurements.label_container_height = 0;
-    measurements.label_container_width = 0;
+    measurements.label_container_width  = 0;
     return measurements;
 }
 
@@ -211,8 +211,8 @@ AngleSliderFieldRow::AngleSliderFieldRow(creeper::theme::pro::ThemeManager const
         creeper::slider::pro::Progress { 0.0 },
     };
 
-    value_field = make_parameter_field(theme, font, field_width,
-        QString::number(default_degrees, 'f', 3));
+    value_field =
+        make_parameter_field(theme, font, field_width, QString::number(default_degrees, 'f', 3));
 
     QObject::connect(value_slider, &creeper::Slider::signal_value_change, this,
         [this](double progress) { sync_from_slider(progress); });

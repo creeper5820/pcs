@@ -12,7 +12,7 @@ struct PngEditToolDescriptor {
     PngEditTool id;
     QString label;
     QString icon;
-    int param_index = 0;
+    int param_index                = 0;
     bool allows_camera_interaction = false;
 };
 

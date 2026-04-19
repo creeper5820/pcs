@@ -77,12 +77,8 @@ public:
                 contexts.emplace_back(
                     "switch theme", "format_paint", [this] { switch_next_theme(); });
             }
-            {
-                visualization_window_state = std::move(states.visualization);
-            }
-            {
-                working_panel_state = std::move(states.working);
-            }
+            { visualization_window_state = std::move(states.visualization); }
+            { working_panel_state = std::move(states.working); }
 
             window = MainWindowComponent();
 

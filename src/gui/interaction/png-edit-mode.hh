@@ -6,9 +6,9 @@
 #include "core/renderer.hh"
 #include "gui/interaction/mouse.hh"
 
+#include <functional>
 #include <optional>
 #include <string>
-#include <functional>
 #include <unordered_map>
 #include <vector>
 
@@ -58,7 +58,8 @@ private:
         PixelPoint to, std::size_t thickness, QString const& verb) noexcept -> bool;
     auto apply_edit(Session const&, PngMapHandle&, event::PngMapEditOperation, PixelPoint from,
         PixelPoint to, std::size_t thickness) const noexcept -> event::ApplyPngMapEdit::Result;
-    auto show_preview(PngMapHandle&, Session&, PixelPoint to, std::size_t thickness) noexcept -> bool;
+    auto show_preview(PngMapHandle&, Session&, PixelPoint to, std::size_t thickness) noexcept
+        -> bool;
     auto clear_preview(PngMapHandle&, Session&) noexcept -> bool;
     auto commit_session(PngMapHandle&, Session const&) noexcept -> bool;
 

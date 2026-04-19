@@ -44,8 +44,8 @@ struct Runtime::Impl {
     }
 
     auto submit_task(std::unique_ptr<Task> task) noexcept {
-        static_cast<co::runtime_executor&>(*work_exec).submit_task(
-            [task = std::move(task)]() mutable { task->exec(); });
+        static_cast<co::runtime_executor&>(*work_exec)
+            .submit_task([task = std::move(task)]() mutable { task->exec(); });
     }
 };
 

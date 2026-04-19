@@ -7,10 +7,17 @@
 
 namespace pcs {
 
+enum class PngMapExportMirror {
+    Horizontal,
+    Vertical,
+    None,
+};
+
 struct PngMapFrameConfig {
     double yaw_deg = 0.0;
     std::optional<int> origin_pixel_x;
     std::optional<int> origin_pixel_y;
+    PngMapExportMirror export_mirror { PngMapExportMirror::Horizontal };
 };
 
 struct PngMapParameters {

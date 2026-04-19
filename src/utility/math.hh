@@ -2,7 +2,8 @@
 
 namespace util {
 
-template <typename T> struct Range {
+template <typename T>
+struct Range {
 public:
     T min, max;
 

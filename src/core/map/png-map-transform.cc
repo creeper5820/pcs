@@ -34,7 +34,8 @@ auto make_png_map_transform_view(PngMapData const& data) noexcept -> PngMapTrans
 }
 
 auto png_map_has_custom_origin(PngMapTransformView const& view) noexcept -> bool {
-    return view.frame_config.origin_pixel_x.has_value() && view.frame_config.origin_pixel_y.has_value();
+    return view.frame_config.origin_pixel_x.has_value()
+        && view.frame_config.origin_pixel_y.has_value();
 }
 
 auto png_map_origin_pixel(PngMapTransformView const& view) noexcept -> PixelPoint {
@@ -65,9 +66,8 @@ auto png_map_anchor_world(PngMapTransformView const& view) noexcept -> std::arra
     return png_map_world_from_pixel(view, pixel);
 }
 
-auto png_map_frame_from_world(
-    PngMapTransformView const& view, std::array<double, 3> const& world) noexcept
-    -> std::array<double, 3> {
+auto png_map_frame_from_world(PngMapTransformView const& view,
+    std::array<double, 3> const& world) noexcept -> std::array<double, 3> {
     const auto anchor = png_map_anchor_world(view);
     const auto dx     = world[0] - anchor[0];
     const auto dy     = world[1] - anchor[1];
@@ -87,9 +87,8 @@ auto png_map_frame_from_pixel(PngMapTransformView const& view, PixelPoint point)
     return png_map_frame_from_world(view, png_map_world_from_pixel(view, point));
 }
 
-auto png_map_pixel_from_world(
-    PngMapTransformView const& view, std::array<double, 3> const& world) noexcept
-    -> std::optional<PixelPoint> {
+auto png_map_pixel_from_world(PngMapTransformView const& view,
+    std::array<double, 3> const& world) noexcept -> std::optional<PixelPoint> {
     if (view.resolution <= 0.0) {
         return std::nullopt;
     }
@@ -108,7 +107,8 @@ auto png_map_pixel_from_world(
 }
 
 auto png_map_ros_origin(PngMapTransformView const& view) noexcept -> std::array<double, 3> {
-    const auto lower_left_world = std::array<double, 3> { view.origin_x, view.origin_y, view.plane_z };
+    const auto lower_left_world =
+        std::array<double, 3> { view.origin_x, view.origin_y, view.plane_z };
     const auto lower_left_frame = png_map_frame_from_world(view, lower_left_world);
     return {
         lower_left_frame[0],

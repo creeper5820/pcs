@@ -46,9 +46,8 @@ public:
 
     auto register_pointcloud_asset(std::unique_ptr<PointsHandle>, std::string const& name,
         std::string const& location, bool persisted = true) noexcept -> std::string;
-    auto register_model_asset(
-        std::unique_ptr<ModelHandle>, std::string const& name, std::string const& location) noexcept
-        -> std::string;
+    auto register_model_asset(std::unique_ptr<ModelHandle>, std::string const& name,
+        std::string const& location) noexcept -> std::string;
     auto register_png_map_asset(std::unique_ptr<PngMapHandle>, std::string const& name,
         std::string const& location, bool persisted = true) noexcept -> std::string;
 

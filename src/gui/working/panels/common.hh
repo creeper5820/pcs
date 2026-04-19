@@ -41,10 +41,10 @@ private:
     auto sync_from_field() noexcept -> void;
     auto set_degrees_internal(double value, bool update_slider, bool update_field) noexcept -> void;
 
-    creeper::Text* value_chip = nullptr;
-    creeper::Slider* value_slider = nullptr;
+    creeper::Text* value_chip               = nullptr;
+    creeper::Slider* value_slider           = nullptr;
     creeper::OutlinedTextField* value_field = nullptr;
-    double degrees_value = 0.0;
+    double degrees_value                    = 0.0;
 };
 
 auto save_pointcloud_location(std::string const& suggested_name) noexcept

@@ -85,8 +85,8 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
     auto& assets  = state.assets;
     auto* mouse   = state.mouse;
 
-    auto current_asset_id = std::make_shared<std::string>();
-    auto* open_control    = state.open_control;
+    auto current_asset_id        = std::make_shared<std::string>();
+    auto* open_control           = state.open_control;
     auto* asset_details_registry = state.asset_details_registry;
 
     auto location_list = new QStringListModel { };
@@ -369,8 +369,8 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
         if (auto result = open_asset_location(open_control->dialog_filter())) {
             if (auto open_result = open_control->open(*result); !open_result.has_value()) {
-                QMessageBox::warning(nullptr, "打开失败",
-                    QString::fromStdString(open_result.error()));
+                QMessageBox::warning(
+                    nullptr, "打开失败", QString::fromStdString(open_result.error()));
                 return;
             }
 

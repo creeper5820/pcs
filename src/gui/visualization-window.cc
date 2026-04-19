@@ -197,12 +197,11 @@ auto VisualizationWindowComponent(VisualizationWindowState& state) noexcept -> Q
                         guard->set_status_text(text);
                     }
                 });
-            state.mouse->set_mode_sink(
-                [guard = QPointer<InteractiveVtkWindow> { window }](auto) {
-                    if (guard != nullptr) {
-                        guard->sync_interaction_state();
-                    }
-                });
+            state.mouse->set_mode_sink([guard = QPointer<InteractiveVtkWindow> { window }](auto) {
+                if (guard != nullptr) {
+                    guard->sync_interaction_state();
+                }
+            });
             state.mouse->set_png_edit_tool_sink(
                 [guard = QPointer<InteractiveVtkWindow> { window }](auto) {
                     if (guard != nullptr) {

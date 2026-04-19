@@ -17,7 +17,7 @@ class VtkWidget : public pcs::QtVtkWindow {
 
 public:
     explicit VtkWidget() noexcept
-        : pcs::QtVtkWindow {} {
+        : pcs::QtVtkWindow { } {
         connect(&resize_watch_dog, &QTimer::timeout, [this] { setVisible(true); });
     }
 
@@ -48,7 +48,7 @@ private:
     QColor background;
 };
 
-auto VtkWindowComponent(VtkWindowState& state) noexcept -> QPointer<QWidget> { }
+auto VtkWindowComponent(VtkWindowState&) noexcept -> QPointer<QWidget> { return nullptr; }
 
 struct VtkWindow::Impl {
 
@@ -57,7 +57,7 @@ struct VtkWindow::Impl {
 
     explicit Impl(ThemeManager& manager) noexcept {
 
-        vtk_widget = new VtkWidget {};
+        vtk_widget = new VtkWidget { };
 
         namespace c = card::pro;
         namespace l = linear::pro;

@@ -1,7 +1,7 @@
 #include "gui/working/open-control.hh"
 
-#include <cctype>
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <format>
 #include <ranges>
@@ -12,12 +12,11 @@ namespace pcs::gui::working {
 
 namespace {
 
-auto normalized_extension(std::string extension) -> std::string {
-    std::ranges::transform(extension, extension.begin(), [](unsigned char ch) {
-        return static_cast<char>(std::tolower(ch));
-    });
-    return extension;
-}
+    auto normalized_extension(std::string extension) -> std::string {
+        std::ranges::transform(extension, extension.begin(),
+            [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        return extension;
+    }
 
 }
 

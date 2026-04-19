@@ -16,6 +16,31 @@ struct PngMapHandle::Impl final {
     PngMapData data;
     std::unique_ptr<PngMapUnit> unit;
 
+    auto make_image(PngMapExportMirror mirror) const noexcept -> QImage {
+        auto image = QImage(
+            static_cast<int>(data.width), static_cast<int>(data.height), QImage::Format_Grayscale8);
+
+        if (image.isNull()) {
+            return image;
+        }
+
+        for (std::size_t y = 0; y < data.height; ++y) {
+            auto* row_ptr = image.scanLine(static_cast<int>(y));
+            std::memcpy(row_ptr, data.pixels.data() + y * data.width, data.width * sizeof(std::uint8_t));
+        }
+
+        switch (mirror) {
+        case PngMapExportMirror::Horizontal:
+            return image.flipped(Qt::Horizontal);
+        case PngMapExportMirror::Vertical:
+            return image.flipped(Qt::Vertical);
+        case PngMapExportMirror::None:
+            return image;
+        }
+
+        return image;
+    }
+
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view> {
         auto image = QImage(QString::fromStdString(path));
@@ -28,20 +53,21 @@ struct PngMapHandle::Impl final {
             return std::unexpected { "Failed to convert png map into grayscale" };
         }
 
-        auto map       = PngMapData { };
-        map.width      = static_cast<std::size_t>(grayscale.width());
-        map.height     = static_cast<std::size_t>(grayscale.height());
-        map.resolution = 0.1;
-        map.plane_z    = 0.0;
-        map.origin_x   = 0.0;
-        map.origin_y   = 0.0;
+        auto map         = PngMapData { };
+        map.width        = static_cast<std::size_t>(grayscale.width());
+        map.height       = static_cast<std::size_t>(grayscale.height());
+        map.resolution   = 0.1;
+        map.plane_z      = 0.0;
+        map.origin_x     = 0.0;
+        map.origin_y     = 0.0;
         map.z_area_start = 0.0;
         map.z_area_end   = 1.0;
         map.pixels.resize(map.width * map.height);
 
         for (std::size_t y = 0; y < map.height; ++y) {
             auto const* row_ptr = grayscale.constScanLine(static_cast<int>(y));
-            std::memcpy(map.pixels.data() + y * map.width, row_ptr, map.width * sizeof(std::uint8_t));
+            std::memcpy(
+                map.pixels.data() + y * map.width, row_ptr, map.width * sizeof(std::uint8_t));
         }
 
         return load_from_data(map);
@@ -63,17 +89,9 @@ struct PngMapHandle::Impl final {
             return std::unexpected { "PNG map is not loaded" };
         }
 
-        auto image = QImage(
-            static_cast<int>(data.width), static_cast<int>(data.height), QImage::Format_Grayscale8);
-
+        auto image = make_image(PngMapExportMirror::None);
         if (image.isNull()) {
             return std::unexpected { "Failed to create png image buffer" };
-        }
-
-        for (std::size_t y = 0; y < data.height; ++y) {
-            auto* row_ptr = image.scanLine(static_cast<int>(y));
-            std::memcpy(
-                row_ptr, data.pixels.data() + y * data.width, data.width * sizeof(std::uint8_t));
         }
 
         if (!image.save(QString::fromStdString(path), "PNG")) {
@@ -100,10 +118,14 @@ struct PngMapHandle::Impl final {
             return std::unexpected { "Failed to create ROS export directory" };
         }
 
+        auto image = make_image(data.frame_config.export_mirror);
+        if (image.isNull()) {
+            return std::unexpected { "Failed to create png image buffer" };
+        }
+
         const auto image_path = (base / "map.png").string();
-        auto image_result     = save_into_filesystem(image_path);
-        if (!image_result.has_value()) {
-            return image_result;
+        if (!image.save(QString::fromStdString(image_path), "PNG")) {
+            return std::unexpected { "Failed to save png map into filesystem" };
         }
 
         auto yaml = std::ofstream { base / "map.yaml", std::ios::out | std::ios::trunc };

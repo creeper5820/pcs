@@ -59,9 +59,9 @@ struct runtime_task {
             };
         }
 
-        constexpr auto initial_suspend() const noexcept { return std::suspend_always {}; }
+        constexpr auto initial_suspend() const noexcept { return std::suspend_always { }; }
 
-        constexpr auto final_suspend() const noexcept { return std::suspend_always {}; }
+        constexpr auto final_suspend() const noexcept { return std::suspend_always { }; }
 
         auto return_value(result_t t) { promise.set_value(std::move(t)); }
 

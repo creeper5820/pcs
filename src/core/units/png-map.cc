@@ -7,10 +7,10 @@
 #include <vtk/vtkAxesActor.h>
 #include <vtk/vtkCubeSource.h>
 #include <vtk/vtkImageData.h>
-#include <vtk/vtkProperty.h>
 #include <vtk/vtkPlaneSource.h>
 #include <vtk/vtkPointData.h>
 #include <vtk/vtkPolyDataMapper.h>
+#include <vtk/vtkProperty.h>
 #include <vtk/vtkSphereSource.h>
 #include <vtk/vtkTexture.h>
 #include <vtk/vtkTransform.h>
@@ -122,7 +122,7 @@ struct PngMapUnit::Impl {
         frame_transform = vtkTransform::New();
         frame_axes->SetUserTransform(frame_transform);
 
-        frame_origin = vtkSphereSource::New();
+        frame_origin        = vtkSphereSource::New();
         frame_origin_mapper = vtkPolyDataMapper::New();
         frame_origin_mapper->SetInputConnection(frame_origin->GetOutputPort());
 
@@ -139,12 +139,12 @@ struct PngMapUnit::Impl {
             return;
         }
 
-        const auto view   = make_png_map_transform_view(map);
-        const auto anchor = png_map_anchor_world(view);
-        const auto span_x = static_cast<double>(map.width) * map.resolution;
-        const auto span_y = static_cast<double>(map.height) * map.resolution;
-        const auto length = std::clamp(std::min(span_x, span_y) * 0.15, 0.2, 5.0);
-        const auto marker_radius = std::clamp(length * 0.05, 0.02, 0.2);
+        const auto view              = make_png_map_transform_view(map);
+        const auto anchor            = png_map_anchor_world(view);
+        const auto span_x            = static_cast<double>(map.width) * map.resolution;
+        const auto span_y            = static_cast<double>(map.height) * map.resolution;
+        const auto length            = std::clamp(std::min(span_x, span_y) * 0.15, 0.2, 5.0);
+        const auto marker_radius     = std::clamp(length * 0.05, 0.02, 0.2);
         constexpr auto kFrameZOffset = 1e-3;
 
         frame_axes->SetTotalLength(length, length, length * 0.6);

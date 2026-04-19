@@ -49,159 +49,171 @@ PngEditMode::PngEditMode(Renderer& renderer, AssetsManager& assets) noexcept
     , assets { assets } {
     register_tool_handler(PngEditTool::Free,
         ToolHandler {
-            .on_move = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                context.session.last_drag_point.reset();
-                self.clear_preview(context.handle, context.session);
-                if (!context.pixel.has_value()) {
-                    return;
-                }
+            .on_move =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    context.session.last_drag_point.reset();
+                    self.clear_preview(context.handle, context.session);
+                    if (!context.pixel.has_value()) {
+                        return;
+                    }
 
-                const auto world = from_pixel(context.handle, *context.pixel);
-                mouse.set_status(mode_status(mouse, QString("坐标 %1").arg(format_xyz(world.data()))));
-            },
-            .on_lclick = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                self.clear_preview(context.handle, context.session);
-                if (!context.pixel.has_value()) {
-                    mouse.set_status(mode_status(mouse, "未命中平面"));
-                    return;
-                }
+                    const auto world = from_pixel(context.handle, *context.pixel);
+                    mouse.set_status(
+                        mode_status(mouse, QString("坐标 %1").arg(format_xyz(world.data()))));
+                },
+            .on_lclick =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    self.clear_preview(context.handle, context.session);
+                    if (!context.pixel.has_value()) {
+                        mouse.set_status(mode_status(mouse, "未命中平面"));
+                        return;
+                    }
 
-                const auto world = from_pixel(context.handle, *context.pixel);
-                mouse.set_status(mode_status(mouse, QString("坐标 %1").arg(format_xyz(world.data()))));
-            },
+                    const auto world = from_pixel(context.handle, *context.pixel);
+                    mouse.set_status(
+                        mode_status(mouse, QString("坐标 %1").arg(format_xyz(world.data()))));
+                },
         });
     register_tool_handler(PngEditTool::Point,
         ToolHandler {
-            .on_move = [](auto& self, Mouse& mouse, MouseEvent const& event, EditContext& context) {
-                self.clear_preview(context.handle, context.session);
-                if (!context.pixel.has_value()) {
-                    context.session.last_drag_point.reset();
-                    return;
-                }
-                if ((event.buttons & Qt::LeftButton) == 0) {
-                    context.session.last_drag_point.reset();
-                    return;
-                }
+            .on_move =
+                [](auto& self, Mouse& mouse, MouseEvent const& event, EditContext& context) {
+                    self.clear_preview(context.handle, context.session);
+                    if (!context.pixel.has_value()) {
+                        context.session.last_drag_point.reset();
+                        return;
+                    }
+                    if ((event.buttons & Qt::LeftButton) == 0) {
+                        context.session.last_drag_point.reset();
+                        return;
+                    }
 
-                const auto from = context.session.last_drag_point.value_or(*context.pixel);
-                if (!self.apply_stroke(mouse, context.handle, context.session,
-                        event::PngMapEditOperation::Draw, from, *context.pixel,
-                        mouse.png_edit_point_size(), "连续绘制")) {
-                    return;
-                }
+                    const auto from = context.session.last_drag_point.value_or(*context.pixel);
+                    if (!self.apply_stroke(mouse, context.handle, context.session,
+                            event::PngMapEditOperation::Draw, from, *context.pixel,
+                            mouse.png_edit_point_size(), "连续绘制")) {
+                        return;
+                    }
 
-                context.session.last_drag_point = *context.pixel;
-            },
-            .on_lclick = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                if (!context.pixel.has_value()) {
-                    mouse.set_status(mode_status(mouse, "未命中平面"));
-                    return;
-                }
-                context.session.last_drag_point.reset();
-                self.clear_preview(context.handle, context.session);
-                self.apply_stroke(mouse, context.handle, context.session,
-                    event::PngMapEditOperation::Draw, *context.pixel, *context.pixel,
-                    mouse.png_edit_point_size(), "绘制点");
-            },
+                    context.session.last_drag_point = *context.pixel;
+                },
+            .on_lclick =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    if (!context.pixel.has_value()) {
+                        mouse.set_status(mode_status(mouse, "未命中平面"));
+                        return;
+                    }
+                    context.session.last_drag_point.reset();
+                    self.clear_preview(context.handle, context.session);
+                    self.apply_stroke(mouse, context.handle, context.session,
+                        event::PngMapEditOperation::Draw, *context.pixel, *context.pixel,
+                        mouse.png_edit_point_size(), "绘制点");
+                },
         });
     register_tool_handler(PngEditTool::Erase,
         ToolHandler {
-            .on_move = [](auto& self, Mouse& mouse, MouseEvent const& event, EditContext& context) {
-                self.clear_preview(context.handle, context.session);
-                if (!context.pixel.has_value()) {
-                    context.session.last_drag_point.reset();
-                    return;
-                }
-                if ((event.buttons & Qt::LeftButton) == 0) {
-                    context.session.last_drag_point.reset();
-                    return;
-                }
+            .on_move =
+                [](auto& self, Mouse& mouse, MouseEvent const& event, EditContext& context) {
+                    self.clear_preview(context.handle, context.session);
+                    if (!context.pixel.has_value()) {
+                        context.session.last_drag_point.reset();
+                        return;
+                    }
+                    if ((event.buttons & Qt::LeftButton) == 0) {
+                        context.session.last_drag_point.reset();
+                        return;
+                    }
 
-                const auto from = context.session.last_drag_point.value_or(*context.pixel);
-                if (!self.apply_stroke(mouse, context.handle, context.session,
-                        event::PngMapEditOperation::Erase, from, *context.pixel,
-                        mouse.png_edit_erase_size(), "连续擦除")) {
-                    return;
-                }
+                    const auto from = context.session.last_drag_point.value_or(*context.pixel);
+                    if (!self.apply_stroke(mouse, context.handle, context.session,
+                            event::PngMapEditOperation::Erase, from, *context.pixel,
+                            mouse.png_edit_erase_size(), "连续擦除")) {
+                        return;
+                    }
 
-                context.session.last_drag_point = *context.pixel;
-            },
-            .on_lclick = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                if (!context.pixel.has_value()) {
-                    mouse.set_status(mode_status(mouse, "未命中平面"));
-                    return;
-                }
-                context.session.last_drag_point.reset();
-                self.clear_preview(context.handle, context.session);
-                self.apply_stroke(mouse, context.handle, context.session,
-                    event::PngMapEditOperation::Erase, *context.pixel, *context.pixel,
-                    mouse.png_edit_erase_size(), "擦除");
-            },
+                    context.session.last_drag_point = *context.pixel;
+                },
+            .on_lclick =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    if (!context.pixel.has_value()) {
+                        mouse.set_status(mode_status(mouse, "未命中平面"));
+                        return;
+                    }
+                    context.session.last_drag_point.reset();
+                    self.clear_preview(context.handle, context.session);
+                    self.apply_stroke(mouse, context.handle, context.session,
+                        event::PngMapEditOperation::Erase, *context.pixel, *context.pixel,
+                        mouse.png_edit_erase_size(), "擦除");
+                },
         });
     register_tool_handler(PngEditTool::Line,
         ToolHandler {
-            .on_move = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                context.session.last_drag_point.reset();
-                if (!context.session.pending_line_start.has_value() || !context.pixel.has_value()) {
-                    self.clear_preview(context.handle, context.session);
-                    return;
-                }
+            .on_move =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    context.session.last_drag_point.reset();
+                    if (!context.session.pending_line_start.has_value()
+                        || !context.pixel.has_value()) {
+                        self.clear_preview(context.handle, context.session);
+                        return;
+                    }
 
-                if (!self.show_preview(context.handle, context.session, *context.pixel,
-                        mouse.png_edit_line_width())) {
-                    mouse.set_status(mode_status(mouse, "线段预览失败"));
-                    return;
-                }
+                    if (!self.show_preview(context.handle, context.session, *context.pixel,
+                            mouse.png_edit_line_width())) {
+                        mouse.set_status(mode_status(mouse, "线段预览失败"));
+                        return;
+                    }
 
-                const auto world = from_pixel(context.handle, *context.pixel);
-                mouse.set_status(
-                    mode_status(mouse, QString("预览终点 %1").arg(format_xyz(world.data()))));
-            },
-            .on_lclick = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                if (!context.pixel.has_value()) {
-                    mouse.set_status(mode_status(mouse, "未命中平面"));
-                    return;
-                }
-
-                context.session.last_drag_point.reset();
-                if (!context.session.pending_line_start.has_value()) {
-                    context.session.pending_line_start = *context.pixel;
                     const auto world = from_pixel(context.handle, *context.pixel);
                     mouse.set_status(
-                        mode_status(mouse, QString("线起点 %1").arg(format_xyz(world.data()))));
-                    return;
-                }
+                        mode_status(mouse, QString("预览终点 %1").arg(format_xyz(world.data()))));
+                },
+            .on_lclick =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    if (!context.pixel.has_value()) {
+                        mouse.set_status(mode_status(mouse, "未命中平面"));
+                        return;
+                    }
 
-                auto result = self.apply_edit(context.session, context.handle,
-                    event::PngMapEditOperation::Draw, *context.session.pending_line_start,
-                    *context.pixel, mouse.png_edit_line_width());
-                if (!result.has_value()) {
-                    mouse.set_status(mode_status(mouse, "应用线绘制失败"));
-                    return;
-                }
+                    context.session.last_drag_point.reset();
+                    if (!context.session.pending_line_start.has_value()) {
+                        context.session.pending_line_start = *context.pixel;
+                        const auto world = from_pixel(context.handle, *context.pixel);
+                        mouse.set_status(
+                            mode_status(mouse, QString("线起点 %1").arg(format_xyz(world.data()))));
+                        return;
+                    }
 
-                context.session.pixels = std::move(result.value());
-                context.session.pending_line_start.reset();
-                self.clear_preview(context.handle, context.session);
-                if (!self.commit_session(context.handle, context.session)) {
-                    mouse.set_status(mode_status(mouse, "应用线绘制失败"));
-                    return;
-                }
+                    auto result = self.apply_edit(context.session, context.handle,
+                        event::PngMapEditOperation::Draw, *context.session.pending_line_start,
+                        *context.pixel, mouse.png_edit_line_width());
+                    if (!result.has_value()) {
+                        mouse.set_status(mode_status(mouse, "应用线绘制失败"));
+                        return;
+                    }
 
-                const auto world = from_pixel(context.handle, *context.pixel);
-                mouse.set_status(mode_status(
-                    mouse, QString("绘制线段至 %1").arg(format_xyz(world.data()))));
-            },
-            .on_rclick = [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
-                context.session.last_drag_point.reset();
-                if (!context.session.pending_line_start.has_value()) {
-                    return;
-                }
+                    context.session.pixels = std::move(result.value());
+                    context.session.pending_line_start.reset();
+                    self.clear_preview(context.handle, context.session);
+                    if (!self.commit_session(context.handle, context.session)) {
+                        mouse.set_status(mode_status(mouse, "应用线绘制失败"));
+                        return;
+                    }
 
-                context.session.pending_line_start.reset();
-                self.clear_preview(context.handle, context.session);
-                mouse.set_status(mode_status(mouse, "已取消线绘制"));
-            },
+                    const auto world = from_pixel(context.handle, *context.pixel);
+                    mouse.set_status(
+                        mode_status(mouse, QString("绘制线段至 %1").arg(format_xyz(world.data()))));
+                },
+            .on_rclick =
+                [](auto& self, Mouse& mouse, MouseEvent const&, EditContext& context) {
+                    context.session.last_drag_point.reset();
+                    if (!context.session.pending_line_start.has_value()) {
+                        return;
+                    }
+
+                    context.session.pending_line_start.reset();
+                    self.clear_preview(context.handle, context.session);
+                    mouse.set_status(mode_status(mouse, "已取消线绘制"));
+                },
         });
 }
 
@@ -374,8 +386,8 @@ auto PngEditMode::apply_stroke(Mouse& mouse, PngMapHandle& handle, Session& sess
     return true;
 }
 
-auto PngEditMode::show_preview(PngMapHandle& handle, Session& session, PixelPoint to,
-    std::size_t thickness) noexcept -> bool {
+auto PngEditMode::show_preview(
+    PngMapHandle& handle, Session& session, PixelPoint to, std::size_t thickness) noexcept -> bool {
     if (!session.pending_line_start.has_value()) {
         return clear_preview(handle, session);
     }

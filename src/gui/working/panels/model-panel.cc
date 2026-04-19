@@ -8,8 +8,8 @@
 #include <creeper-qt/widget/cards/filled-card.hh>
 #include <creeper-qt/widget/text.hh>
 
-#include <spdlog/spdlog.h>
 #include <QTimer>
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <future>
@@ -76,21 +76,25 @@ namespace {
                     return;
                 }
 
-                auto event_context        = std::make_unique<pcs::event::ConvertModelToPointcloud::Context>();
+                auto event_context =
+                    std::make_unique<pcs::event::ConvertModelToPointcloud::Context>();
                 event_context->model      = handle.value()->model_data();
                 event_context->parameters = parameters;
 
                 const auto source_id = selected_asset_id;
-                auto future          = std::make_shared<std::future<pcs::event::ConvertModelToPointcloud::Result>>(
-                    runtime.submit<pcs::event::ConvertModelToPointcloud>(std::move(event_context)));
+                auto future =
+                    std::make_shared<std::future<pcs::event::ConvertModelToPointcloud::Result>>(
+                        runtime.submit<pcs::event::ConvertModelToPointcloud>(
+                            std::move(event_context)));
 
                 set_convert_busy(true);
 
                 auto* watcher = new QTimer { convert_button };
                 watcher->setInterval(30);
-                QObject::connect(watcher, &QTimer::timeout,
-                    [this, watcher, future, source_id]() mutable {
-                        if (future->wait_for(std::chrono::seconds { 0 }) != std::future_status::ready) {
+                QObject::connect(
+                    watcher, &QTimer::timeout, [this, watcher, future, source_id]() mutable {
+                        if (future->wait_for(std::chrono::seconds { 0 })
+                            != std::future_status::ready) {
                             return;
                         }
 
@@ -104,7 +108,8 @@ namespace {
                             return;
                         }
 
-                        auto upsert_result = assets.upsert_generated_pointcloud(source_id, result.value());
+                        auto upsert_result =
+                            assets.upsert_generated_pointcloud(source_id, result.value());
                         if (!upsert_result.has_value()) {
                             spdlog::error("模型转点云失败: {}", upsert_result.error());
                             return;

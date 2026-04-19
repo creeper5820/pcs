@@ -654,8 +654,7 @@ auto AssetsManager::get_png_map_handle(std::string const& id) noexcept
 }
 
 auto AssetsManager::register_pointcloud_asset(std::unique_ptr<PointsHandle> pointcloud,
-    std::string const& name, std::string const& location, bool persisted) noexcept
-    -> std::string {
+    std::string const& name, std::string const& location, bool persisted) noexcept -> std::string {
     return pimpl->register_pointcloud(std::move(pointcloud), name, location, persisted);
 }
 
@@ -665,8 +664,7 @@ auto AssetsManager::register_model_asset(std::unique_ptr<ModelHandle> model,
 }
 
 auto AssetsManager::register_png_map_asset(std::unique_ptr<PngMapHandle> png_map,
-    std::string const& name, std::string const& location, bool persisted) noexcept
-    -> std::string {
+    std::string const& name, std::string const& location, bool persisted) noexcept -> std::string {
     return pimpl->register_png_map(std::move(png_map), name, location, persisted);
 }
 
@@ -716,8 +714,8 @@ auto AssetsManager::save_png_map_asset(std::string const& id, std::string const&
     return pimpl->save_png_map_asset(id, path);
 }
 
-auto AssetsManager::export_png_map_asset(std::string const& id, std::string const& directory) noexcept
-    -> std::expected<void, std::string> {
+auto AssetsManager::export_png_map_asset(std::string const& id,
+    std::string const& directory) noexcept -> std::expected<void, std::string> {
     return pimpl->export_png_map_asset(id, directory);
 }
 
