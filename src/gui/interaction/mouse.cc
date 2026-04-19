@@ -1,6 +1,7 @@
 #include "gui/interaction/mouse.hh"
 
 #include <utility>
+#include <vector>
 
 namespace pcs::gui::interaction {
 
@@ -167,6 +168,16 @@ auto Mouse::clear_selected_asset() noexcept -> void {
 
 auto Mouse::selected_asset() const noexcept -> std::optional<MouseSelection> const& { return asset; }
 
+auto Mouse::start_png_origin_pick(PngOriginPickRequest request) noexcept -> void {
+    png_origin_pick = std::move(request);
+}
+
+auto Mouse::cancel_png_origin_pick() noexcept -> void { png_origin_pick.reset(); }
+
+auto Mouse::png_origin_pick_request() const noexcept -> PngOriginPickRequest const* {
+    return png_origin_pick.has_value() ? &*png_origin_pick : nullptr;
+}
+
 auto Mouse::next_token() noexcept -> Token {
     ++last_token;
     return last_token;
@@ -185,9 +196,18 @@ auto Mouse::add_handler(
 
 auto Mouse::emit_handlers(std::unordered_map<Token, HandlerEntry> const& handlers,
     MouseEvent const& event) const noexcept -> void {
+    auto callbacks = std::vector<Handler> { };
+    callbacks.reserve(handlers.size());
+
     for (auto const& [_, entry] : handlers) {
         if (entry.callback) {
-            entry.callback(event);
+            callbacks.push_back(entry.callback);
+        }
+    }
+
+    for (auto const& callback : callbacks) {
+        if (callback) {
+            callback(event);
         }
     }
 }

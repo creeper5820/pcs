@@ -23,7 +23,8 @@ struct PngMapTransformView {
 
 auto make_png_map_transform_view(PngMapData const& data) noexcept -> PngMapTransformView;
 
-auto png_map_origin_mode_label(PngMapOriginMode mode) noexcept -> std::string_view;
+auto png_map_has_custom_origin(PngMapTransformView const& view) noexcept -> bool;
+auto png_map_origin_pixel(PngMapTransformView const& view) noexcept -> PixelPoint;
 
 auto png_map_anchor_world(PngMapTransformView const& view) noexcept -> std::array<double, 3>;
 auto png_map_world_from_pixel(PngMapTransformView const& view, PixelPoint point) noexcept

@@ -8,6 +8,7 @@
 #include "gui/interaction/picker-png-map-extension.hh"
 #include "gui/interaction/picker-pointcloud-extension.hh"
 #include "gui/interaction/png-edit-mode.hh"
+#include "gui/interaction/png-origin-pick-mode.hh"
 #include "gui/working/panels/model-panel.hh"
 #include "gui/working/panels/png-map-panel.hh"
 #include "gui/working/panels/pointcloud-panel.hh"
@@ -67,6 +68,8 @@ auto register_default_features(AppModules& modules) noexcept -> void {
     modules.mouse->register_mode(std::move(picker_mode));
     modules.mouse->register_mode(
         std::make_unique<gui::interaction::PngEditMode>(*modules.renderer, *modules.assets));
+    modules.mouse->register_mode(
+        std::make_unique<gui::interaction::PngOriginPickMode>(*modules.renderer, *modules.assets));
 
     modules.action_panels->register_factory(pcs::AssetKind::Pointcloud,
         [](gui::working::ActionPanelContext context, QFont const& font) {
@@ -139,6 +142,14 @@ auto register_default_features(AppModules& modules) noexcept -> void {
             const auto height = static_cast<std::uintmax_t>(handle->get_height());
             const auto path   = assets.get_asset_path(id).value_or(std::string { });
             const auto config = handle->get_frame_config();
+            const auto origin_text = [&] {
+                if (config.origin_pixel_x.has_value() && config.origin_pixel_y.has_value()) {
+                    return QString("(%1, %2)")
+                        .arg(*config.origin_pixel_x)
+                        .arg(*config.origin_pixel_y);
+                }
+                return QString("中心");
+            }();
 
             return pcs::gui::working::AssetDetails {
                 .type = "PNG 地图",
@@ -148,8 +159,7 @@ auto register_default_features(AppModules& modules) noexcept -> void {
                             .arg(static_cast<qulonglong>(height))
                             .arg(handle->get_resolution(), 0, 'f', 3)
                             .arg(config.yaw_deg, 0, 'f', 3)
-                            .arg(QString::fromStdString(std::string {
-                                png_map_origin_mode_label(config.origin_mode) })),
+                            .arg(origin_text),
             };
         });
 

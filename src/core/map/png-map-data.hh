@@ -2,21 +2,15 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace pcs {
 
-enum class PngMapOriginMode {
-    Center,
-    Corner1,
-    Corner2,
-    Corner3,
-    Corner4,
-};
-
 struct PngMapFrameConfig {
     double yaw_deg = 0.0;
-    PngMapOriginMode origin_mode { PngMapOriginMode::Center };
+    std::optional<int> origin_pixel_x;
+    std::optional<int> origin_pixel_y;
 };
 
 struct PngMapParameters {

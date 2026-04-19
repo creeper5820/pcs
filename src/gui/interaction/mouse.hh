@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/assets.hh"
+#include "core/map/png-edit-ops.hh"
 
 #include <qnamespace.h>
 #include <qstring.h>
@@ -19,6 +20,7 @@ enum class MouseModeId {
     None,
     Picker,
     PngEdit,
+    PngOriginPick,
 };
 
 enum class PngEditTool {
@@ -38,6 +40,12 @@ struct MouseEvent {
 struct MouseSelection {
     std::string id;
     pcs::AssetKind kind = pcs::AssetKind::Pointcloud;
+};
+
+struct PngOriginPickRequest {
+    std::string asset_id;
+    std::function<void(pcs::PixelPoint)> on_pick;
+    std::function<void()> on_cancel;
 };
 
 class Mouse;
@@ -98,6 +106,10 @@ public:
     auto clear_selected_asset() noexcept -> void;
     auto selected_asset() const noexcept -> std::optional<MouseSelection> const&;
 
+    auto start_png_origin_pick(PngOriginPickRequest) noexcept -> void;
+    auto cancel_png_origin_pick() noexcept -> void;
+    auto png_origin_pick_request() const noexcept -> PngOriginPickRequest const*;
+
 private:
     struct HandlerEntry {
         MouseModeId mode = MouseModeId::None;
@@ -129,6 +141,7 @@ private:
     PngEditTool png_edit_tool_mode     = PngEditTool::Free;
 
     std::optional<MouseSelection> asset;
+    std::optional<PngOriginPickRequest> png_origin_pick;
 };
 
 }

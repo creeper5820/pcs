@@ -33,45 +33,22 @@ auto make_png_map_transform_view(PngMapData const& data) noexcept -> PngMapTrans
     };
 }
 
-auto png_map_origin_mode_label(PngMapOriginMode mode) noexcept -> std::string_view {
-    switch (mode) {
-    case PngMapOriginMode::Center:
-        return "中心";
-    case PngMapOriginMode::Corner1:
-        return "角1";
-    case PngMapOriginMode::Corner2:
-        return "角2";
-    case PngMapOriginMode::Corner3:
-        return "角3";
-    case PngMapOriginMode::Corner4:
-        return "角4";
-    }
-
-    return "中心";
+auto png_map_has_custom_origin(PngMapTransformView const& view) noexcept -> bool {
+    return view.frame_config.origin_pixel_x.has_value() && view.frame_config.origin_pixel_y.has_value();
 }
 
-auto png_map_anchor_world(PngMapTransformView const& view) noexcept -> std::array<double, 3> {
-    const auto max_x = view.origin_x + extent_x(view);
-    const auto max_y = view.origin_y + extent_y(view);
-
-    switch (view.frame_config.origin_mode) {
-    case PngMapOriginMode::Center:
-        return {
-            view.origin_x + extent_x(view) * 0.5,
-            view.origin_y + extent_y(view) * 0.5,
-            view.plane_z,
+auto png_map_origin_pixel(PngMapTransformView const& view) noexcept -> PixelPoint {
+    if (png_map_has_custom_origin(view)) {
+        return PixelPoint {
+            *view.frame_config.origin_pixel_x,
+            *view.frame_config.origin_pixel_y,
         };
-    case PngMapOriginMode::Corner1:
-        return { view.origin_x, view.origin_y, view.plane_z };
-    case PngMapOriginMode::Corner2:
-        return { max_x, view.origin_y, view.plane_z };
-    case PngMapOriginMode::Corner3:
-        return { max_x, max_y, view.plane_z };
-    case PngMapOriginMode::Corner4:
-        return { view.origin_x, max_y, view.plane_z };
     }
 
-    return { view.origin_x, view.origin_y, view.plane_z };
+    return PixelPoint {
+        static_cast<int>(view.width / 2),
+        static_cast<int>(view.height / 2),
+    };
 }
 
 auto png_map_world_from_pixel(PngMapTransformView const& view, PixelPoint point) noexcept
@@ -81,6 +58,11 @@ auto png_map_world_from_pixel(PngMapTransformView const& view, PixelPoint point)
         view.origin_y + static_cast<double>(point.y) * view.resolution,
         view.plane_z,
     };
+}
+
+auto png_map_anchor_world(PngMapTransformView const& view) noexcept -> std::array<double, 3> {
+    const auto pixel = png_map_origin_pixel(view);
+    return png_map_world_from_pixel(view, pixel);
 }
 
 auto png_map_frame_from_world(

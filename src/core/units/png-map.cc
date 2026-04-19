@@ -112,6 +112,12 @@ struct PngMapUnit::Impl {
         frame_axes = vtkAxesActor::New();
         frame_axes->AxisLabelsOff();
         frame_axes->PickableOff();
+        frame_axes->GetXAxisShaftProperty()->SetLineWidth(4.0);
+        frame_axes->GetYAxisShaftProperty()->SetLineWidth(4.0);
+        frame_axes->GetZAxisShaftProperty()->SetLineWidth(4.0);
+        frame_axes->GetXAxisTipProperty()->SetColor(1.0, 0.42, 0.32);
+        frame_axes->GetYAxisTipProperty()->SetColor(0.22, 0.76, 0.47);
+        frame_axes->GetZAxisTipProperty()->SetColor(0.32, 0.62, 1.0);
 
         frame_transform = vtkTransform::New();
         frame_axes->SetUserTransform(frame_transform);

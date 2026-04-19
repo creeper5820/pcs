@@ -1,8 +1,15 @@
 #include "gui/working/panels/common.hh"
 
+#include <creeper-qt/layout/linear.hh>
+#include <creeper-qt/widget/cards/filled-card.hh>
+#include <creeper-qt/widget/text.hh>
+
+#include <QSignalBlocker>
+
 #include <qfiledialog.h>
 #include <qmessagebox.h>
 
+#include <cmath>
 #include <filesystem>
 
 namespace pcs::gui::working::panels {
@@ -127,6 +134,150 @@ auto compact_text_field_measurements() noexcept -> creeper::OutlinedTextField::M
     measurements.supporting_text_and_character_counter_row_padding = 8;
 
     return measurements;
+}
+
+auto compact_slider_measurements() noexcept -> creeper::slider::internal::Slider::Measurements {
+    auto measurements = creeper::slider::internal::Slider::Measurements::Xs();
+    measurements.track_height = 8;
+    measurements.handle_height = 18;
+    measurements.handle_width = 4;
+    measurements.track_shape = 4;
+    measurements.label_container_height = 0;
+    measurements.label_container_width = 0;
+    return measurements;
+}
+
+CompactFieldRow::CompactFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
+    std::string_view label, int label_width, int field_width,
+    QString const& default_value) noexcept {
+    input = make_parameter_field(theme, font, field_width, default_value);
+
+    auto* content = new creeper::Row {
+        creeper::row::pro::Spacing { 8 },
+        creeper::row::pro::Item<creeper::Text> {
+            { 0, Qt::AlignVCenter },
+            theme,
+            creeper::text::pro::Font { font },
+            creeper::text::pro::Text { QString::fromStdString(std::string { label }) },
+            creeper::text::pro::WordWrap { true },
+            creeper::text::pro::Alignment { Qt::AlignVCenter | Qt::AlignLeft },
+            creeper::widget::pro::FixedWidth { label_width },
+        },
+        creeper::row::pro::Item { { 1, Qt::AlignVCenter }, input },
+    };
+
+    content->setContentsMargins(0, 0, 0, 0);
+    setLayout(content);
+}
+
+auto CompactFieldRow::field() const noexcept -> creeper::OutlinedTextField& { return *input; }
+
+AngleSliderFieldRow::AngleSliderFieldRow(creeper::theme::pro::ThemeManager const& theme,
+    QFont const& font, QString const& label, int field_width, double default_degrees) noexcept {
+    auto chip_font = font;
+    chip_font.setPointSize(std::max(8, font.pointSize() - 1));
+
+    auto* chip_text = new creeper::Text {
+        theme,
+        creeper::text::pro::Font { chip_font },
+        creeper::text::pro::Text { label },
+        creeper::text::pro::Alignment { Qt::AlignCenter },
+    };
+
+    value_chip = new creeper::Text {
+        theme,
+        creeper::text::pro::Font { font },
+        creeper::text::pro::Text { "0" },
+        creeper::text::pro::Alignment { Qt::AlignCenter },
+        creeper::widget::pro::MinimumWidth { 30 },
+    };
+
+    auto* chip = new creeper::FilledCard {
+        theme,
+        creeper::card::pro::LevelLowest,
+        creeper::card::pro::Layout<creeper::Row> {
+            creeper::row::pro::Spacing { 8 },
+            creeper::row::pro::Margin { 6 },
+            creeper::row::pro::Item { chip_text },
+            creeper::row::pro::Item { value_chip },
+        },
+    };
+
+    value_slider = new creeper::Slider {
+        theme,
+        creeper::widget::pro::FixedHeight { 24 },
+        creeper::widget::pro::MinimumWidth { 150 },
+        creeper::slider::pro::Measurements { compact_slider_measurements() },
+        creeper::slider::pro::Progress { 0.0 },
+    };
+
+    value_field = make_parameter_field(theme, font, field_width,
+        QString::number(default_degrees, 'f', 3));
+
+    QObject::connect(value_slider, &creeper::Slider::signal_value_change, this,
+        [this](double progress) { sync_from_slider(progress); });
+    QObject::connect(value_field, &creeper::OutlinedTextField::editingFinished, this,
+        [this]() { sync_from_field(); });
+
+    auto* content = new creeper::Row {
+        creeper::row::pro::Spacing { 8 },
+        creeper::row::pro::Alignment { Qt::AlignVCenter },
+        creeper::row::pro::Item { chip },
+        creeper::row::pro::Item { { 1, Qt::AlignVCenter }, value_slider },
+        creeper::row::pro::Item { value_field },
+    };
+
+    content->setContentsMargins(0, 0, 0, 0);
+    setLayout(content);
+
+    set_degrees(default_degrees);
+}
+
+auto AngleSliderFieldRow::set_degrees(double value) noexcept -> void {
+    set_degrees_internal(value, true, true);
+}
+
+auto AngleSliderFieldRow::degrees() const noexcept -> double { return degrees_value; }
+
+auto AngleSliderFieldRow::field() const noexcept -> creeper::OutlinedTextField& {
+    return *value_field;
+}
+
+auto AngleSliderFieldRow::slider() const noexcept -> creeper::Slider& { return *value_slider; }
+
+auto AngleSliderFieldRow::sync_from_slider(double progress) noexcept -> void {
+    set_degrees_internal(progress * 360.0, false, true);
+}
+
+auto AngleSliderFieldRow::sync_from_field() noexcept -> void {
+    auto value = parse_double_input(*value_field, degrees_value, 0.0);
+    while (value >= 360.0) {
+        value -= 360.0;
+    }
+    set_degrees_internal(value, true, true);
+}
+
+auto AngleSliderFieldRow::set_degrees_internal(
+    double value, bool update_slider, bool update_field) noexcept -> void {
+    while (value < 0.0) {
+        value += 360.0;
+    }
+    while (value >= 360.0) {
+        value -= 360.0;
+    }
+
+    degrees_value = value;
+    value_chip->setText(QString::number(static_cast<int>(std::round(degrees_value))));
+
+    if (update_slider) {
+        const auto blocker = QSignalBlocker { value_slider };
+        value_slider->set_progress(degrees_value / 360.0);
+    }
+
+    if (update_field) {
+        const auto blocker = QSignalBlocker { value_field };
+        value_field->setText(QString::number(degrees_value, 'f', 3));
+    }
 }
 
 auto confirm_large_pointcloud_warning(std::uintmax_t bytes) noexcept -> bool {
