@@ -1,12 +1,21 @@
 #pragma once
 
 #include "gui/working/action-panels.hh"
+#include "utility/pimpl.hh"
 
 #include <memory>
 
 namespace pcs::gui::working {
 
-auto make_pointcloud_panel(ActionPanelContext context, QFont const& font)
-    -> std::unique_ptr<AssetActionPanel>;
+class PointcloudPanel final : public AssetActionPanel {
+    PCS_PIMPL_DEFINITION(PointcloudPanel)
+
+public:
+    explicit PointcloudPanel(ActionPanelContext context, QFont const& font) noexcept;
+
+    auto widget() const noexcept -> QWidget* override;
+    auto bind_asset(std::string const& id) noexcept -> void override;
+    auto clear() noexcept -> void override;
+};
 
 }
