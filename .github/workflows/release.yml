@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+    paths:
+      - CMakeLists.txt
+      - src/**
+      - deploy/**
+      - .github/release-notes/**
+      - .github/workflows/release.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: appimage-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-linux-appimage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: creeper5820/pcs-deploy:v1.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build/appimage -GNinja
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build/appimage --parallel "$(nproc)"
+
+      - name: Package AppImage
+        run: ./deploy/deploy-linux.sh build/appimage pcs release-appimage
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: pcs-appimage-x86_64
+          path: release-appimage/pcs-x86_64.AppImage
+          if-no-files-found: error
+
+  publish-nightly:
+    needs: build-linux-appimage
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download AppImage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: pcs-appimage-x86_64
+          path: release-artifact
+
+      - name: Generate checksum
+        run: |
+          set -euo pipefail
+          appimage="release-artifact/pcs-x86_64.AppImage"
+          checksum="release-artifact/pcs-x86_64.AppImage.sha256"
+          printf '%s  pcs-x86_64.AppImage\n' "$(sha256sum "${appimage}" | cut -d' ' -f1)" > "${checksum}"
+
+      - name: Render nightly notes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          template = Path('.github/release-notes/nightly.md').read_text(encoding='utf-8')
+          rendered = template.replace('__GITHUB_SHA__', '${{ github.sha }}')
+          Path('release-artifact/nightly-body.md').write_text(rendered, encoding='utf-8')
+          PY
+
+      - name: Publish nightly release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: nightly
+          name: PCS Nightly
+          prerelease: true
+          make_latest: false
+          body_path: release-artifact/nightly-body.md
+          files: |
+            release-artifact/pcs-x86_64.AppImage
+            release-artifact/pcs-x86_64.AppImage.sha256
+          target_commitish: ${{ github.sha }}
+          update_release_body: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  publish-release:
+    needs: build-linux-appimage
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download AppImage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: pcs-appimage-x86_64
+          path: release-artifact
+
+      - name: Generate checksum
+        run: |
+          set -euo pipefail
+          appimage="release-artifact/pcs-x86_64.AppImage"
+          checksum="release-artifact/pcs-x86_64.AppImage.sha256"
+          printf '%s  pcs-x86_64.AppImage\n' "$(sha256sum "${appimage}" | cut -d' ' -f1)" > "${checksum}"
+
+      - name: Render release draft notes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          template = Path('.github/release-notes/release.md').read_text(encoding='utf-8')
+          rendered = template.replace('__GITHUB_REF_NAME__', '${{ github.ref_name }}').replace('__GITHUB_SHA__', '${{ github.sha }}')
+          Path('release-artifact/release-body.md').write_text(rendered, encoding='utf-8')
+          PY
+
+      - name: Publish draft release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: PCS ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+          make_latest: false
+          body_path: release-artifact/release-body.md
+          files: |
+            release-artifact/pcs-x86_64.AppImage
+            release-artifact/pcs-x86_64.AppImage.sha256
+          target_commitish: ${{ github.sha }}
+          update_release_body: false
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
