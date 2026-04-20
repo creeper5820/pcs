@@ -1,5 +1,7 @@
 #include "model.hh"
 
+#include "core/renderer.vtk.hh"
+
 #include <vtk/vtkCellArray.h>
 #include <vtk/vtkPoints.h>
 #include <vtk/vtkPolyData.h>
@@ -55,6 +57,14 @@ auto ModelUnit::initialize(ModelData const& model) noexcept -> void { pimpl->ini
 auto ModelUnit::actor() noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
 
 auto ModelUnit::actor() const noexcept -> SmartPointer<vtkActor> { return pimpl->actor; }
+
+auto ModelUnit::attach(Renderer& renderer) noexcept -> void {
+    renderer.vtk_context().attach_unit(actor());
+}
+
+auto ModelUnit::detach(Renderer& renderer) noexcept -> void {
+    renderer.vtk_context().detach_unit(actor());
+}
 
 auto ModelUnit::get_points_size() const noexcept -> std::size_t {
     return pimpl->data->GetNumberOfPoints();

@@ -4,9 +4,7 @@
 
 using namespace pcs::event;
 
-auto MakeModelUnit::runtime_exec(std::unique_ptr<Context> context) noexcept -> Result {
-    const auto& path = context->path;
-
+auto MakeModelUnit::exec() noexcept -> Result {
     auto handle = std::make_unique<pcs::ModelHandle>();
     auto result = handle->load_from_filesystem(path);
 
@@ -18,3 +16,5 @@ auto MakeModelUnit::runtime_exec(std::unique_ptr<Context> context) noexcept -> R
 
     return handle;
 }
+
+auto MakeModelUnit::redo() noexcept -> Result { return exec(); }

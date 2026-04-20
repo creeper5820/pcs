@@ -9,6 +9,7 @@ PointsHandle::~PointsHandle() noexcept = default;
 
 auto PointsHandle::set_position(double x, double y, double z) noexcept -> void {
     pimpl->unit->set_position(x, y, z);
+    pimpl->unit->set_coordinate_position(x, y, z);
 }
 auto PointsHandle::get_position() const noexcept -> Position {
     auto position = pimpl->unit->get_position();
@@ -36,18 +37,27 @@ auto PointsHandle::get_positions() const noexcept -> std::vector<Position> {
 
 auto PointsHandle::pick_position(Renderer& renderer, int display_x, int display_y) const noexcept
     -> std::optional<PointsHandle::Position> {
-    return renderer.pick_points_unit(*pimpl->unit, display_x, display_y);
+    return renderer.pick(*pimpl->unit, display_x, display_y);
 }
 
 auto PointsHandle::set_visibility(bool on) noexcept -> void {
     pimpl->unit->set_visibility(on); //
+    pimpl->unit->set_coordinate_visibility(on && pimpl->coordinate_visibility());
+}
+
+auto PointsHandle::set_coordinate_visibility(bool on) noexcept -> void {
+    pimpl->set_coordinate_visibility(on);
+}
+
+auto PointsHandle::coordinate_visibility() const noexcept -> bool {
+    return pimpl->coordinate_visibility();
 }
 
 auto PointsHandle::attach_renderer(Renderer& r) noexcept -> void {
-    r.attach_points_unit(*pimpl->unit);
+    r.attach(*pimpl->unit);
 }
 auto PointsHandle::detach_renderer(Renderer& r) noexcept -> void {
-    r.detach_points_unit(*pimpl->unit);
+    r.detach(*pimpl->unit);
 }
 
 auto PointsHandle::load_from_filesystem(std::string const& path) noexcept

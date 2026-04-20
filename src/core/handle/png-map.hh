@@ -18,6 +18,10 @@ public:
     using Position = std::tuple<double, double, double>;
 
     auto set_visibility(bool) noexcept -> void;
+    auto set_frame_visibility(bool) noexcept -> void;
+    auto frame_visibility() const noexcept -> bool;
+    auto set_source_area_visibility(bool) noexcept -> void;
+    auto source_area_visibility() const noexcept -> bool;
 
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view>;

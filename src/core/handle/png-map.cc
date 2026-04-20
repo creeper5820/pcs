@@ -7,7 +7,21 @@ PngMapHandle::PngMapHandle() noexcept
 
 PngMapHandle::~PngMapHandle() noexcept = default;
 
-auto PngMapHandle::set_visibility(bool on) noexcept -> void { pimpl->unit->set_visibility(on); }
+auto PngMapHandle::set_visibility(bool on) noexcept -> void { pimpl->set_visibility(on); }
+
+auto PngMapHandle::set_frame_visibility(bool on) noexcept -> void {
+    pimpl->set_frame_visibility(on);
+}
+
+auto PngMapHandle::frame_visibility() const noexcept -> bool { return pimpl->frame_visibility(); }
+
+auto PngMapHandle::set_source_area_visibility(bool on) noexcept -> void {
+    pimpl->set_area_visibility(on);
+}
+
+auto PngMapHandle::source_area_visibility() const noexcept -> bool {
+    return pimpl->area_visibility();
+}
 
 auto PngMapHandle::load_from_filesystem(std::string const& path) noexcept
     -> std::expected<void, std::string_view> {
@@ -61,13 +75,13 @@ auto PngMapHandle::clear_preview() noexcept -> bool { return pimpl->clear_previe
 
 auto PngMapHandle::pick_plane_position(Renderer& renderer, int display_x,
     int display_y) const noexcept -> std::optional<PngMapHandle::Position> {
-    return renderer.pick_png_map_unit(*pimpl->unit, display_x, display_y);
+    return renderer.pick(*pimpl->unit, display_x, display_y);
 }
 
 auto PngMapHandle::attach_renderer(Renderer& renderer) noexcept -> void {
-    renderer.attach_png_map_unit(*pimpl->unit);
+    renderer.attach(*pimpl->unit);
 }
 
 auto PngMapHandle::detach_renderer(Renderer& renderer) noexcept -> void {
-    renderer.detach_png_map_unit(*pimpl->unit);
+    renderer.detach(*pimpl->unit);
 }

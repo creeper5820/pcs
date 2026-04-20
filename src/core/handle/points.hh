@@ -30,6 +30,8 @@ public:
         -> std::optional<Position>;
 
     auto set_visibility(bool) noexcept -> void;
+    auto set_coordinate_visibility(bool) noexcept -> void;
+    auto coordinate_visibility() const noexcept -> bool;
 
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view>;

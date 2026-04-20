@@ -4,9 +4,7 @@
 
 using namespace pcs::event;
 
-auto MakePngMapUnit::runtime_exec(std::unique_ptr<Context> context) noexcept -> Result {
-    const auto& path = context->path;
-
+auto MakePngMapUnit::exec() noexcept -> Result {
     auto handle = std::make_unique<pcs::PngMapHandle>();
     auto result = handle->load_from_filesystem(path);
 
@@ -18,3 +16,5 @@ auto MakePngMapUnit::runtime_exec(std::unique_ptr<Context> context) noexcept -> 
 
     return handle;
 }
+
+auto MakePngMapUnit::redo() noexcept -> Result { return exec(); }

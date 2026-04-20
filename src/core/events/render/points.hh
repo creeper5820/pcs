@@ -1,25 +1,28 @@
 #pragma once
 
-#include "core/events/common.hh"
 #include "core/handle/points.hh"
 
 #include <expected>
+#include <string>
+#include <string_view>
 
 namespace pcs::event {
 
 struct MakePointsUnit {
     using Result = std::expected<std::unique_ptr<PointsHandle>, std::string>;
 
-    struct Context {
-        static constexpr EventMeta meta {
-            .name      = "Make Points Unit",
-            .consuming = true,
-        };
-        std::string path;
-        std::string name;
+    struct Meta {
+        std::string_view name = "Make Points Unit";
+        bool recordable       = false;
+        bool redoable         = true;
     };
 
-    static auto runtime_exec(std::unique_ptr<Context>) noexcept -> Result;
+    Meta meta { };
+    std::string path;
+    std::string name;
+
+    auto exec() noexcept -> Result;
+    auto redo() noexcept -> Result;
 };
 
 }

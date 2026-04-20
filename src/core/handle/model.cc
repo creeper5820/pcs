@@ -43,9 +43,9 @@ auto ModelHandle::load_from_filesystem(std::string const& path) noexcept
 auto ModelHandle::model_data() const noexcept -> ModelData const& { return pimpl->data; }
 
 auto ModelHandle::attach_renderer(Renderer& r) noexcept -> void {
-    r.attach_model_unit(*pimpl->unit);
+    r.attach(*pimpl->unit);
 }
 
 auto ModelHandle::detach_renderer(Renderer& r) noexcept -> void {
-    r.detach_model_unit(*pimpl->unit);
+    r.detach(*pimpl->unit);
 }

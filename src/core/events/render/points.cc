@@ -1,11 +1,10 @@
 #include "points.hh"
 
+#include <format>
+
 using namespace pcs::event;
 
-auto MakePointsUnit::runtime_exec(std::unique_ptr<Context> context) noexcept -> Result {
-
-    const auto& path = context->path;
-    const auto& name = context->name;
+auto MakePointsUnit::exec() noexcept -> Result {
 
     auto handle = std::make_unique<PointsHandle>();
 
@@ -19,3 +18,5 @@ auto MakePointsUnit::runtime_exec(std::unique_ptr<Context> context) noexcept -> 
 
     return handle;
 }
+
+auto MakePointsUnit::redo() noexcept -> Result { return exec(); }

@@ -2,6 +2,7 @@
 
 #include "common.hh"
 #include "core/map/model-data.hh"
+#include "core/renderer.hh"
 
 #include <vtk/vtkActor.h>
 
@@ -19,6 +20,9 @@ public:
 
     auto actor() noexcept -> SmartPointer<vtkActor>;
     auto actor() const noexcept -> SmartPointer<vtkActor>;
+
+    auto attach(Renderer&) noexcept -> void;
+    auto detach(Renderer&) noexcept -> void;
 
     auto get_points_size() const noexcept -> std::size_t;
     auto get_polys_size() const noexcept -> std::size_t;

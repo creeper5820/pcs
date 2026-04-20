@@ -1,8 +1,10 @@
 #pragma once
 #include "common.hh"
+#include "core/renderer.hh"
 
 #include <vtk/vtkActor.h>
 #include <vtk/vtkPoints.h>
+#include <vtk/vtkProp.h>
 
 namespace pcs {
 
@@ -94,6 +96,18 @@ public:
     auto actor() noexcept -> SmartPointer<vtkActor>;
     auto actor() const noexcept -> SmartPointer<vtkActor>;
 
+    auto attach(Renderer&) noexcept -> void;
+    auto detach(Renderer&) noexcept -> void;
+    auto pick(Renderer&, int display_x, int display_y) const noexcept
+        -> std::optional<Renderer::Position>;
+
+    auto coordinate_actor() noexcept -> SmartPointer<vtkProp>;
+    auto coordinate_actor() const noexcept -> SmartPointer<vtkProp>;
+    auto coordinate_origin_actor() noexcept -> SmartPointer<vtkProp>;
+    auto coordinate_origin_actor() const noexcept -> SmartPointer<vtkProp>;
+
+    auto set_coordinate_visibility(bool on) noexcept -> void;
+    auto set_coordinate_position(double x, double y, double z) noexcept -> void;
     auto get_points_size() const noexcept -> std::size_t;
 
 private:

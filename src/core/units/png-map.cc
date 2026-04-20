@@ -1,10 +1,14 @@
 #include "png-map.hh"
 
 #include "core/map/png-map-transform.hh"
+#include "core/renderer.vtk.hh"
 
 #include <algorithm>
 
+#include <array>
+
 #include <vtk/vtkAxesActor.h>
+#include <vtk/vtkCellPicker.h>
 #include <vtk/vtkCubeSource.h>
 #include <vtk/vtkImageData.h>
 #include <vtk/vtkPlaneSource.h>
@@ -190,11 +194,57 @@ auto PngMapUnit::frame_origin_actor() const noexcept -> SmartPointer<vtkActor> {
     return pimpl->frame_origin_actor;
 }
 
+auto PngMapUnit::attach(Renderer& renderer) noexcept -> void {
+    renderer.vtk_context().attach_unit(actor());
+    renderer.vtk_context().attach_unit(area_actor());
+    renderer.vtk_context().attach_unit(frame_actor());
+    renderer.vtk_context().attach_unit(frame_origin_actor());
+}
+
+auto PngMapUnit::detach(Renderer& renderer) noexcept -> void {
+    renderer.vtk_context().detach_unit(actor());
+    renderer.vtk_context().detach_unit(area_actor());
+    renderer.vtk_context().detach_unit(frame_actor());
+    renderer.vtk_context().detach_unit(frame_origin_actor());
+}
+
+auto PngMapUnit::pick(Renderer& renderer, int display_x, int display_y) const noexcept
+    -> std::optional<Renderer::Position> {
+    auto picker = vtkSmartPointer<vtkCellPicker>::New();
+    picker->SetTolerance(0.0005);
+    picker->PickFromListOn();
+    picker->InitializePickList();
+    picker->AddPickList(actor());
+
+    auto* size    = renderer.vtk_context().window->GetSize();
+    const auto ok = picker->Pick(static_cast<double>(display_x),
+        static_cast<double>(size[1] - display_y - 1), 0.0, renderer.vtk_context().render);
+    if (ok <= 0 || picker->GetCellId() < 0) {
+        return std::nullopt;
+    }
+
+    auto point = std::array<double, 3> { };
+    picker->GetPickPosition(point.data());
+    return Renderer::Position { point[0], point[1], point[2] };
+}
+
 auto PngMapUnit::set_visibility(bool on) noexcept -> void {
     pimpl->actor->SetVisibility(on);
-    pimpl->area_actor->SetVisibility(on);
+}
+
+auto PngMapUnit::set_frame_visibility(bool on) noexcept -> void {
     pimpl->frame_axes->SetVisibility(on);
     pimpl->frame_origin_actor->SetVisibility(on);
+}
+
+auto PngMapUnit::frame_visibility() const noexcept -> bool {
+    return pimpl->frame_axes != nullptr && pimpl->frame_axes->GetVisibility() != 0;
+}
+
+auto PngMapUnit::set_area_visibility(bool on) noexcept -> void { pimpl->area_actor->SetVisibility(on); }
+
+auto PngMapUnit::area_visibility() const noexcept -> bool {
+    return pimpl->area_actor != nullptr && pimpl->area_actor->GetVisibility() != 0;
 }
 
 auto PngMapUnit::update_pixels(std::vector<std::uint8_t> const& pixels) noexcept -> bool {
