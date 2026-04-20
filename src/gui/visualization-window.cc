@@ -54,11 +54,27 @@ public:
         font.setStyleHint(QFont::SansSerif);
         status_label->setFont(font);
         status_label->show();
+
+        operation_label = new QLabel { this };
+        operation_label->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        operation_label->setStyleSheet("QLabel {"
+                                       "color: white;"
+                                       "background: rgba(0, 0, 0, 160);"
+                                       "padding: 6px 8px;"
+                                       "border-radius: 8px;"
+                                       "}");
+        operation_label->setFont(font);
+        operation_label->hide();
     }
 
     auto set_status_text(QString text) noexcept -> void {
         status_text = std::move(text);
-        update_status_label();
+        update_overlay_labels();
+    }
+
+    auto set_operation_text(QString text) noexcept -> void {
+        operation_text = std::move(text);
+        update_overlay_labels();
     }
 
     auto sync_interaction_state() noexcept -> void {
@@ -78,7 +94,7 @@ public:
 protected:
     auto resizeEvent(QResizeEvent* event) -> void override {
         Rounded<pcs::QtVtkWindow>::resizeEvent(event);
-        update_status_label();
+        update_overlay_labels();
     }
 
     auto mouseMoveEvent(QMouseEvent* event) -> void override {
@@ -118,29 +134,44 @@ private:
         return mouse->allows_camera_interaction();
     }
 
-    auto update_status_label() noexcept -> void {
-        if (status_label == nullptr) {
+    auto update_overlay_labels() noexcept -> void {
+        if (status_label == nullptr || operation_label == nullptr) {
             return;
         }
+
+        constexpr auto kMargin = 12;
 
         if (status_text.isEmpty()) {
             status_label->hide();
-            return;
+        } else {
+            status_label->show();
+
+            const auto max_text_width = std::max(120, width() / 2 - kMargin * 2);
+            auto metrics              = QFontMetrics { status_label->font() };
+            auto text = metrics.elidedText(status_text, Qt::ElideRight, max_text_width);
+            status_label->setText(text);
+            status_label->adjustSize();
+
+            const auto h = status_label->height();
+            status_label->move(kMargin, std::max(0, height() - kMargin - h));
         }
 
-        status_label->show();
+        if (operation_text.isEmpty()) {
+            operation_label->hide();
+        } else {
+            operation_label->show();
 
-        constexpr auto kMargin      = 12;
-        constexpr auto kPaddingLeft = 16;
+            const auto max_text_width = std::max(120, width() / 2 - kMargin * 2);
+            auto metrics               = QFontMetrics { operation_label->font() };
+            auto text = metrics.elidedText(operation_text, Qt::ElideRight, max_text_width);
+            operation_label->setText(text);
+            operation_label->adjustSize();
 
-        const auto max_text_width = std::max(120, width() - kMargin * 2 - kPaddingLeft);
-        auto metrics              = QFontMetrics { status_label->font() };
-        auto text                 = metrics.elidedText(status_text, Qt::ElideRight, max_text_width);
-        status_label->setText(text);
-        status_label->adjustSize();
-
-        const auto h = status_label->height();
-        status_label->move(kMargin, std::max(0, height() - kMargin - h));
+            const auto w = operation_label->width();
+            const auto h = operation_label->height();
+            operation_label->move(
+                std::max(0, width() - kMargin - w), std::max(0, height() - kMargin - h));
+        }
     }
 
     auto emit_move(QMouseEvent const& event) noexcept -> void {
@@ -180,7 +211,9 @@ private:
 
     pcs::gui::interaction::Mouse* mouse = nullptr;
     QLabel* status_label                = nullptr;
+    QLabel* operation_label             = nullptr;
     QString status_text;
+    QString operation_text;
 };
 
 auto VisualizationWindowComponent(VisualizationWindowState& state) noexcept -> QPointer<QWidget> {
@@ -206,6 +239,15 @@ auto VisualizationWindowComponent(VisualizationWindowState& state) noexcept -> Q
                 [guard = QPointer<InteractiveVtkWindow> { window }](auto) {
                     if (guard != nullptr) {
                         guard->sync_interaction_state();
+                    }
+                });
+        }
+
+        if (state.runtime != nullptr) {
+            state.runtime->set_operation_sink(
+                [guard = QPointer<InteractiveVtkWindow> { window }](std::string const& message) {
+                    if (guard != nullptr) {
+                        guard->set_operation_text(QString::fromStdString(message));
                     }
                 });
         }

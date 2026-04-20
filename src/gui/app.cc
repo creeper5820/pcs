@@ -23,6 +23,8 @@
 #include <qshortcut.h>
 #include <qstandardpaths.h>
 
+#include <QKeySequence>
+
 #include <utility>
 
 using namespace pcs;
@@ -101,10 +103,18 @@ public:
             QObject::connect(shortcut_q, &QShortcut::activated, //
                 [this] { exit_application_with_confirment(); });
 
-            // C 键居中
-            auto shortcut_c = new QShortcut { Qt::Key_C, window };
-            QObject::connect(shortcut_c, &QShortcut::activated,
-                [this] { window->apply(widget::pro::MoveCenter { }); });
+            auto shortcut_undo = new QShortcut { QKeySequence::Undo, window };
+            QObject::connect(
+                shortcut_undo, &QShortcut::activated, [this] { modules.runtime->undo(); });
+
+            auto shortcut_redo = new QShortcut { QKeySequence::Redo, window };
+            QObject::connect(
+                shortcut_redo, &QShortcut::activated, [this] { modules.runtime->redo(); });
+
+            auto shortcut_redo_shift_z =
+                new QShortcut { QKeySequence { Qt::CTRL | Qt::SHIFT | Qt::Key_Z }, window };
+            QObject::connect(
+                shortcut_redo_shift_z, &QShortcut::activated, [this] { modules.runtime->redo(); });
 
             sp::info("App gui are loaded");
         }
@@ -194,7 +204,8 @@ private:
     auto use_configuration() noexcept { }
 
     auto use_startup_files() noexcept -> void {
-        if (startup_files.empty() || working_panel_state == nullptr || modules.open_control == nullptr) {
+        if (startup_files.empty() || working_panel_state == nullptr
+            || modules.open_control == nullptr) {
             return;
         }
 
