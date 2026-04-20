@@ -12,6 +12,8 @@
 #include <qpointer.h>
 #include <qwidget.h>
 
+#include <functional>
+
 namespace pcs::gui::working {
 class ActionPanelRegistry;
 }
@@ -29,5 +31,8 @@ struct WorkingPanelState {
     creeper::MutableDouble panel_width { 300. };
 
     bool assets_visibility = true;
+
+    std::function<void()> refresh_callback;
+    std::function<void(std::string const&)> select_callback;
 };
 auto WorkingPanelComponent(WorkingPanelState&) noexcept -> QPointer<QWidget>;

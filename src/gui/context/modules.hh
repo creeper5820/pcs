@@ -13,6 +13,8 @@
 namespace pcs::gui::context {
 
 struct AppModules {
+    AppModules() noexcept;
+
     std::unique_ptr<pcs::Runtime> runtime;
     std::unique_ptr<pcs::Renderer> renderer;
     std::unique_ptr<pcs::AssetsManager> assets;
@@ -21,7 +23,5 @@ struct AppModules {
     std::unique_ptr<pcs::gui::working::OpenControl> open_control;
     std::unique_ptr<pcs::gui::working::AssetDetailsRegistry> asset_details;
 };
-
-auto make_app_modules() noexcept -> AppModules;
 
 }

@@ -34,6 +34,7 @@ public:
     auto clean_assets() noexcept -> void;
 
     auto get_asset_ids() const noexcept -> std::generator<std::string_view>;
+    auto last_asset_id() const noexcept -> std::optional<std::string>;
     auto get_asset_kind(std::string const& id) const noexcept -> std::optional<AssetKind>;
     auto get_asset_display_name(std::string const& id) const noexcept -> std::optional<std::string>;
     auto get_asset_name(std::string const& id) const noexcept -> std::optional<std::string>;

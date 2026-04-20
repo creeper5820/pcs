@@ -10,11 +10,12 @@
 namespace pcs::gui::context {
 
 struct AppStates {
+    AppStates() noexcept = default;
+    AppStates(creeper::ThemeManager& manager, AppModules& modules) noexcept;
+
     std::unique_ptr<NavigationState> navigation;
     std::unique_ptr<VisualizationWindowState> visualization;
     std::unique_ptr<WorkingPanelState> working;
 };
-
-auto make_app_states(creeper::ThemeManager& manager, AppModules& modules) noexcept -> AppStates;
 
 }

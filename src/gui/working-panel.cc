@@ -129,6 +129,9 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         }
     };
 
+    state.refresh_callback = refresh_assets_list;
+    state.select_callback  = select_asset;
+
     auto panel_context                = pcs::gui::working::ActionPanelContext { };
     panel_context.manager             = &manager;
     panel_context.assets              = &assets;

@@ -263,6 +263,16 @@ struct AssetsManager::Impl {
         }
     }
 
+    auto last_asset_id() const noexcept -> std::optional<std::string> {
+        for (auto iter = asset_order.rbegin(); iter != asset_order.rend(); ++iter) {
+            if (assets.contains(*iter)) {
+                return *iter;
+            }
+        }
+
+        return std::nullopt;
+    }
+
     auto create_pointcloud_asset_from_positions(std::string const& source_id,
         std::vector<event::ConvertModelToPointcloud::Position> const& points) noexcept
         -> std::expected<std::string, std::string> {
@@ -580,6 +590,10 @@ struct AssetsManager::Impl {
 
 auto AssetsManager::get_asset_ids() const noexcept -> std::generator<std::string_view> {
     return pimpl->get_asset_ids();
+}
+
+auto AssetsManager::last_asset_id() const noexcept -> std::optional<std::string> {
+    return pimpl->last_asset_id();
 }
 
 auto AssetsManager::get_asset_kind(std::string const& id) const noexcept

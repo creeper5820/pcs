@@ -111,7 +111,7 @@ namespace {
 
             auto* tool_row = new creeper::Row {
                 creeper::row::pro::Spacing { 6 },
-                creeper::row::pro::Alignment { Qt::AlignHCenter },
+                creeper::row::pro::Alignment { Qt::AlignLeft },
             };
             for (auto const& descriptor :
                 pcs::gui::interaction::default_png_edit_tool_descriptors()) {
@@ -119,11 +119,18 @@ namespace {
                     descriptor.id, descriptor.label, descriptor.icon));
             }
 
-            auto* free_param = new creeper::Text {
-                theme,
-                creeper::text::pro::Font { font },
-                creeper::text::pro::Text { "自由模式：用于查看坐标，可拖动视图" },
-                creeper::text::pro::WordWrap { true },
+            auto* free_param = new creeper::Widget {
+                creeper::widget::pro::Layout<creeper::Col> {
+                    creeper::col::pro::Spacing { 4 },
+                    creeper::col::pro::Item<creeper::Text> {
+                        theme,
+                        creeper::text::pro::Font { font },
+                        creeper::text::pro::Text {
+                            "自由模式：用于查看当前坐标系下的位置，可拖动视图。" },
+                        creeper::text::pro::WordWrap { true },
+                        creeper::text::pro::Alignment { Qt::AlignLeft | Qt::AlignTop },
+                    },
+                },
             };
 
             line_width_row = new panels::CompactFieldRow(
@@ -163,6 +170,21 @@ namespace {
                 creeper::stacked::pro::Item { erase_param },
                 creeper::stacked::pro::CurrentIndex {
                     pcs::gui::interaction::png_edit_tool_descriptor(current_tool).param_index },
+            };
+
+            const auto parameter_panel_height = std::max({
+                free_param->sizeHint().height(),
+                line_param->sizeHint().height(),
+                point_param->sizeHint().height(),
+                erase_param->sizeHint().height(),
+                40,
+            });
+            auto* parameter_panel = new creeper::Widget {
+                creeper::widget::pro::MinimumHeight { parameter_panel_height },
+                creeper::widget::pro::Layout<creeper::Col> {
+                    creeper::col::pro::Spacing { 0 },
+                    creeper::col::pro::Item { param_stack },
+                },
             };
 
             yaw_row   = new panels::AngleSliderFieldRow(theme, font, "Yaw", 84, 0.0);
@@ -219,13 +241,25 @@ namespace {
                 mouse.set_mode(pcs::gui::interaction::MouseModeId::PngOriginPick);
             });
 
-            auto* frame_rotation_card = new creeper::FilledCard {
+            auto* mode_card = new creeper::FilledCard {
                 theme,
                 creeper::card::pro::LevelLowest,
                 creeper::card::pro::Layout<creeper::Col> {
                     creeper::col::pro::Margin { 8 },
-                    creeper::col::pro::Spacing { 0 },
+                    creeper::col::pro::Spacing { 8 },
+                    creeper::col::pro::Item { tool_row },
+                    creeper::col::pro::Item { parameter_panel },
+                },
+            };
+
+            auto* frame_card = new creeper::FilledCard {
+                theme,
+                creeper::card::pro::LevelLowest,
+                creeper::card::pro::Layout<creeper::Col> {
+                    creeper::col::pro::Margin { 8 },
+                    creeper::col::pro::Spacing { 8 },
                     creeper::col::pro::Item { yaw_row },
+                    creeper::col::pro::Item { set_origin_button },
                 },
             };
 
@@ -263,6 +297,17 @@ namespace {
                 creeper::row::pro::Item { { 1, Qt::AlignVCenter }, export_mirror_dropdown },
             };
 
+            auto* export_card = new creeper::FilledCard {
+                theme,
+                creeper::card::pro::LevelLowest,
+                creeper::card::pro::Layout<creeper::Col> {
+                    creeper::col::pro::Margin { 8 },
+                    creeper::col::pro::Spacing { 8 },
+                    creeper::col::pro::Item { export_option_row },
+                    creeper::col::pro::Item { export_button },
+                },
+            };
+
             QObject::connect(export_button, &creeper::OutlinedButton::clicked, [this](bool) {
                 if (selected_asset_id.empty()) {
                     return;
@@ -297,28 +342,9 @@ namespace {
                         creeper::text::pro::Text { "PNG 地图操作" },
                         creeper::text::pro::Alignment { Qt::AlignHCenter },
                     },
-                    creeper::col::pro::Item<creeper::FilledCard> {
-                        theme,
-                        creeper::card::pro::LevelLowest,
-                        creeper::card::pro::Layout<creeper::Col> {
-                            creeper::col::pro::Margin { 8 },
-                            creeper::col::pro::Spacing { 6 },
-                            creeper::col::pro::Item { tool_row },
-                        },
-                    },
-                    creeper::col::pro::Item<creeper::FilledCard> {
-                        theme,
-                        creeper::card::pro::LevelLowest,
-                        creeper::card::pro::Layout<creeper::Col> {
-                            creeper::col::pro::Margin { 8 },
-                            creeper::col::pro::Spacing { 4 },
-                            creeper::col::pro::Item { param_stack },
-                        },
-                    },
-                    creeper::col::pro::Item { frame_rotation_card },
-                    creeper::col::pro::Item { set_origin_button },
-                    creeper::col::pro::Item { export_option_row },
-                    creeper::col::pro::Item { export_button },
+                    creeper::col::pro::Item { mode_card },
+                    creeper::col::pro::Item { frame_card },
+                    creeper::col::pro::Item { export_card },
                 },
             };
         }

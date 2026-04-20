@@ -23,6 +23,8 @@
 #include <qshortcut.h>
 #include <qstandardpaths.h>
 
+#include <utility>
+
 using namespace pcs;
 using namespace creeper;
 
@@ -44,7 +46,7 @@ public:
 
         // App modules loading
         {
-            modules = gui::context::make_app_modules();
+            modules = gui::context::AppModules { };
             gui::context::register_default_features(modules);
 
             sp::info("App modules are loaded");
@@ -56,7 +58,7 @@ public:
             manager->set_theme_pack(kBlueMikuThemePack);
             manager->set_color_mode(ColorMode::LIGHT);
 
-            states = gui::context::make_app_states(*manager, modules);
+            states = gui::context::AppStates { *manager, modules };
 
             {
                 navigation_state = std::move(states.navigation);
@@ -107,6 +109,8 @@ public:
             sp::info("App gui are loaded");
         }
 
+        use_startup_files();
+
         sp::info("Applicatioin is loaded fully");
     }
 
@@ -115,6 +119,30 @@ public:
         configuration_path = path;
     }
 
+    auto set_startup_files(std::vector<std::string> files) noexcept -> void {
+        startup_files = std::move(files);
+        use_startup_files();
+    }
+
+    auto set_theme_name(std::string const& name) noexcept -> void {
+        if (name == "green") {
+            manager->set_theme_pack(kGreenThemePack);
+            manager->apply_theme();
+            return;
+        }
+        if (name == "blue-miku" || name == "blue") {
+            manager->set_theme_pack(kBlueMikuThemePack);
+            manager->apply_theme();
+            return;
+        }
+
+        sp::warn("Unknown theme '{}', keeping current theme", name);
+    }
+
+    auto request_exit() noexcept -> void { exit_requested = true; }
+
+    auto should_exit() const noexcept -> bool { return exit_requested; }
+
     auto show() noexcept { window->show(); }
 
 private:
@@ -122,6 +150,8 @@ private:
 
     std::string application_name = "pointcloud-shop";
     std::string configuration_path;
+    std::vector<std::string> startup_files;
+    bool exit_requested = false;
 
     std::unique_ptr<NavigationState> navigation_state;
     std::unique_ptr<VisualizationWindowState> visualization_window_state;
@@ -162,6 +192,34 @@ private:
     }
 
     auto use_configuration() noexcept { }
+
+    auto use_startup_files() noexcept -> void {
+        if (startup_files.empty() || working_panel_state == nullptr || modules.open_control == nullptr) {
+            return;
+        }
+
+        auto last_opened_id = std::optional<std::string> { };
+        for (auto const& file : startup_files) {
+            if (auto result = modules.open_control->open(file); !result.has_value()) {
+                sp::error("Failed to open startup file '{}': {}", file, result.error());
+                continue;
+            }
+
+            if (working_panel_state->refresh_callback) {
+                working_panel_state->refresh_callback();
+            }
+            auto id = modules.assets->last_asset_id();
+            if (id.has_value()) {
+                last_opened_id = *id;
+            }
+        }
+
+        if (last_opened_id.has_value() && working_panel_state->select_callback) {
+            working_panel_state->select_callback(*last_opened_id);
+        }
+
+        startup_files.clear();
+    }
 
     std::size_t current_theme_index = 0;
     auto switch_next_theme() noexcept -> void {
@@ -207,3 +265,13 @@ auto App::show() noexcept -> void { pimpl->show(); }
 auto App::set_configuration_path(const std::string& path) noexcept -> void {
     pimpl->set_configuration_path(path);
 }
+
+auto App::set_startup_files(std::vector<std::string> files) noexcept -> void {
+    pimpl->set_startup_files(std::move(files));
+}
+
+auto App::set_theme_name(std::string const& name) noexcept -> void { pimpl->set_theme_name(name); }
+
+auto App::request_exit() noexcept -> void { pimpl->request_exit(); }
+
+auto App::should_exit() const noexcept -> bool { return pimpl->should_exit(); }
