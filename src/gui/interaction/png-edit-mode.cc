@@ -44,9 +44,10 @@ namespace {
 
 }
 
-PngEditMode::PngEditMode(Renderer& renderer, AssetsManager& assets) noexcept
+PngEditMode::PngEditMode(Renderer& renderer, AssetsManager& assets, Runtime& runtime) noexcept
     : renderer { renderer }
-    , assets { assets } {
+    , assets { assets }
+    , runtime { runtime } {
     register_tool_handler(PngEditTool::Free,
         ToolHandler {
             .on_move =
@@ -355,15 +356,15 @@ auto PngEditMode::ensure_session(std::string const& asset_id, PngMapHandle& hand
 auto PngEditMode::apply_edit(Session const& session, PngMapHandle& handle,
     event::PngMapEditOperation operation, PixelPoint from, PixelPoint to,
     std::size_t thickness) const noexcept -> event::ApplyPngMapEdit::Result {
-    auto context       = std::make_unique<event::ApplyPngMapEdit::Context>();
-    context->pixels    = session.pixels;
-    context->width     = handle.get_width();
-    context->height    = handle.get_height();
-    context->from      = from;
-    context->to        = to;
-    context->thickness = thickness;
-    context->operation = operation;
-    return event::ApplyPngMapEdit::runtime_exec(std::move(context));
+    auto edit       = event::ApplyPngMapEdit { };
+    edit.pixels     = session.pixels;
+    edit.width      = handle.get_width();
+    edit.height     = handle.get_height();
+    edit.from       = from;
+    edit.to         = to;
+    edit.thickness  = thickness;
+    edit.operation  = operation;
+    return runtime.submit(std::move(edit)).get();
 }
 
 auto PngEditMode::apply_stroke(Mouse& mouse, PngMapHandle& handle, Session& session,

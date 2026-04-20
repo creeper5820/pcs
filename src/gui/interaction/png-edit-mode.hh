@@ -4,6 +4,7 @@
 #include "core/events/process/png-map-edit.hh"
 #include "core/map/png-edit-ops.hh"
 #include "core/renderer.hh"
+#include "core/runtime.hh"
 #include "gui/interaction/mouse.hh"
 
 #include <functional>
@@ -16,7 +17,7 @@ namespace pcs::gui::interaction {
 
 class PngEditMode final : public MouseMode {
 public:
-    PngEditMode(Renderer&, AssetsManager&) noexcept;
+    PngEditMode(Renderer&, AssetsManager&, Runtime&) noexcept;
 
     auto id() const noexcept -> MouseModeId override;
     auto on_init(Mouse&) noexcept -> void override;
@@ -65,6 +66,7 @@ private:
 
     Renderer& renderer;
     AssetsManager& assets;
+    Runtime& runtime;
     std::unordered_map<std::string, Session> sessions;
     std::unordered_map<PngEditTool, ToolHandler> tool_handlers;
 };
