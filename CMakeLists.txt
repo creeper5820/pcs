@@ -17,7 +17,7 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network OpenGLWidgets)
 find_package(spdlog REQUIRED)
-find_package(PCL REQUIRED COMPONENTS io common filters)
+find_package(PCL REQUIRED COMPONENTS io common filters search segmentation)
 find_package(VTK COMPONENTS
     CommonColor
     CommonCore
