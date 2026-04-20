@@ -1,7 +1,5 @@
 #pragma once
 
-#include "core/map/png-map-data.hh"
-
 #include <expected>
 #include <string>
 #include <string_view>
@@ -10,19 +8,24 @@
 
 namespace pcs::event {
 
-struct ConvertPointcloudToPngMap {
+struct PointcloudRangeCrop {
     using Position = std::tuple<double, double, double>;
-    using Result   = std::expected<PngMapData, std::string>;
+    using Result   = std::expected<std::vector<Position>, std::string>;
 
     struct Meta {
-        std::string_view name = "Convert Pointcloud To PNG Map";
+        std::string_view name = "Pointcloud Range Crop";
         bool recordable       = false;
         bool redoable         = true;
     };
 
     Meta meta { };
     std::vector<Position> points;
-    PngMapParameters parameters;
+    double x_min = -10.0;
+    double x_max = 10.0;
+    double y_min = -10.0;
+    double y_max = 10.0;
+    double z_min = -10.0;
+    double z_max = 10.0;
 
     auto exec() noexcept -> Result;
     auto redo() noexcept -> Result;

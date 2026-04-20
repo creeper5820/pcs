@@ -20,6 +20,7 @@ struct PointsHandle::Impl final {
 
     std::unique_ptr<PointsUnit> unit;
     std::shared_ptr<PointCloud> points;
+    bool coordinate_visible = true;
 
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view> {
@@ -28,6 +29,7 @@ struct PointsHandle::Impl final {
             return std::unexpected { "Failed to read pointcloud from filesystem" };
         }
         unit = std::make_unique<PointsUnit>(points->points);
+        unit->set_coordinate_visibility(coordinate_visible);
         return { };
     }
 
@@ -45,6 +47,7 @@ struct PointsHandle::Impl final {
         points->height = 1;
 
         unit = std::make_unique<PointsUnit>(points->points);
+        unit->set_coordinate_visibility(coordinate_visible);
         return { };
     }
 
@@ -72,4 +75,13 @@ struct PointsHandle::Impl final {
 
         return result;
     }
+
+    auto set_coordinate_visibility(bool on) noexcept -> void {
+        coordinate_visible = on;
+        if (unit != nullptr) {
+            unit->set_coordinate_visibility(on);
+        }
+    }
+
+    auto coordinate_visibility() const noexcept -> bool { return coordinate_visible; }
 };

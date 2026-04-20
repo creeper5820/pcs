@@ -1,7 +1,6 @@
 #include "assets.hh"
 
 #include "core/events/process/model-to-pointcloud.hh"
-#include "core/events/process/pointcloud-to-png-map.hh"
 
 #include <algorithm>
 #include <filesystem>
@@ -357,24 +356,33 @@ struct AssetsManager::Impl {
         return created;
     }
 
-    auto convert_model_to_pointcloud(
-        std::string const& id, pcs::ModelToPointcloudParameters const& parameters) noexcept
-        -> std::expected<std::string, std::string> {
-        auto* asset = get_model_asset(id);
-        if (asset == nullptr || asset->unit == nullptr) {
-            return std::unexpected { "Model asset is not loaded" };
+    auto clone_pointcloud_asset(std::string const& source_id, std::string const& target_name)
+        noexcept -> std::expected<std::string, std::string> {
+        auto* source_asset = get_pointcloud_asset(source_id);
+        if (source_asset == nullptr || source_asset->unit == nullptr) {
+            return std::unexpected { "Pointcloud asset is not loaded" };
         }
 
-        auto context        = std::make_unique<event::ConvertModelToPointcloud::Context>();
-        context->model      = asset->unit->model_data();
-        context->parameters = parameters;
-
-        auto result = event::ConvertModelToPointcloud::runtime_exec(std::move(context));
-        if (!result.has_value()) {
-            return std::unexpected { result.error() };
+        auto replacement = std::make_unique<PointsHandle>();
+        auto load_result = replacement->load_from_positions(source_asset->unit->get_positions());
+        if (!load_result.has_value()) {
+            return std::unexpected { std::string { load_result.error() } };
         }
 
-        return upsert_generated_pointcloud(id, result.value());
+        auto name = target_name;
+        if (name.empty()) {
+            auto derived = std::filesystem::path(source_asset->name);
+            if (derived.empty()) {
+                derived = "pointcloud-copy.pcd";
+            } else {
+                derived.replace_extension(".pcd");
+                derived = derived.stem().string() + "-copy.pcd";
+            }
+            name = derived.filename().string();
+        }
+
+        auto new_id = register_pointcloud(std::move(replacement), name, { }, false);
+        return new_id;
     }
 
     auto create_png_map_asset_from_data(std::string const& source_id,
@@ -453,25 +461,6 @@ struct AssetsManager::Impl {
 
         generated_png_asset_by_source[source_id] = *created;
         return created;
-    }
-
-    auto generate_png_map_from_pointcloud(std::string const& id,
-        PngMapParameters const& parameters) noexcept -> std::expected<std::string, std::string> {
-        auto* asset = get_pointcloud_asset(id);
-        if (asset == nullptr || asset->unit == nullptr) {
-            return std::unexpected { "Pointcloud asset is not loaded" };
-        }
-
-        auto context        = std::make_unique<event::ConvertPointcloudToPngMap::Context>();
-        context->points     = asset->unit->get_positions();
-        context->parameters = parameters;
-
-        auto result = event::ConvertPointcloudToPngMap::runtime_exec(std::move(context));
-        if (!result.has_value()) {
-            return std::unexpected { result.error() };
-        }
-
-        return upsert_generated_png_map(id, result.value());
     }
 
     auto save_pointcloud_asset(std::string const& id, std::string const& path) noexcept
@@ -686,21 +675,22 @@ auto AssetsManager::set_asset_visibility(std::string const& id, bool on) noexcep
     return pimpl->set_asset_visibility(id, on);
 }
 
-auto AssetsManager::convert_model_to_pointcloud(
-    std::string const& id, ModelToPointcloudParameters const& parameters) noexcept
-    -> std::expected<std::string, std::string> {
-    return pimpl->convert_model_to_pointcloud(id, parameters);
-}
-
-auto AssetsManager::generate_png_map_from_pointcloud(std::string const& id,
-    PngMapParameters const& parameters) noexcept -> std::expected<std::string, std::string> {
-    return pimpl->generate_png_map_from_pointcloud(id, parameters);
-}
-
 auto AssetsManager::upsert_generated_pointcloud(std::string const& source_id,
     std::vector<std::tuple<double, double, double>> const& points) noexcept
     -> std::expected<std::string, std::string> {
     return pimpl->upsert_generated_pointcloud(source_id, points);
+}
+
+auto AssetsManager::replace_pointcloud_asset_data(std::string const& id,
+    std::vector<std::tuple<double, double, double>> const& points) noexcept
+    -> std::expected<void, std::string> {
+    return pimpl->replace_pointcloud_asset_data(id, points);
+}
+
+auto AssetsManager::clone_pointcloud_asset(
+    std::string const& source_id, std::string const& target_name) noexcept
+    -> std::expected<std::string, std::string> {
+    return pimpl->clone_pointcloud_asset(source_id, target_name);
 }
 
 auto AssetsManager::create_png_map_asset_from_data(std::string const& source_id,

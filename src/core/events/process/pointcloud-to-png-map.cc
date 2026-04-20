@@ -214,46 +214,48 @@ auto generate_png_map(PointCloud const& pointcloud, pcs::PngMapParameters const&
 
 namespace pcs::event {
 
-auto ConvertPointcloudToPngMap::runtime_exec(std::unique_ptr<Context> context) noexcept -> Result {
-    if (context == nullptr || context->points.empty()) {
+auto ConvertPointcloudToPngMap::exec() noexcept -> Result {
+    if (points.empty()) {
         return std::unexpected { "点云数据未加载" };
     }
 
-    auto parameters = context->parameters;
+    auto params = parameters;
 
-    if (parameters.resolution < 0.01) {
+    if (params.resolution < 0.01) {
         return std::unexpected { "分辨率必须大于等于 0.01" };
     }
-    if (parameters.points_limit == 0) {
+    if (params.points_limit == 0) {
         return std::unexpected { "有效点云数必须大于 0" };
     }
-    if (parameters.height_limit < 0.0) {
+    if (params.height_limit < 0.0) {
         return std::unexpected { "有效高度差必须大于等于 0" };
     }
-    if (parameters.influence_radius < 0.0) {
+    if (params.influence_radius < 0.0) {
         return std::unexpected { "影响半径必须大于等于 0" };
     }
-    if (parameters.z_area_start < 0.0) {
+    if (params.z_area_start < 0.0) {
         return std::unexpected { "Z 区间起点必须大于等于 0" };
     }
-    if (parameters.z_area_end < 0.0) {
+    if (params.z_area_end < 0.0) {
         return std::unexpected { "Z 区间终点必须大于等于 0" };
     }
 
-    auto pointcloud = as_pointcloud(context->points);
+    auto pointcloud = as_pointcloud(points);
 
     auto original_min = Point { };
     auto original_max = Point { };
     pcl::getMinMax3D(*pointcloud, original_min, original_max);
 
     auto filtered = std::make_shared<PointCloud>(*pointcloud);
-    remove_outlier_points(filtered, parameters.resolution);
+    remove_outlier_points(filtered, params.resolution);
 
     if (filtered->empty()) {
         return std::unexpected { "离群点过滤后点云为空" };
     }
 
-    return generate_png_map(*filtered, parameters, original_min.z);
+    return generate_png_map(*filtered, params, original_min.z);
 }
+
+auto ConvertPointcloudToPngMap::redo() noexcept -> Result { return exec(); }
 
 }

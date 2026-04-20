@@ -15,6 +15,9 @@ using namespace pcs;
 struct PngMapHandle::Impl final {
     PngMapData data;
     std::unique_ptr<PngMapUnit> unit;
+    bool visible       = true;
+    bool frame_visible = true;
+    bool area_visible  = true;
 
     auto make_image(PngMapExportMirror mirror) const noexcept -> QImage {
         auto image = QImage(
@@ -93,6 +96,9 @@ struct PngMapHandle::Impl final {
 
         data = map;
         unit = std::make_unique<PngMapUnit>(data);
+        unit->set_visibility(visible);
+        unit->set_area_visibility(area_visible && visible);
+        unit->set_frame_visibility(frame_visible && visible);
         return { };
     }
 
@@ -209,4 +215,37 @@ struct PngMapHandle::Impl final {
 
         return unit->update_pixels(data.pixels);
     }
+
+    auto set_visibility(bool on) noexcept -> void {
+        visible = on;
+        if (unit == nullptr) {
+            return;
+        }
+
+        unit->set_visibility(visible);
+        unit->set_area_visibility(area_visible && visible);
+        unit->set_frame_visibility(frame_visible && visible);
+    }
+
+    auto set_frame_visibility(bool on) noexcept -> void {
+        frame_visible = on;
+        if (unit == nullptr) {
+            return;
+        }
+
+        unit->set_frame_visibility(frame_visible && visible);
+    }
+
+    auto frame_visibility() const noexcept -> bool { return frame_visible; }
+
+    auto set_area_visibility(bool on) noexcept -> void {
+        area_visible = on;
+        if (unit == nullptr) {
+            return;
+        }
+
+        unit->set_area_visibility(area_visible && visible);
+    }
+
+    auto area_visibility() const noexcept -> bool { return area_visible; }
 };

@@ -257,17 +257,16 @@ auto apply_max_points_limit(std::vector<pcs::event::ConvertModelToPointcloud::Po
 
 namespace pcs::event {
 
-auto ConvertModelToPointcloud::runtime_exec(std::unique_ptr<Context> context) noexcept -> Result {
-    if (context == nullptr || context->model.vertices.empty()) {
+auto ConvertModelToPointcloud::exec() noexcept -> Result {
+    if (model.vertices.empty()) {
         return std::unexpected { "Model data is not loaded" };
     }
 
-    auto poly_data = build_poly_data(context->model);
+    auto poly_data = build_poly_data(model);
     if (poly_data == nullptr || poly_data->GetNumberOfPoints() == 0) {
         return std::unexpected { "Model polydata is not loaded" };
     }
 
-    const auto& parameters = context->parameters;
     if (parameters.density <= 0.0) {
         return std::unexpected { "Density must be greater than 0" };
     }
@@ -347,5 +346,7 @@ auto ConvertModelToPointcloud::runtime_exec(std::unique_ptr<Context> context) no
 
     return positions;
 }
+
+auto ConvertModelToPointcloud::redo() noexcept -> Result { return exec(); }
 
 }

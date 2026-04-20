@@ -54,15 +54,16 @@ public:
 
     auto set_asset_visibility(std::string const& id, bool on) noexcept -> bool;
 
-    auto convert_model_to_pointcloud(
-        std::string const& id, ModelToPointcloudParameters const& = { }) noexcept
-        -> std::expected<std::string, std::string>;
-
     auto upsert_generated_pointcloud(std::string const& source_id,
         std::vector<std::tuple<double, double, double>> const& points) noexcept
         -> std::expected<std::string, std::string>;
 
-    auto generate_png_map_from_pointcloud(std::string const& id, PngMapParameters const&) noexcept
+    auto replace_pointcloud_asset_data(std::string const& id,
+        std::vector<std::tuple<double, double, double>> const& points) noexcept
+        -> std::expected<void, std::string>;
+
+    auto clone_pointcloud_asset(
+        std::string const& source_id, std::string const& target_name = "") noexcept
         -> std::expected<std::string, std::string>;
 
     auto upsert_generated_png_map(std::string const& source_id, PngMapData const&) noexcept

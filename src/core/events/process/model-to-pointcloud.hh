@@ -1,10 +1,11 @@
 #pragma once
 
-#include "core/events/common.hh"
 #include "core/map/model-data.hh"
 #include "core/map/model-pointcloud-data.hh"
 
 #include <expected>
+#include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -14,17 +15,18 @@ struct ConvertModelToPointcloud {
     using Position = std::tuple<double, double, double>;
     using Result   = std::expected<std::vector<Position>, std::string>;
 
-    struct Context {
-        static constexpr EventMeta meta {
-            .name      = "Convert Model To Pointcloud",
-            .consuming = true,
-        };
-
-        ModelData model;
-        ModelToPointcloudParameters parameters;
+    struct Meta {
+        std::string_view name = "Convert Model To Pointcloud";
+        bool recordable       = false;
+        bool redoable         = true;
     };
 
-    static auto runtime_exec(std::unique_ptr<Context>) noexcept -> Result;
+    Meta meta { };
+    ModelData model;
+    ModelToPointcloudParameters parameters;
+
+    auto exec() noexcept -> Result;
+    auto redo() noexcept -> Result;
 };
 
 }
