@@ -26,19 +26,32 @@ struct PngMapHandle::Impl final {
 
         for (std::size_t y = 0; y < data.height; ++y) {
             auto* row_ptr = image.scanLine(static_cast<int>(y));
-            std::memcpy(row_ptr, data.pixels.data() + y * data.width, data.width * sizeof(std::uint8_t));
+            std::memcpy(
+                row_ptr, data.pixels.data() + y * data.width, data.width * sizeof(std::uint8_t));
         }
 
-        switch (mirror) {
-        case PngMapExportMirror::Horizontal:
-            return image.flipped(Qt::Horizontal);
-        case PngMapExportMirror::Vertical:
-            return image.flipped(Qt::Vertical);
-        case PngMapExportMirror::None:
+        if (mirror == PngMapExportMirror::None) {
             return image;
         }
 
-        return image;
+        auto mirrored = QImage(static_cast<int>(data.width), static_cast<int>(data.height),
+            QImage::Format_Grayscale8);
+        if (mirrored.isNull()) {
+            return mirrored;
+        }
+
+        for (std::size_t y = 0; y < data.height; ++y) {
+            for (std::size_t x = 0; x < data.width; ++x) {
+                const auto source_x = mirror == PngMapExportMirror::Horizontal ? data.width - 1 - x : x;
+                const auto source_y = mirror == PngMapExportMirror::Vertical ? data.height - 1 - y : y;
+
+                auto* target = mirrored.scanLine(static_cast<int>(y));
+                auto const* source = image.constScanLine(static_cast<int>(source_y));
+                target[x] = source[source_x];
+            }
+        }
+
+        return mirrored;
     }
 
     auto load_from_filesystem(std::string const& path) noexcept
