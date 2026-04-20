@@ -1,5 +1,6 @@
 #include "gui/context/states.hh"
 
+using namespace creeper;
 namespace pcs::gui::context {
 
 AppStates::AppStates(creeper::ThemeManager& manager, AppModules& modules) noexcept {
@@ -9,6 +10,7 @@ AppStates::AppStates(creeper::ThemeManager& manager, AppModules& modules) noexce
         manager, *modules.assets, *modules.runtime, *modules.renderer);
 
     navigation->mouse               = modules.mouse.get();
+    visualization->runtime          = modules.runtime.get();
     visualization->mouse            = modules.mouse.get();
     working->mouse                  = modules.mouse.get();
     working->open_control           = modules.open_control.get();

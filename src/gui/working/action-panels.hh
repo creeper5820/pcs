@@ -21,6 +21,7 @@ struct ActionPanelContext {
     creeper::ThemeManager* manager      = nullptr;
     pcs::AssetsManager* assets          = nullptr;
     pcs::Runtime* runtime               = nullptr;
+    pcs::Renderer* renderer             = nullptr;
     pcs::gui::interaction::Mouse* mouse = nullptr;
 
     std::function<void()> refresh_assets_list;

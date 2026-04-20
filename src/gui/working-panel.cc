@@ -102,6 +102,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
     auto visibility_button = std::make_shared<QPointer<IconButton>>();
     auto delete_button     = std::make_shared<QPointer<IconButton>>();
+    auto clear_asset_detail = std::make_shared<std::function<void()>>();
 
     auto assets_view = std::make_shared<QPointer<AssetsView>>();
     auto action_host = static_cast<pcs::gui::working::ActionPanelHost*>(nullptr);
@@ -136,6 +137,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
     panel_context.manager             = &manager;
     panel_context.assets              = &assets;
     panel_context.runtime             = &state.runtime;
+    panel_context.renderer            = &state.renderer;
     panel_context.mouse               = mouse;
     panel_context.refresh_assets_list = refresh_assets_list;
     panel_context.select_asset        = select_asset;
@@ -198,6 +200,16 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
             icon_button::pro::ColorStandard,
             icon_button::pro::TypesToggleUnselected,
             icon_button::pro::ToolTip { "切换资产可见性" },
+            icon_button::pro::Clickable { [=, &assets] {
+                if (current_asset_id->empty()) {
+                    return;
+                }
+
+                const auto current_visibility = assets.is_asset_visible(*current_asset_id).value_or(true);
+                const auto next_visibility    = !current_visibility;
+                assets.set_asset_visibility(*current_asset_id, next_visibility);
+                sync_visibility_button(assets.is_asset_visible(*current_asset_id).value_or(true));
+            } },
         };
         sync_visibility_button(false);
         (*visibility_button)->setDisabled(true);
@@ -210,6 +222,30 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
             icon_button::pro::ShapeSquare,
             icon_button::pro::ColorStandard,
             icon_button::pro::ToolTip { "删除当前资产" },
+            icon_button::pro::Clickable { [=, &assets] {
+                if (current_asset_id->empty()) {
+                    return;
+                }
+
+                const auto id   = *current_asset_id;
+                const auto name = assets.get_asset_name(id).value_or(id);
+                const auto ask  = QMessageBox::question(nullptr, "删除资产",
+                    QString("确认删除资产 '%1' 吗？该操作不可撤销。").arg(QString::fromStdString(name)),
+                    QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+                if (ask != QMessageBox::Yes) {
+                    return;
+                }
+
+                if (!assets.remove_asset(id)) {
+                    QMessageBox::warning(nullptr, "删除失败", "删除当前资产失败。");
+                    return;
+                }
+
+                refresh_assets_list();
+                if (clear_asset_detail != nullptr && *clear_asset_detail) {
+                    (*clear_asset_detail)();
+                }
+            } },
         };
         (*delete_button)->setDisabled(true);
 
@@ -222,43 +258,12 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         };
     };
 
-    const auto asset_detail_view = new FilledCard {
-        theme_manager,
-        card::pro::LevelLowest,
-        card::pro::Layout<Col> {
-            col::pro::Margin { 10 },
-            col::pro::Spacing { 10 },
-            col::pro::Item<Text> {
-                theme_manager,
-                text::pro::Font { font },
-                text::pro::Text { "资产详情" },
-                text::pro::Alignment { Qt::AlignHCenter },
-            },
-            col::pro::Item<FilledCard> {
-                theme_manager,
-                card::pro::LevelLow,
-                card::pro::Layout<Col> {
-                    col::pro::Margin { 10 },
-                    col::pro::Spacing { 5 },
-                    col::pro::Item { prop_row("名称:", asset_name) },
-                    col::pro::Item { prop_row("类型:", asset_type) },
-                    col::pro::Item { prop_row("大小（MB）:", asset_size) },
-                    col::pro::Item { prop_row("信息:", asset_info) },
-                    col::pro::Item { prop_row("路径:", asset_path) },
-                    col::pro::Item { asset_actions_row() },
-                },
-            },
-            col::pro::Item { action_host->widget() },
-            col::pro::Stretch { 255 },
-        },
-    };
-
-    std::function<void()> clear_asset_detail;
-
-    const auto asset_selection_callback = [=, &assets, &clear_asset_detail](std::string const& id) {
+    const auto asset_selection_callback = [=, &assets](std::string const& id) {
         auto kind = assets.get_asset_kind(id);
         if (!kind.has_value()) {
-            clear_asset_detail();
+            if (clear_asset_detail != nullptr && *clear_asset_detail) {
+                (*clear_asset_detail)();
+            }
             return;
         }
 
@@ -304,7 +309,7 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         asset_selection_callback,
     };
 
-    clear_asset_detail = [=] {
+    *clear_asset_detail = [=] {
         *current_asset_id = { };
         *asset_name       = "未知";
         *asset_type       = "未知";
@@ -327,40 +332,6 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
 
         action_host->clear();
     };
-
-    QObject::connect(visibility_button->data(), &IconButton::clicked, [=, &assets](bool) {
-        if (current_asset_id->empty()) {
-            return;
-        }
-
-        const auto current_visibility = assets.is_asset_visible(*current_asset_id).value_or(true);
-        const auto next_visibility    = !current_visibility;
-        assets.set_asset_visibility(*current_asset_id, next_visibility);
-        sync_visibility_button(assets.is_asset_visible(*current_asset_id).value_or(true));
-    });
-
-    QObject::connect(delete_button->data(), &IconButton::clicked, [=, &assets](bool) {
-        if (current_asset_id->empty()) {
-            return;
-        }
-
-        const auto id   = *current_asset_id;
-        const auto name = assets.get_asset_name(id).value_or(id);
-        const auto ask  = QMessageBox::question(nullptr, "删除资产",
-            QString("确认删除资产 '%1' 吗？该操作不可撤销。").arg(QString::fromStdString(name)),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
-        if (ask != QMessageBox::Yes) {
-            return;
-        }
-
-        if (!assets.remove_asset(id)) {
-            QMessageBox::warning(nullptr, "删除失败", "删除当前资产失败。");
-            return;
-        }
-
-        refresh_assets_list();
-        clear_asset_detail();
-    });
 
     const auto open_location = [=, &assets] {
         if (open_control == nullptr) {
@@ -394,7 +365,9 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         if (result == QMessageBox::Yes) {
             assets.clean_assets();
             refresh_assets_list();
-            clear_asset_detail();
+            if (clear_asset_detail != nullptr && *clear_asset_detail) {
+                (*clear_asset_detail)();
+            }
         }
     };
 
@@ -442,52 +415,8 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
         };
     };
 
-    const auto assets_actions_panel = new FilledCard {
-        card::pro::ThemeManager { manager },
-        card::pro::Radius { 10 },
-        card::pro::LevelHigh,
-        card::pro::Layout<Col> {
-            col::pro::Item<Text> {
-                text::pro::ThemeManager { manager },
-                text::pro::Font { font },
-                text::pro::Alignment { Qt::AlignHCenter },
-                text::pro::Text { "资产操作" },
-            },
-            col::pro::Item<Flow> {
-                { 255 },
-                flow::pro::RowSpacing { 10 },
-                flow::pro::ColSpacing { 10 },
-                flow::pro::Alignment { Qt::AlignTop },
-                flow::pro::Widget { assets_action("folder_open", "打开", open_location) },
-                flow::pro::Widget { assets_action("delete_sweep", "清空", clean_assets) },
-                flow::pro::Widget { assets_action("hide_source", "显隐", hide_assets) },
-                flow::pro::Widget { assets_action("restart_alt", "重置视角", reset_view) },
-            },
-        },
-    };
-
-    auto scroll_content = new Widget {
-        widget::pro::Apply { [](QWidget& self) {
-            self.setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-        } },
-        widget::pro::Layout<Col> {
-            col::pro::Margin { 10 },
-            col::pro::Spacing { 10 },
-            col::pro::Item { assets_actions_panel },
-            col::pro::Item { assets_view->data() },
-            col::pro::Item { asset_detail_view },
-            col::pro::Stretch { 255 },
-        },
-    };
-
-    auto scrollable = new ScrollArea {
-        theme_manager,
-        scroll::pro::ScrollBarPolicy { Qt::ScrollBarAsNeeded, Qt::ScrollBarAlwaysOff },
-        scroll::pro::Item { scroll_content },
-    };
-
     refresh_assets_list();
-    clear_asset_detail();
+    (*clear_asset_detail)();
 
     return new FilledCard {
         card::pro::ThemeManager { manager },
@@ -511,7 +440,79 @@ auto WorkingPanelComponent(WorkingPanelState& state) noexcept -> QPointer<QWidge
                 card::pro::Layout<Col> {
                     col::pro::Margin { 0 },
                     col::pro::Spacing { 0 },
-                    col::pro::Item { scrollable },
+                    col::pro::Item<ScrollArea> {
+                        theme_manager,
+                        scroll::pro::ScrollBarPolicy {
+                            Qt::ScrollBarAsNeeded, Qt::ScrollBarAlwaysOff },
+                        scroll::pro::Item<Widget> {
+                            widget::pro::Apply { [](QWidget& self) {
+                                self.setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+                            } },
+                            widget::pro::Layout<Col> {
+                                col::pro::Margin { 10 },
+                                col::pro::Spacing { 10 },
+                                col::pro::Item<FilledCard> {
+                                    card::pro::ThemeManager { manager },
+                                    card::pro::Radius { 10 },
+                                    card::pro::LevelHigh,
+                                    card::pro::Layout<Col> {
+                                        col::pro::Item<Text> {
+                                            text::pro::ThemeManager { manager },
+                                            text::pro::Font { font },
+                                            text::pro::Alignment { Qt::AlignHCenter },
+                                            text::pro::Text { "资产操作" },
+                                        },
+                                        col::pro::Item<Flow> {
+                                            { 255 },
+                                            flow::pro::RowSpacing { 10 },
+                                            flow::pro::ColSpacing { 10 },
+                                            flow::pro::Alignment { Qt::AlignTop },
+                                            flow::pro::Widget {
+                                                assets_action("folder_open", "打开", open_location) },
+                                            flow::pro::Widget {
+                                                assets_action("delete_sweep", "清空", clean_assets) },
+                                            flow::pro::Widget {
+                                                assets_action("hide_source", "显隐", hide_assets) },
+                                            flow::pro::Widget {
+                                                assets_action("restart_alt", "重置视角", reset_view) },
+                                        },
+                                    },
+                                },
+                                col::pro::Item { assets_view->data() },
+                                col::pro::Item<FilledCard> {
+                                    theme_manager,
+                                    card::pro::LevelLowest,
+                                    card::pro::Layout<Col> {
+                                        col::pro::Margin { 10 },
+                                        col::pro::Spacing { 10 },
+                                        col::pro::Item<Text> {
+                                            theme_manager,
+                                            text::pro::Font { font },
+                                            text::pro::Text { "资产详情" },
+                                            text::pro::Alignment { Qt::AlignHCenter },
+                                        },
+                                        col::pro::Item<FilledCard> {
+                                            theme_manager,
+                                            card::pro::LevelLow,
+                                            card::pro::Layout<Col> {
+                                                col::pro::Margin { 10 },
+                                                col::pro::Spacing { 5 },
+                                                col::pro::Item { prop_row("名称:", asset_name) },
+                                                col::pro::Item { prop_row("类型:", asset_type) },
+                                                col::pro::Item { prop_row("大小:", asset_size) },
+                                                col::pro::Item { prop_row("信息:", asset_info) },
+                                                col::pro::Item { prop_row("路径:", asset_path) },
+                                                col::pro::Item { asset_actions_row() },
+                                            },
+                                        },
+                                        col::pro::Item { action_host->widget() },
+                                        col::pro::Stretch { 255 },
+                                    },
+                                },
+                                col::pro::Stretch { 255 },
+                            },
+                        },
+                    },
                 },
             },
         },

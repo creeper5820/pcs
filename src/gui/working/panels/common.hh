@@ -1,6 +1,7 @@
 #pragma once
 
 #include <creeper-qt/utility/theme/theme.hh>
+#include <creeper-qt/utility/wrapper/mutable-value.hh>
 #include <creeper-qt/widget/sliders.hh>
 #include <creeper-qt/widget/text-fields.hh>
 #include <creeper-qt/widget/text.hh>
@@ -8,6 +9,8 @@
 #include <QWidget>
 
 #include <expected>
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -17,12 +20,58 @@ class CompactFieldRow final : public QWidget {
 public:
     CompactFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
         std::string_view label, int label_width, int field_width,
-        QString const& default_value) noexcept;
+        QString const& default_value, QString const& placeholder = {}) noexcept;
 
     auto field() const noexcept -> creeper::OutlinedTextField&;
 
 private:
     creeper::OutlinedTextField* input = nullptr;
+};
+
+class CompactDualFieldRow final : public QWidget {
+public:
+    CompactDualFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
+        std::string_view label, int label_width, int field_width,
+        QString const& first_default, QString const& second_default,
+        QString const& first_placeholder = {}, QString const& second_placeholder = {}) noexcept;
+
+    auto first() const noexcept -> creeper::OutlinedTextField&;
+    auto second() const noexcept -> creeper::OutlinedTextField&;
+
+private:
+    creeper::OutlinedTextField* first_input  = nullptr;
+    creeper::OutlinedTextField* second_input = nullptr;
+};
+
+class CompactTripleFieldRow final : public QWidget {
+public:
+    CompactTripleFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
+        std::string_view label, int label_width, int field_width, QString const& first_default,
+        QString const& second_default, QString const& third_default,
+        QString const& first_placeholder = {}, QString const& second_placeholder = {},
+        QString const& third_placeholder = {}) noexcept;
+
+    auto first() const noexcept -> creeper::OutlinedTextField&;
+    auto second() const noexcept -> creeper::OutlinedTextField&;
+    auto third() const noexcept -> creeper::OutlinedTextField&;
+
+private:
+    creeper::OutlinedTextField* first_input  = nullptr;
+    creeper::OutlinedTextField* second_input = nullptr;
+    creeper::OutlinedTextField* third_input  = nullptr;
+};
+
+class CompactWidgetRow final : public QWidget {
+public:
+    CompactWidgetRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
+        std::string_view label, int label_width, QWidget* value_widget) noexcept;
+};
+
+class ValueSliderRow final : public QWidget {
+public:
+    ValueSliderRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
+        std::string_view label, std::shared_ptr<creeper::MutableDouble> value,
+        std::function<void()> on_commit) noexcept;
 };
 
 class AngleSliderFieldRow final : public QWidget {

@@ -14,6 +14,7 @@
 #include "gui/working/panels/pointcloud-panel.hh"
 
 #include <filesystem>
+#include <memory>
 
 namespace pcs::gui::context {
 
@@ -40,22 +41,32 @@ namespace {
         return text;
     }
 
-    auto format_size_mb(std::uintmax_t bytes) noexcept -> QString {
-        const auto mb = static_cast<double>(bytes) / (1024.0 * 1024.0);
-        return trim_decimal_zeros(QString::number(mb, 'f', 2));
+    auto format_size_human_readable(std::uintmax_t bytes) noexcept -> QString {
+        constexpr auto kKb = 1024.0;
+        constexpr auto kMb = 1024.0 * 1024.0;
+
+        if (bytes >= static_cast<std::uintmax_t>(kMb)) {
+            const auto mb = static_cast<double>(bytes) / kMb;
+            return QString("%1 MB").arg(trim_decimal_zeros(QString::number(mb, 'f', 2)));
+        }
+        if (bytes >= static_cast<std::uintmax_t>(kKb)) {
+            const auto kb = static_cast<double>(bytes) / kKb;
+            return QString("%1 KB").arg(trim_decimal_zeros(QString::number(kb, 'f', 2)));
+        }
+        return QString("%1 B").arg(static_cast<qulonglong>(bytes));
     }
 
-    auto asset_size_mb_text(std::string const& path, std::uintmax_t fallback_bytes) noexcept
+    auto asset_size_text(std::string const& path, std::uintmax_t fallback_bytes) noexcept
         -> QString {
         if (!path.empty() && path != "<memory>") {
             auto error      = std::error_code { };
             const auto size = std::filesystem::file_size(path, error);
             if (!error) {
-                return format_size_mb(size);
+                return format_size_human_readable(size);
             }
         }
 
-        return format_size_mb(fallback_bytes);
+        return format_size_human_readable(fallback_bytes);
     }
 
     auto export_mirror_text(pcs::PngMapExportMirror mirror) noexcept -> QString {
@@ -81,21 +92,24 @@ auto register_default_features(AppModules& modules) noexcept -> void {
 
     modules.mouse->register_mode(std::move(picker_mode));
     modules.mouse->register_mode(
-        std::make_unique<gui::interaction::PngEditMode>(*modules.renderer, *modules.assets));
+        std::make_unique<gui::interaction::PngEditMode>(
+            *modules.renderer, *modules.assets, *modules.runtime));
     modules.mouse->register_mode(
         std::make_unique<gui::interaction::PngOriginPickMode>(*modules.renderer, *modules.assets));
 
     modules.action_panels->register_factory(pcs::AssetKind::Pointcloud,
         [](gui::working::ActionPanelContext context, QFont const& font) {
-            return gui::working::make_pointcloud_panel(std::move(context), font);
+            return std::make_unique<gui::working::PointcloudPanel>(std::move(context), font);
         });
     modules.action_panels->register_factory(
-        pcs::AssetKind::Model, [](gui::working::ActionPanelContext context, QFont const& font) {
-            return gui::working::make_model_panel(std::move(context), font);
+        pcs::AssetKind::Model,
+        [](gui::working::ActionPanelContext context, QFont const& font) {
+            return std::make_unique<gui::working::ModelPanel>(std::move(context), font);
         });
     modules.action_panels->register_factory(
-        pcs::AssetKind::PngMap, [](gui::working::ActionPanelContext context, QFont const& font) {
-            return gui::working::make_png_map_panel(std::move(context), font);
+        pcs::AssetKind::PngMap,
+        [](gui::working::ActionPanelContext context, QFont const& font) {
+            return std::make_unique<gui::working::PngMapPanel>(std::move(context), font);
         });
 
     modules.asset_details->register_provider(pcs::AssetKind::Pointcloud,
@@ -114,7 +128,7 @@ auto register_default_features(AppModules& modules) noexcept -> void {
 
             return pcs::gui::working::AssetDetails {
                 .type = "点云",
-                .size = asset_size_mb_text(path, estimated_bytes),
+                .size = asset_size_text(path, estimated_bytes),
                 .info = QString("点数: %1 点, 状态: %2")
                     .arg(static_cast<qulonglong>(points_count))
                     .arg(is_memory ? "内存中" : "已保存"),
@@ -137,7 +151,7 @@ auto register_default_features(AppModules& modules) noexcept -> void {
 
             return pcs::gui::working::AssetDetails {
                 .type = "模型",
-                .size = asset_size_mb_text(path, estimated_bytes),
+                .size = asset_size_text(path, estimated_bytes),
                 .info = QString("顶点: %1 点, 面数: %2 面")
                     .arg(static_cast<qulonglong>(vertices))
                     .arg(static_cast<qulonglong>(faces)),
@@ -167,7 +181,7 @@ auto register_default_features(AppModules& modules) noexcept -> void {
 
             return pcs::gui::working::AssetDetails {
                 .type = "PNG 地图",
-                .size = asset_size_mb_text(path, width * height),
+                .size = asset_size_text(path, width * height),
                 .info = QString("尺寸: %1 x %2 像素, 分辨率: %3 米/像素, Yaw: %4, 原点: %5, 导出: %6")
                     .arg(static_cast<qulonglong>(width))
                     .arg(static_cast<qulonglong>(height))
@@ -183,11 +197,11 @@ auto register_default_features(AppModules& modules) noexcept -> void {
         .dialog_pattern = "*.pcd",
         .extensions     = { ".pcd" },
         .open           = [&modules](std::string const& path) -> std::expected<void, std::string> {
-            auto context  = std::make_unique<pcs::event::MakePointsUnit::Context>();
-            context->path = path;
-            context->name = inferred_name(path, "pointcloud.pcd");
+            auto event = pcs::event::MakePointsUnit { };
+            event.path = path;
+            event.name = inferred_name(path, "pointcloud.pcd");
 
-            auto result = pcs::event::MakePointsUnit::runtime_exec(std::move(context));
+            auto result = modules.runtime->submit(std::move(event)).get();
             if (!result.has_value()) {
                 return std::unexpected { result.error() };
             }
@@ -202,11 +216,11 @@ auto register_default_features(AppModules& modules) noexcept -> void {
         .dialog_pattern = "*.obj",
         .extensions     = { ".obj" },
         .open           = [&modules](std::string const& path) -> std::expected<void, std::string> {
-            auto context  = std::make_unique<pcs::event::MakeModelUnit::Context>();
-            context->path = path;
-            context->name = inferred_name(path, "model.obj");
+            auto event = pcs::event::MakeModelUnit { };
+            event.path = path;
+            event.name = inferred_name(path, "model.obj");
 
-            auto result = pcs::event::MakeModelUnit::runtime_exec(std::move(context));
+            auto result = modules.runtime->submit(std::move(event)).get();
             if (!result.has_value()) {
                 return std::unexpected { result.error() };
             }

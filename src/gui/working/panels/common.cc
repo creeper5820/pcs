@@ -12,6 +12,7 @@
 #include <cmath>
 #include <filesystem>
 
+using namespace creeper;
 namespace pcs::gui::working::panels {
 
 auto save_pointcloud_location(std::string const& suggested_name) noexcept
@@ -149,8 +150,11 @@ auto compact_slider_measurements() noexcept -> creeper::slider::internal::Slider
 
 CompactFieldRow::CompactFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
     std::string_view label, int label_width, int field_width,
-    QString const& default_value) noexcept {
+    QString const& default_value, QString const& placeholder) noexcept {
     input = make_parameter_field(theme, font, field_width, default_value);
+    if (!placeholder.isEmpty()) {
+        input->setPlaceholderText(placeholder);
+    }
 
     auto* content = new creeper::Row {
         creeper::row::pro::Spacing { 8 },
@@ -172,17 +176,173 @@ CompactFieldRow::CompactFieldRow(creeper::theme::pro::ThemeManager const& theme,
 
 auto CompactFieldRow::field() const noexcept -> creeper::OutlinedTextField& { return *input; }
 
+CompactDualFieldRow::CompactDualFieldRow(creeper::theme::pro::ThemeManager const& theme,
+    QFont const& font, std::string_view label, int label_width, int field_width,
+    QString const& first_default, QString const& second_default,
+    QString const& first_placeholder, QString const& second_placeholder) noexcept {
+    first_input  = make_parameter_field(theme, font, field_width, first_default);
+    second_input = make_parameter_field(theme, font, field_width, second_default);
+    if (!first_placeholder.isEmpty()) {
+        first_input->setPlaceholderText(first_placeholder);
+    }
+    if (!second_placeholder.isEmpty()) {
+        second_input->setPlaceholderText(second_placeholder);
+    }
+
+    auto* content = new creeper::Row {
+        creeper::row::pro::Spacing { 8 },
+        creeper::row::pro::Item<creeper::Text> {
+            { 0, Qt::AlignVCenter },
+            theme,
+            creeper::text::pro::Font { font },
+            creeper::text::pro::Text { QString::fromStdString(std::string { label }) },
+            creeper::text::pro::WordWrap { true },
+            creeper::text::pro::Alignment { Qt::AlignVCenter | Qt::AlignLeft },
+            creeper::widget::pro::FixedWidth { label_width },
+        },
+        creeper::row::pro::Item<creeper::Row> {
+            { 1, Qt::AlignVCenter },
+            creeper::row::pro::Spacing { 4 },
+            creeper::row::pro::Item { first_input },
+            creeper::row::pro::Item { second_input },
+        },
+    };
+
+    content->setContentsMargins(0, 0, 0, 0);
+    setLayout(content);
+}
+
+auto CompactDualFieldRow::first() const noexcept -> creeper::OutlinedTextField& {
+    return *first_input;
+}
+
+auto CompactDualFieldRow::second() const noexcept -> creeper::OutlinedTextField& {
+    return *second_input;
+}
+
+CompactTripleFieldRow::CompactTripleFieldRow(creeper::theme::pro::ThemeManager const& theme,
+    QFont const& font, std::string_view label, int label_width, int field_width,
+    QString const& first_default, QString const& second_default, QString const& third_default,
+    QString const& first_placeholder, QString const& second_placeholder,
+    QString const& third_placeholder) noexcept {
+    first_input  = make_parameter_field(theme, font, field_width, first_default);
+    second_input = make_parameter_field(theme, font, field_width, second_default);
+    third_input  = make_parameter_field(theme, font, field_width, third_default);
+
+    if (!first_placeholder.isEmpty()) {
+        first_input->setPlaceholderText(first_placeholder);
+    }
+    if (!second_placeholder.isEmpty()) {
+        second_input->setPlaceholderText(second_placeholder);
+    }
+    if (!third_placeholder.isEmpty()) {
+        third_input->setPlaceholderText(third_placeholder);
+    }
+
+    auto* content = new creeper::Row {
+        creeper::row::pro::Spacing { 8 },
+        creeper::row::pro::Item<creeper::Text> {
+            { 0, Qt::AlignVCenter },
+            theme,
+            creeper::text::pro::Font { font },
+            creeper::text::pro::Text { QString::fromStdString(std::string { label }) },
+            creeper::text::pro::WordWrap { true },
+            creeper::text::pro::Alignment { Qt::AlignVCenter | Qt::AlignLeft },
+            creeper::widget::pro::FixedWidth { label_width },
+        },
+        creeper::row::pro::Item<creeper::Row> {
+            { 1, Qt::AlignVCenter },
+            creeper::row::pro::Spacing { 4 },
+            creeper::row::pro::Item { first_input },
+            creeper::row::pro::Item { second_input },
+            creeper::row::pro::Item { third_input },
+        },
+    };
+
+    content->setContentsMargins(0, 0, 0, 0);
+    setLayout(content);
+}
+
+auto CompactTripleFieldRow::first() const noexcept -> creeper::OutlinedTextField& {
+    return *first_input;
+}
+
+auto CompactTripleFieldRow::second() const noexcept -> creeper::OutlinedTextField& {
+    return *second_input;
+}
+
+auto CompactTripleFieldRow::third() const noexcept -> creeper::OutlinedTextField& {
+    return *third_input;
+}
+
+CompactWidgetRow::CompactWidgetRow(creeper::theme::pro::ThemeManager const& theme,
+    QFont const& font, std::string_view label, int label_width, QWidget* value_widget) noexcept {
+    auto* content = new creeper::Row {
+        creeper::row::pro::Spacing { 8 },
+        creeper::row::pro::Item<creeper::Text> {
+            { 0, Qt::AlignVCenter },
+            theme,
+            creeper::text::pro::Font { font },
+            creeper::text::pro::Text { QString::fromStdString(std::string { label }) },
+            creeper::text::pro::WordWrap { true },
+            creeper::text::pro::Alignment { Qt::AlignVCenter | Qt::AlignLeft },
+            creeper::widget::pro::FixedWidth { label_width },
+        },
+        creeper::row::pro::Item { { 1, Qt::AlignVCenter }, value_widget },
+    };
+
+    content->setContentsMargins(0, 0, 0, 0);
+    setLayout(content);
+}
+
+ValueSliderRow::ValueSliderRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
+    std::string_view label, std::shared_ptr<creeper::MutableDouble> value,
+    std::function<void()> on_commit) noexcept {
+    auto measurement          = creeper::Slider::Measurements::Xs();
+    measurement.handle_height = 22;
+
+    auto* content = new creeper::Row {
+        creeper::row::pro::Spacing { 8 },
+        creeper::row::pro::Item<creeper::Text> {
+            theme,
+            creeper::MutableTransform {
+                [label](creeper::Text& self, double current) {
+                    self.setText(QString("%1: %2")
+                            .arg(QString::fromStdString(std::string { label }))
+                            .arg(QString::number(current, 'f', 2)));
+                },
+                value,
+            },
+            creeper::text::pro::Font { font },
+        },
+        creeper::row::pro::Item<creeper::Slider> {
+            { 255 },
+            theme,
+            creeper::slider::pro::Measurements { measurement },
+            creeper::MutableForward {
+                creeper::slider::pro::Progress { 0 },
+                value,
+            },
+            creeper::slider::pro::FixedHeight { measurement.minimum_height() },
+            creeper::slider::pro::OnValueChangeFinished {
+                [value, on_commit = std::move(on_commit)](double v) {
+                    *value = v;
+                    if (on_commit) {
+                        on_commit();
+                    }
+                },
+            },
+        },
+    };
+
+    content->setContentsMargins(0, 0, 0, 0);
+    setLayout(content);
+}
+
 AngleSliderFieldRow::AngleSliderFieldRow(creeper::theme::pro::ThemeManager const& theme,
     QFont const& font, QString const& label, int field_width, double default_degrees) noexcept {
     auto chip_font = font;
     chip_font.setPointSize(std::max(8, font.pointSize() - 1));
-
-    auto* chip_text = new creeper::Text {
-        theme,
-        creeper::text::pro::Font { chip_font },
-        creeper::text::pro::Text { label },
-        creeper::text::pro::Alignment { Qt::AlignCenter },
-    };
 
     value_chip = new creeper::Text {
         theme,
@@ -190,17 +350,6 @@ AngleSliderFieldRow::AngleSliderFieldRow(creeper::theme::pro::ThemeManager const
         creeper::text::pro::Text { "0" },
         creeper::text::pro::Alignment { Qt::AlignCenter },
         creeper::widget::pro::MinimumWidth { 30 },
-    };
-
-    auto* chip = new creeper::FilledCard {
-        theme,
-        creeper::card::pro::LevelLowest,
-        creeper::card::pro::Layout<creeper::Row> {
-            creeper::row::pro::Spacing { 8 },
-            creeper::row::pro::Margin { 6 },
-            creeper::row::pro::Item { chip_text },
-            creeper::row::pro::Item { value_chip },
-        },
     };
 
     value_slider = new creeper::Slider {
@@ -222,7 +371,21 @@ AngleSliderFieldRow::AngleSliderFieldRow(creeper::theme::pro::ThemeManager const
     auto* content = new creeper::Row {
         creeper::row::pro::Spacing { 8 },
         creeper::row::pro::Alignment { Qt::AlignVCenter },
-        creeper::row::pro::Item { chip },
+        creeper::row::pro::Item<creeper::FilledCard> {
+            theme,
+            creeper::card::pro::LevelLowest,
+            creeper::card::pro::Layout<creeper::Row> {
+                creeper::row::pro::Spacing { 8 },
+                creeper::row::pro::Margin { 6 },
+                creeper::row::pro::Item<creeper::Text> {
+                    theme,
+                    creeper::text::pro::Font { chip_font },
+                    creeper::text::pro::Text { label },
+                    creeper::text::pro::Alignment { Qt::AlignCenter },
+                },
+                creeper::row::pro::Item { value_chip },
+            },
+        },
         creeper::row::pro::Item { { 1, Qt::AlignVCenter }, value_slider },
         creeper::row::pro::Item { value_field },
     };
