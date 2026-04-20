@@ -10,14 +10,17 @@
 #include <creeper-qt/widget/buttons/outlined-button.hh>
 #include <creeper-qt/widget/cards/filled-card.hh>
 #include <creeper-qt/widget/dropdown-menu.hh>
+#include <creeper-qt/widget/switch.hh>
 #include <creeper-qt/widget/text.hh>
 #include <creeper-qt/widget/widget.hh>
 
+#include <QSignalBlocker>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <vector>
 
+using namespace creeper;
 namespace pcs::gui::working {
 
 namespace {
@@ -73,31 +76,40 @@ namespace {
 
     auto compact_dropdown_measurements() noexcept
         -> creeper::dropdown_menu::internal::DropdownMenu::Measurements {
-        auto measurements = creeper::dropdown_menu::internal::DropdownMenu::Measurements {};
+        auto measurements = creeper::dropdown_menu::internal::DropdownMenu::Measurements { };
 
-        measurements.container_height = 38;
-        measurements.icon_rect_size = 16;
-        measurements.input_rect_size = 16;
-        measurements.label_rect_size = 12;
-        measurements.standard_font_height = 13;
-        measurements.col_padding = 6;
-        measurements.row_padding_widthout_icons = 10;
-        measurements.row_padding_with_icons = 8;
-        measurements.row_padding_populated_label_text = 0;
-        measurements.padding_icons_text = 8;
+        measurements.container_height                                  = 38;
+        measurements.icon_rect_size                                    = 16;
+        measurements.input_rect_size                                   = 16;
+        measurements.label_rect_size                                   = 12;
+        measurements.standard_font_height                              = 13;
+        measurements.col_padding                                       = 6;
+        measurements.row_padding_widthout_icons                        = 10;
+        measurements.row_padding_with_icons                            = 8;
+        measurements.row_padding_populated_label_text                  = 0;
+        measurements.padding_icons_text                                = 8;
         measurements.supporting_text_and_character_counter_top_padding = 0;
         measurements.supporting_text_and_character_counter_row_padding = 0;
 
         return measurements;
     }
 
-    class PngMapPanel final : public AssetActionPanel {
+    class PngMapPanelBody final : public AssetActionPanel {
     public:
-        explicit PngMapPanel(ActionPanelContext context, QFont const& font)
+        explicit PngMapPanelBody(ActionPanelContext context, QFont const& font)
             : context { std::move(context) }
             , assets { *this->context.assets }
             , mouse { *this->context.mouse } {
+            using creeper::Col;
+            using creeper::FilledCard;
+            using creeper::OutlinedButton;
+            using creeper::Row;
+            using creeper::Stacked;
+            using creeper::Text;
+            using creeper::Widget;
+
             namespace ib = creeper::icon_button::pro;
+            namespace ob = creeper::outlined_button::pro;
 
             const auto theme        = creeper::theme::pro::ThemeManager { *this->context.manager };
             const auto current_tool = mouse.png_edit_tool();
@@ -109,9 +121,9 @@ namespace {
             const auto default_point_size = static_cast<qulonglong>(mouse.png_edit_point_size());
             const auto default_erase_size = static_cast<qulonglong>(mouse.png_edit_erase_size());
 
-            auto* tool_row = new creeper::Row {
-                creeper::row::pro::Spacing { 6 },
-                creeper::row::pro::Alignment { Qt::AlignLeft },
+            auto* tool_row = new Row {
+                row::pro::Spacing { 6 },
+                row::pro::Alignment { Qt::AlignLeft },
             };
             for (auto const& descriptor :
                 pcs::gui::interaction::default_png_edit_tool_descriptors()) {
@@ -119,16 +131,15 @@ namespace {
                     descriptor.id, descriptor.label, descriptor.icon));
             }
 
-            auto* free_param = new creeper::Widget {
-                creeper::widget::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Spacing { 4 },
-                    creeper::col::pro::Item<creeper::Text> {
+            auto* free_param = new Widget {
+                widget::pro::Layout<Col> {
+                    col::pro::Spacing { 4 },
+                    col::pro::Item<Text> {
                         theme,
-                        creeper::text::pro::Font { font },
-                        creeper::text::pro::Text {
-                            "自由模式：用于查看当前坐标系下的位置，可拖动视图。" },
-                        creeper::text::pro::WordWrap { true },
-                        creeper::text::pro::Alignment { Qt::AlignLeft | Qt::AlignTop },
+                        text::pro::Font { font },
+                        text::pro::Text { "自由模式：用于查看当前坐标系下的位置，可拖动视图。" },
+                        text::pro::WordWrap { true },
+                        text::pro::Alignment { Qt::AlignLeft | Qt::AlignTop },
                     },
                 },
             };
@@ -136,39 +147,39 @@ namespace {
             line_width_row = new panels::CompactFieldRow(
                 theme, font, "线宽（px）", 92, 116, QString::number(default_line_width));
             line_width_input = &line_width_row->field();
-            auto* line_param = new creeper::Widget {
-                creeper::widget::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Spacing { 4 },
-                    creeper::col::pro::Item { line_width_row },
+            auto* line_param = new Widget {
+                widget::pro::Layout<Col> {
+                    col::pro::Spacing { 4 },
+                    col::pro::Item { line_width_row },
                 },
             };
 
             point_size_row = new panels::CompactFieldRow(
                 theme, font, "点大小（px）", 92, 116, QString::number(default_point_size));
             point_size_input  = &point_size_row->field();
-            auto* point_param = new creeper::Widget {
-                creeper::widget::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Spacing { 4 },
-                    creeper::col::pro::Item { point_size_row },
+            auto* point_param = new Widget {
+                widget::pro::Layout<Col> {
+                    col::pro::Spacing { 4 },
+                    col::pro::Item { point_size_row },
                 },
             };
 
             erase_size_row = new panels::CompactFieldRow(
                 theme, font, "擦除大小（px）", 92, 116, QString::number(default_erase_size));
             erase_size_input  = &erase_size_row->field();
-            auto* erase_param = new creeper::Widget {
-                creeper::widget::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Spacing { 4 },
-                    creeper::col::pro::Item { erase_size_row },
+            auto* erase_param = new Widget {
+                widget::pro::Layout<Col> {
+                    col::pro::Spacing { 4 },
+                    col::pro::Item { erase_size_row },
                 },
             };
 
-            param_stack = new creeper::Stacked {
-                creeper::stacked::pro::Item { free_param },
-                creeper::stacked::pro::Item { line_param },
-                creeper::stacked::pro::Item { point_param },
-                creeper::stacked::pro::Item { erase_param },
-                creeper::stacked::pro::CurrentIndex {
+            param_stack = new Stacked {
+                stacked::pro::Item { free_param },
+                stacked::pro::Item { line_param },
+                stacked::pro::Item { point_param },
+                stacked::pro::Item { erase_param },
+                stacked::pro::CurrentIndex {
                     pcs::gui::interaction::png_edit_tool_descriptor(current_tool).param_index },
             };
 
@@ -179,105 +190,90 @@ namespace {
                 erase_param->sizeHint().height(),
                 40,
             });
-            auto* parameter_panel = new creeper::Widget {
-                creeper::widget::pro::MinimumHeight { parameter_panel_height },
-                creeper::widget::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Spacing { 0 },
-                    creeper::col::pro::Item { param_stack },
-                },
-            };
-
             yaw_row   = new panels::AngleSliderFieldRow(theme, font, "Yaw", 84, 0.0);
             yaw_input = &yaw_row->field();
-            QObject::connect(yaw_input, &creeper::OutlinedTextField::editingFinished,
+            QObject::connect(yaw_input, &OutlinedTextField::editingFinished,
                 [this]() { sync_frame_config_into_asset(); });
-            QObject::connect(&yaw_row->slider(), &creeper::Slider::signal_value_change,
+            QObject::connect(&yaw_row->slider(), &Slider::signal_value_change,
                 [this](double) { sync_frame_config_into_asset(); });
 
-            set_origin_button = new creeper::OutlinedButton {
-                theme,
-                creeper::widget::pro::FixedHeight { 34 },
-                creeper::button::pro::Text { "设置坐标系原点" },
+            namespace sw       = creeper::_switch::pro;
+            source_area_switch = new creeper::Switch {
+                sw::ThemeManager { *this->context.manager },
+                sw::Checked { true },
+                sw::FixedSize { 44, 24 },
+                sw::Clickable { [this] {
+                    if (selected_asset_id.empty()) {
+                        return;
+                    }
+
+                    auto handle = assets.get_png_map_handle(selected_asset_id);
+                    if (!handle.has_value() || handle.value() == nullptr) {
+                        return;
+                    }
+
+                    handle.value()->set_source_area_visibility(source_area_switch->isChecked());
+                    assets.update_renderer();
+                } },
             };
-            QObject::connect(set_origin_button, &creeper::OutlinedButton::clicked, [this](bool) {
-                if (selected_asset_id.empty()) {
-                    return;
-                }
+            source_area_switch_row =
+                new panels::CompactWidgetRow(theme, font, "显示源点云区域", 92, source_area_switch);
 
-                sync_frame_config_into_asset();
-                const auto asset_id = selected_asset_id;
-                mouse.set_selected_asset(selected_asset_id, pcs::AssetKind::PngMap);
-                mouse.start_png_origin_pick({
-                    .asset_id = asset_id,
-                    .on_pick =
-                        [this, asset_id](pcs::PixelPoint pixel) {
-                            auto handle = assets.get_png_map_handle(asset_id);
-                            if (!handle.has_value() || handle.value() == nullptr) {
-                                return;
-                            }
-
-                            auto config           = handle.value()->get_frame_config();
-                            config.origin_pixel_x = pixel.x;
-                            config.origin_pixel_y = pixel.y;
-                            handle.value()->set_frame_config(config);
-                            refresh_origin_summary(config);
-                            assets.update_renderer();
-                            mouse.set_status(QString::fromUtf8("PNG 编辑 | 模式: %1 | 原点已设置为 "
-                                                               "(%2, %3)")
-                                    .arg(pcs::gui::interaction::png_edit_tool_descriptor(
-                                        mouse.png_edit_tool())
-                                            .label)
-                                    .arg(pixel.x)
-                                    .arg(pixel.y));
-                        },
-                    .on_cancel =
-                        [this]() {
-                            mouse.set_status(QString::fromUtf8("PNG 编辑 | 模式: %1")
-                                    .arg(pcs::gui::interaction::png_edit_tool_descriptor(
-                                        mouse.png_edit_tool())
-                                            .label));
-                        },
-                });
-                mouse.set_mode(pcs::gui::interaction::MouseModeId::PngOriginPick);
-            });
-
-            auto* mode_card = new creeper::FilledCard {
+            set_origin_button = new OutlinedButton {
                 theme,
-                creeper::card::pro::LevelLowest,
-                creeper::card::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Margin { 8 },
-                    creeper::col::pro::Spacing { 8 },
-                    creeper::col::pro::Item { tool_row },
-                    creeper::col::pro::Item { parameter_panel },
-                },
-            };
+                ob::FixedHeight { 34 },
+                ob::Text { "设置坐标系原点" },
+                ob::Clickable { [this] {
+                    if (selected_asset_id.empty()) {
+                        return;
+                    }
 
-            auto* frame_card = new creeper::FilledCard {
-                theme,
-                creeper::card::pro::LevelLowest,
-                creeper::card::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Margin { 8 },
-                    creeper::col::pro::Spacing { 8 },
-                    creeper::col::pro::Item { yaw_row },
-                    creeper::col::pro::Item { set_origin_button },
-                },
-            };
+                    sync_frame_config_into_asset();
+                    const auto asset_id = selected_asset_id;
+                    mouse.set_selected_asset(selected_asset_id, pcs::AssetKind::PngMap);
+                    mouse.start_png_origin_pick({
+                        .asset_id = asset_id,
+                        .on_pick =
+                            [this, asset_id](pcs::PixelPoint pixel) {
+                                auto handle = assets.get_png_map_handle(asset_id);
+                                if (!handle.has_value() || handle.value() == nullptr) {
+                                    return;
+                                }
 
-            export_button = new creeper::OutlinedButton {
-                theme,
-                creeper::widget::pro::FixedHeight { 36 },
-                creeper::widget::pro::MinimumWidth { 180 },
-                creeper::button::pro::Text { "导出" },
+                                auto config           = handle.value()->get_frame_config();
+                                config.origin_pixel_x = pixel.x;
+                                config.origin_pixel_y = pixel.y;
+                                handle.value()->set_frame_config(config);
+                                refresh_origin_summary(config);
+                                assets.update_renderer();
+                                mouse.set_status(QString::fromUtf8("PNG 编辑 | 模式: %1 | "
+                                                                   "原点已设置为 "
+                                                                   "(%2, %3)")
+                                        .arg(pcs::gui::interaction::png_edit_tool_descriptor(
+                                            mouse.png_edit_tool())
+                                                .label)
+                                        .arg(pixel.x)
+                                        .arg(pixel.y));
+                            },
+                        .on_cancel =
+                            [this]() {
+                                mouse.set_status(QString::fromUtf8("PNG 编辑 | 模式: %1")
+                                        .arg(pcs::gui::interaction::png_edit_tool_descriptor(
+                                            mouse.png_edit_tool())
+                                                .label));
+                            },
+                    });
+                    mouse.set_mode(pcs::gui::interaction::MouseModeId::PngOriginPick);
+                } },
             };
 
             export_mirror_dropdown = new creeper::FilledDropdownMenu {
                 theme,
-                creeper::widget::pro::MinimumWidth { 150 },
-                creeper::widget::pro::Apply { [](auto& self) {
-                    self.set_measurements(compact_dropdown_measurements());
-                } },
-                creeper::filled_dropdown_menu::pro::Items { export_mirror_items() },
-                creeper::filled_dropdown_menu::pro::IndexChanged { [this](int index) {
+                widget::pro::MinimumWidth { 150 },
+                widget::pro::Apply {
+                    [](auto& self) { self.set_measurements(compact_dropdown_measurements()); } },
+                filled_dropdown_menu::pro::Items { export_mirror_items() },
+                filled_dropdown_menu::pro::IndexChanged { [this](int index) {
                     if (index >= 0) {
                         sync_frame_config_into_asset();
                     }
@@ -285,66 +281,90 @@ namespace {
             };
             export_mirror_dropdown->setCurrentIndex(0);
 
-            auto* export_option_row = new creeper::Row {
-                creeper::row::pro::Spacing { 8 },
-                creeper::row::pro::Item<creeper::Text> {
-                    { 0, Qt::AlignVCenter },
-                    theme,
-                    creeper::text::pro::Font { font },
-                    creeper::text::pro::Text { "导出镜像" },
-                    creeper::widget::pro::FixedWidth { 92 },
-                },
-                creeper::row::pro::Item { { 1, Qt::AlignVCenter }, export_mirror_dropdown },
-            };
-
-            auto* export_card = new creeper::FilledCard {
+            root = new FilledCard {
                 theme,
-                creeper::card::pro::LevelLowest,
-                creeper::card::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Margin { 8 },
-                    creeper::col::pro::Spacing { 8 },
-                    creeper::col::pro::Item { export_option_row },
-                    creeper::col::pro::Item { export_button },
-                },
-            };
-
-            QObject::connect(export_button, &creeper::OutlinedButton::clicked, [this](bool) {
-                if (selected_asset_id.empty()) {
-                    return;
-                }
-
-                sync_frame_config_into_asset();
-
-                const auto suggested_name =
-                    assets.get_asset_name(selected_asset_id).value_or("map");
-                if (auto location = panels::export_png_map_directory(suggested_name)) {
-                    const auto result = assets.export_png_map_asset(selected_asset_id, *location);
-                    if (!result.has_value()) {
-                        spdlog::error("导出 PNG 地图资产失败: {}", result.error());
-                        return;
-                    }
-
-                    this->context.refresh_assets_list();
-                    this->context.select_asset(selected_asset_id);
-                }
-            });
-
-            root = new creeper::FilledCard {
-                theme,
-                creeper::card::pro::LevelLow,
-                creeper::card::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Alignment { Qt::AlignTop },
-                    creeper::col::pro::Margin { 10 },
-                    creeper::col::pro::Spacing { 10 },
-                    creeper::col::pro::Item<creeper::Text> {
+                card::pro::LevelLow,
+                card::pro::Layout<Col> {
+                    col::pro::Alignment { Qt::AlignTop },
+                    col::pro::Margin { 10 },
+                    col::pro::Spacing { 10 },
+                    col::pro::Item<Text> {
                         theme,
-                        creeper::text::pro::Font { font },
-                        creeper::text::pro::Text { "PNG 地图操作" },
-                        creeper::text::pro::Alignment { Qt::AlignHCenter },
+                        text::pro::Font { font },
+                        text::pro::Text { "PNG 地图操作" },
+                        text::pro::Alignment { Qt::AlignHCenter },
                     },
-                    creeper::col::pro::Item { mode_card },
-                    creeper::col::pro::Item { frame_card },
-                    creeper::col::pro::Item { export_card },
+                    col::pro::Item<FilledCard> {
+                        theme,
+                        card::pro::LevelLowest,
+                        card::pro::Layout<Col> {
+                            col::pro::Margin { 8 },
+                            col::pro::Spacing { 8 },
+                            col::pro::Item { tool_row },
+                            col::pro::Item<Widget> {
+                                widget::pro::MinimumHeight { parameter_panel_height },
+                                widget::pro::Layout<Col> {
+                                    col::pro::Spacing { 0 },
+                                    col::pro::Item { param_stack },
+                                },
+                            },
+                        },
+                    },
+                    col::pro::Item<FilledCard> {
+                        theme,
+                        card::pro::LevelLowest,
+                        card::pro::Layout<Col> {
+                            col::pro::Margin { 8 },
+                            col::pro::Spacing { 8 },
+                            col::pro::Item { source_area_switch_row },
+                            col::pro::Item { yaw_row },
+                            col::pro::Item { set_origin_button },
+                        },
+                    },
+                    col::pro::Item<FilledCard> {
+                        theme,
+                        card::pro::LevelLowest,
+                        card::pro::Layout<Col> {
+                            col::pro::Margin { 8 },
+                            col::pro::Spacing { 8 },
+                            col::pro::Item<panels::CompactWidgetRow> {
+                                theme,
+                                font,
+                                "导出镜像",
+                                92,
+                                export_mirror_dropdown,
+                            },
+                            col::pro::Item<OutlinedButton> {
+                                theme,
+                                ob::FixedHeight { 36 },
+                                ob::MinimumWidth { 180 },
+                                ob::Text { "导出" },
+                                ob::Clickable { [this] {
+                                    if (selected_asset_id.empty()) {
+                                        return;
+                                    }
+
+                                    sync_frame_config_into_asset();
+
+                                    const auto suggested_name =
+                                        assets.get_asset_name(selected_asset_id).value_or("map");
+                                    if (auto location =
+                                            panels::export_png_map_directory(suggested_name)) {
+                                        const auto result = assets.export_png_map_asset(
+                                            selected_asset_id, *location);
+                                        if (!result.has_value()) {
+                                            spdlog::error(
+                                                "导出 PNG 地图资产失败: {}", result.error());
+                                            return;
+                                        }
+
+                                        this->context.refresh_assets_list();
+                                        this->context.select_asset(selected_asset_id);
+                                    }
+                                } },
+                            },
+                        },
+                    },
                 },
             };
         }
@@ -363,6 +383,10 @@ namespace {
                 const auto config = handle.value()->get_frame_config();
                 yaw_row->set_degrees(config.yaw_deg);
                 export_mirror_dropdown->setCurrentIndex(export_mirror_index(config.export_mirror));
+                if (source_area_switch != nullptr) {
+                    const auto blocker = QSignalBlocker { source_area_switch };
+                    source_area_switch->setChecked(handle.value()->source_area_visibility());
+                }
                 refresh_origin_summary(config);
             }
 
@@ -392,8 +416,8 @@ namespace {
                 return;
             }
 
-            auto config    = handle.value()->get_frame_config();
-            config.yaw_deg = yaw_row->degrees();
+            auto config          = handle.value()->get_frame_config();
+            config.yaw_deg       = yaw_row->degrees();
             config.export_mirror = export_mirror_from_index(export_mirror_dropdown->currentIndex());
             if (handle.value()->set_frame_config(config)) {
                 refresh_origin_summary(config);
@@ -437,17 +461,17 @@ namespace {
             mode_button_tools.push_back(tool);
 
             return new creeper::Widget {
-                creeper::widget::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Spacing { 2 },
-                    creeper::col::pro::Alignment { Qt::AlignHCenter },
-                    creeper::col::pro::Item { { 0, Qt::AlignHCenter }, button },
-                    creeper::col::pro::Item<creeper::Text> {
+                widget::pro::Layout<creeper::Col> {
+                    col::pro::Spacing { 2 },
+                    col::pro::Alignment { Qt::AlignHCenter },
+                    col::pro::Item { { 0, Qt::AlignHCenter }, button },
+                    col::pro::Item<creeper::Text> {
                         { 0, Qt::AlignHCenter },
                         theme,
-                        creeper::text::pro::Font { mode_label_font },
-                        creeper::text::pro::Text { label },
-                        creeper::text::pro::Alignment { Qt::AlignHCenter },
-                        creeper::widget::pro::FixedWidth {
+                        text::pro::Font { mode_label_font },
+                        text::pro::Text { label },
+                        text::pro::Alignment { Qt::AlignHCenter },
+                        widget::pro::FixedWidth {
                             creeper::IconButton::kExtraSmallContainerSize.width() },
                     },
                 },
@@ -491,29 +515,44 @@ namespace {
         std::vector<creeper::IconButton*> mode_buttons;
         std::vector<pcs::gui::interaction::PngEditTool> mode_button_tools;
 
-        panels::CompactFieldRow* line_width_row = nullptr;
-        panels::CompactFieldRow* point_size_row = nullptr;
-        panels::CompactFieldRow* erase_size_row = nullptr;
-        panels::AngleSliderFieldRow* yaw_row    = nullptr;
+        panels::CompactFieldRow* line_width_row          = nullptr;
+        panels::CompactFieldRow* point_size_row          = nullptr;
+        panels::CompactFieldRow* erase_size_row          = nullptr;
+        panels::AngleSliderFieldRow* yaw_row             = nullptr;
+        panels::CompactWidgetRow* source_area_switch_row = nullptr;
 
         creeper::OutlinedTextField* line_width_input = nullptr;
         creeper::OutlinedTextField* point_size_input = nullptr;
         creeper::OutlinedTextField* erase_size_input = nullptr;
         creeper::OutlinedTextField* yaw_input        = nullptr;
+        creeper::Switch* source_area_switch          = nullptr;
 
         creeper::Stacked* param_stack = nullptr;
 
-        creeper::OutlinedButton* set_origin_button = nullptr;
+        creeper::OutlinedButton* set_origin_button          = nullptr;
         creeper::FilledDropdownMenu* export_mirror_dropdown = nullptr;
-        creeper::OutlinedButton* export_button     = nullptr;
-        creeper::FilledCard* root                  = nullptr;
+        creeper::FilledCard* root                           = nullptr;
     };
 
 }
 
-auto make_png_map_panel(ActionPanelContext context, QFont const& font)
-    -> std::unique_ptr<AssetActionPanel> {
-    return std::make_unique<PngMapPanel>(std::move(context), font);
+struct PngMapPanel::Impl {
+    std::unique_ptr<AssetActionPanel> panel;
+};
+
+PngMapPanel::~PngMapPanel() noexcept = default;
+
+auto PngMapPanel::widget() const noexcept -> QWidget* { return pimpl->panel->widget(); }
+
+auto PngMapPanel::bind_asset(std::string const& id) noexcept -> void {
+    pimpl->panel->bind_asset(id);
+}
+
+auto PngMapPanel::clear() noexcept -> void { pimpl->panel->clear(); }
+
+PngMapPanel::PngMapPanel(ActionPanelContext context, QFont const& font) noexcept
+    : pimpl { std::make_unique<Impl>() } {
+    pimpl->panel = std::make_unique<PngMapPanelBody>(std::move(context), font);
 }
 
 }
