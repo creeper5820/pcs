@@ -1,5 +1,7 @@
 .cache/
 build/
 release*/
+!.github/release-notes/
+!.github/release-notes/*.md
 
 *.tar.gz
