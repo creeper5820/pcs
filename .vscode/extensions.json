@@ -1,9 +1,0 @@
-{
-    "recommendations": [
-        "ms-ceintl.vscode-language-pack-zh-hans",
-        "xaver.clang-format",
-        "llvm-vs-code-extensions.vscode-clangd",
-        "twxs.cmake",
-        "streetsidesoftware.code-spell-checker"
-    ]
-}

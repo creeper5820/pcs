@@ -15,25 +15,41 @@ if(NOT DEFINED VTK_DIR AND DEFINED ENV{VTK_DIR})
     set(VTK_DIR "$ENV{VTK_DIR}" CACHE PATH "Path to the VTK package configuration")
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Network OpenGLWidgets)
 find_package(spdlog REQUIRED)
-find_package(PCL REQUIRED COMPONENTS io common filters search segmentation)
-find_package(VTK COMPONENTS
-    CommonColor
-    CommonCore
-    CommonDataModel
-    FiltersCore
-    FiltersGeneral
-    FiltersModeling
-    FiltersSources
-    GUISupportQt
-    InteractionStyle
-    RenderingAnnotation
-    RenderingContextOpenGL2
-    RenderingCore
-    RenderingFreeType
-    RenderingGL2PSOpenGL2
-    RenderingOpenGL2
+find_package(
+    Qt6 REQUIRED
+    COMPONENTS
+        Widgets
+        Network
+        OpenGLWidgets
+)
+find_package(
+    PCL REQUIRED
+    COMPONENTS
+        io
+        common
+        filters
+        search
+        segmentation
+)
+find_package(
+    VTK REQUIRED
+    COMPONENTS
+        CommonColor
+        CommonCore
+        CommonDataModel
+        FiltersCore
+        FiltersGeneral
+        FiltersModeling
+        FiltersSources
+        GUISupportQt
+        InteractionStyle
+        RenderingAnnotation
+        RenderingContextOpenGL2
+        RenderingCore
+        RenderingFreeType
+        RenderingGL2PSOpenGL2
+        RenderingOpenGL2
 )
 
 include(FetchContent)
