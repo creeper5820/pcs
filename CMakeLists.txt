@@ -2,6 +2,30 @@ cmake_minimum_required(VERSION 3.22)
 
 project(pcs VERSION 0.1 LANGUAGES C CXX)
 
+execute_process(
+    COMMAND git describe --tags --exact-match HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE PCS_APP_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE PCS_APP_VERSION_TAG_RESULT
+    ERROR_QUIET
+)
+
+if(NOT PCS_APP_VERSION_TAG_RESULT EQUAL 0 OR PCS_APP_VERSION STREQUAL "")
+    execute_process(
+        COMMAND git rev-parse --short HEAD
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE PCS_APP_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE PCS_APP_VERSION_HASH_RESULT
+        ERROR_QUIET
+    )
+endif()
+
+if(PCS_APP_VERSION STREQUAL "")
+    set(PCS_APP_VERSION "unknown")
+endif()
+
 enable_testing()
 option(PCS_BUILD_TESTS "Build project tests" OFF)
 
@@ -89,6 +113,7 @@ target_link_libraries(
         ${PCL_LIBRARIES}
         ${VTK_LIBRARIES}
 )
+target_compile_definitions(${PROJECT_NAME} PRIVATE APP_VERSION="${PCS_APP_VERSION}")
 vtk_module_autoinit(
     TARGETS ${PROJECT_NAME}
     MODULES ${VTK_LIBRARIES}

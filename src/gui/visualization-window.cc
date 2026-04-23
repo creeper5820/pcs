@@ -3,10 +3,10 @@
 
 #include <creeper-qt/layout/linear.hh>
 #include <creeper-qt/widget/cards/filled-card.hh>
+#include <creeper-qt/widget/text.hh>
 
 #include <QFont>
 #include <QFontMetrics>
-#include <QLabel>
 #include <QMouseEvent>
 #include <QPainterPath>
 #include <QPointer>
@@ -17,6 +17,11 @@
 #include <vtkRenderWindowInteractor.h>
 
 #include <algorithm>
+#include <tuple>
+
+#ifndef APP_VERSION
+#define APP_VERSION "dev"
+#endif
 
 using namespace creeper;
 
@@ -39,34 +44,68 @@ struct Rounded : public T {
 
 class InteractiveVtkWindow : public Rounded<pcs::QtVtkWindow> {
 public:
-    explicit InteractiveVtkWindow(pcs::gui::interaction::Mouse& mouse) noexcept
+    explicit InteractiveVtkWindow(
+        ThemeManager& manager, pcs::gui::interaction::Mouse& mouse) noexcept
         : mouse { mouse } {
         setMouseTracking(true);
 
-        status_label = new QLabel { this };
-        status_label->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-        status_label->setStyleSheet("QLabel {"
-                                    "color: white;"
-                                    "background: rgba(0, 0, 0, 160);"
-                                    "padding: 6px 8px;"
-                                    "border-radius: 8px;"
-                                    "}");
-
         auto font = QFont { "WenQuanYi Micro Hei", 10 };
         font.setStyleHint(QFont::SansSerif);
-        status_label->setFont(font);
-        status_label->show();
 
-        operation_label = new QLabel { this };
-        operation_label->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-        operation_label->setStyleSheet("QLabel {"
-                                       "color: white;"
-                                       "background: rgba(0, 0, 0, 160);"
-                                       "padding: 6px 8px;"
-                                       "border-radius: 8px;"
-                                       "}");
-        operation_label->setFont(font);
-        operation_label->hide();
+        const auto overlay_text_props = std::tuple {
+            text::pro::ThemeManager { manager },
+            text::pro::Font { font },
+            text::pro::Alignment { Qt::AlignLeft | Qt::AlignVCenter },
+            text::pro::Apply { [](Text& text) {
+                text.setAttribute(Qt::WA_TransparentForMouseEvents, true);
+                text.setMargin(6);
+            } },
+        };
+
+        const auto overlay_card_props = std::tuple {
+            card::pro::ThemeManager { manager },
+            widget::pro::Parent { this },
+            card::pro::Radius { 8 },
+            card::pro::LevelLow,
+            widget::pro::Apply { [](QWidget& widget) {
+                widget.setAttribute(Qt::WA_TransparentForMouseEvents, true);
+            } },
+        };
+
+        status_label = new Text { overlay_text_props };
+        status_card  = new FilledCard {
+            overlay_card_props,
+            card::pro::Layout<Row> {
+                row::pro::Margin { 0 },
+                row::pro::Item { status_label },
+            },
+        };
+        status_card->show();
+
+        operation_label = new Text { overlay_text_props };
+        operation_card  = new FilledCard {
+            overlay_card_props,
+            card::pro::Layout<Row> {
+                row::pro::Margin { 0 },
+                row::pro::Item { operation_label },
+            },
+        };
+        operation_card->hide();
+
+        version_label = new Text {
+            overlay_text_props,
+            text::pro::Text { QString::fromUtf8(APP_VERSION) },
+        };
+        version_card = new FilledCard {
+            overlay_card_props,
+            card::pro::Layout<Row> {
+                row::pro::Margin { 0 },
+                row::pro::Item { version_label },
+            },
+        };
+        version_card->show();
+
+        update_overlay_labels();
     }
 
     auto set_status_text(QString text) noexcept -> void {
@@ -134,42 +173,49 @@ private:
     }
 
     auto update_overlay_labels() noexcept -> void {
-        if (status_label == nullptr || operation_label == nullptr) {
-            return;
-        }
-
         constexpr auto kMargin = 12;
+        constexpr auto kGap    = 8;
+
+        version_label->setText(QString::fromUtf8(APP_VERSION));
+        version_card->adjustSize();
+
+        const auto version_w = version_card->width();
+        const auto version_h = version_card->height();
+        const auto version_x = std::max(0, width() - kMargin - version_w);
+        const auto version_y = std::max(0, height() - kMargin - version_h);
+        version_card->move(version_x, version_y);
 
         if (status_text.isEmpty()) {
-            status_label->hide();
+            status_card->hide();
         } else {
-            status_label->show();
+            status_card->show();
 
             const auto max_text_width = std::max(120, width() / 2 - kMargin * 2);
             auto metrics              = QFontMetrics { status_label->font() };
             auto text = metrics.elidedText(status_text, Qt::ElideRight, max_text_width);
             status_label->setText(text);
-            status_label->adjustSize();
+            status_card->adjustSize();
 
-            const auto h = status_label->height();
-            status_label->move(kMargin, std::max(0, height() - kMargin - h));
+            const auto h = status_card->height();
+            status_card->move(kMargin, std::max(0, height() - kMargin - h));
         }
 
         if (operation_text.isEmpty()) {
-            operation_label->hide();
+            operation_card->hide();
         } else {
-            operation_label->show();
+            operation_card->show();
 
-            const auto max_text_width = std::max(120, width() / 2 - kMargin * 2);
-            auto metrics               = QFontMetrics { operation_label->font() };
+            const auto max_text_width = std::max(120, width() - kMargin * 2 - version_w - kGap);
+            auto metrics              = QFontMetrics { operation_label->font() };
             auto text = metrics.elidedText(operation_text, Qt::ElideRight, max_text_width);
             operation_label->setText(text);
-            operation_label->adjustSize();
+            operation_card->adjustSize();
 
-            const auto w = operation_label->width();
-            const auto h = operation_label->height();
-            operation_label->move(
-                std::max(0, width() - kMargin - w), std::max(0, height() - kMargin - h));
+            const auto w = operation_card->width();
+            const auto h = operation_card->height();
+            const auto x = std::max(0, version_x - kGap - w);
+            const auto y = std::max(0, height() - kMargin - h);
+            operation_card->move(x, y);
         }
     }
 
@@ -201,8 +247,12 @@ private:
     }
 
     pcs::gui::interaction::Mouse& mouse;
-    QLabel* status_label                = nullptr;
-    QLabel* operation_label             = nullptr;
+    FilledCard* status_card    = nullptr;
+    FilledCard* operation_card = nullptr;
+    FilledCard* version_card   = nullptr;
+    Text* status_label         = nullptr;
+    Text* operation_label      = nullptr;
+    Text* version_label        = nullptr;
     QString status_text;
     QString operation_text;
 };
@@ -214,35 +264,34 @@ struct VisualizationWindow::Impl {
 VisualizationWindow::VisualizationWindow(ThemeManager& manager, pcs::Renderer& renderer,
     pcs::Runtime& runtime, pcs::gui::interaction::Mouse& mouse) noexcept
     : pimpl { std::make_unique<Impl>() } {
-    pimpl->window = new InteractiveVtkWindow { mouse };
+    pimpl->window = new InteractiveVtkWindow { manager, mouse };
 
     renderer.connect_ui(*pimpl->window);
     pimpl->window->sync_interaction_state();
 
-    mouse.set_status_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](
-                              QString const& text) {
-        if (guard != nullptr) {
-            guard->set_status_text(text);
-        }
-    });
+    mouse.set_status_sink(
+        [guard = QPointer<InteractiveVtkWindow> { pimpl->window }](QString const& text) {
+            if (guard != nullptr) {
+                guard->set_status_text(text);
+            }
+        });
     mouse.set_mode_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](auto) {
         if (guard != nullptr) {
             guard->sync_interaction_state();
         }
     });
-    mouse.set_png_edit_tool_sink(
-        [guard = QPointer<InteractiveVtkWindow> { pimpl->window }](auto) {
-            if (guard != nullptr) {
-                guard->sync_interaction_state();
-            }
-        });
-
-    runtime.set_operation_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](
-                                  std::string const& message) {
+    mouse.set_png_edit_tool_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](auto) {
         if (guard != nullptr) {
-            guard->set_operation_text(QString::fromStdString(message));
+            guard->sync_interaction_state();
         }
     });
+
+    runtime.set_operation_sink(
+        [guard = QPointer<InteractiveVtkWindow> { pimpl->window }](std::string const& message) {
+            if (guard != nullptr) {
+                guard->set_operation_text(QString::fromStdString(message));
+            }
+        });
 
     auto* root = new FilledCard {
         card::pro::ThemeManager { manager },
@@ -261,4 +310,4 @@ VisualizationWindow::VisualizationWindow(ThemeManager& manager, pcs::Renderer& r
     setLayout(layout);
 }
 
-VisualizationWindow::~VisualizationWindow() noexcept = default;
+VisualizationWindow::~VisualizationWindow() = default;

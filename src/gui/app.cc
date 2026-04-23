@@ -74,7 +74,7 @@ public:
             // Set color for all pointcloud assets
             for (auto const& id : modules.assets->get_asset_ids()) {
                 if (auto handle = modules.assets->get_handle<PointsHandle>(std::string { id })) {
-                    auto* points = handle.value();
+                    auto* points     = handle.value();
                     const auto alpha = std::get<3>(points->get_overall_color());
                     points->set_overall_color(point.redF(), point.greenF(), point.blueF(), alpha);
                 }
@@ -102,8 +102,7 @@ public:
             QObject::connect(
                 shortcut_redo_shift_z, &QShortcut::activated, [this] { modules.runtime->redo(); });
 
-            auto shortcut_redo_y =
-                new QShortcut { QKeySequence { Qt::CTRL | Qt::Key_Y }, window };
+            auto shortcut_redo_y = new QShortcut { QKeySequence { Qt::CTRL | Qt::Key_Y }, window };
             QObject::connect(
                 shortcut_redo_y, &QShortcut::activated, [this] { modules.runtime->redo(); });
 
@@ -194,7 +193,8 @@ private:
                                                            : gui::interaction::MouseModeId::None);
                             },
                             [this] {
-                                return modules.mouse->mode() == gui::interaction::MouseModeId::Picker;
+                                return modules.mouse->mode()
+                                    == gui::interaction::MouseModeId::Picker;
                             },
                             [this] { exit_application_with_confirment(); },
                             *modules.mouse,
@@ -214,9 +214,8 @@ private:
                         [this]() {
                             working_panel = new WorkingPanel { *manager, *modules.assets,
                                 *modules.runtime, *modules.renderer, *modules.open_control,
-                                *modules.asset_details, *modules.mouse,
-                                *modules.action_panels, states.working_panel_width,
-                                states.assets_visibility };
+                                *modules.asset_details, *modules.mouse, *modules.action_panels,
+                                states.working_panel_width, states.assets_visibility };
                             return working_panel;
                         }(),
                     },
@@ -228,8 +227,7 @@ private:
     auto use_configuration() noexcept { }
 
     auto use_startup_files() noexcept -> void {
-        if (startup_files.empty() || working_panel == nullptr
-            || modules.open_control == nullptr) {
+        if (startup_files.empty() || working_panel == nullptr || modules.open_control == nullptr) {
             return;
         }
 
