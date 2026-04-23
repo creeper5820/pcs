@@ -32,7 +32,7 @@ protected:
     }
 
     void paintEvent(QPaintEvent* e) override {
-        // TODO: 实现不优雅
+        // 先绘制 VTK 内容，再叠加圆角边框。
         QVTKOpenGLNativeWidget::paintEvent(e);
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
@@ -47,8 +47,6 @@ private:
     QTimer resize_watch_dog;
     QColor background;
 };
-
-auto VtkWindowComponent(VtkWindowState&) noexcept -> QPointer<QWidget> { return nullptr; }
 
 struct VtkWindow::Impl {
 

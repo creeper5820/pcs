@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 
 namespace pcs::gui::interaction {
@@ -26,7 +27,7 @@ private:
 
     Renderer& renderer;
     AssetsManager& assets;
-    std::unordered_map<pcs::AssetKind, std::unique_ptr<PickerExtension>> extensions;
+    std::unordered_map<std::string_view, std::unique_ptr<PickerExtension>> extensions;
 
     std::chrono::steady_clock::time_point next_move_pick_at;
     static constexpr auto kMovePickInterval = std::chrono::milliseconds { 100 };

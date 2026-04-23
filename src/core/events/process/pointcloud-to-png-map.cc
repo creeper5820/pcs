@@ -4,12 +4,10 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
-#include <optional>
+#include <memory>
 #include <unordered_set>
 
 #include <pcl/common/common.h>
-#include <pcl/filters/statistical_outlier_removal.h>
-#include <pcl/filters/voxel_grid.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
@@ -98,25 +96,6 @@ auto as_pointcloud(std::vector<pcs::event::ConvertPointcloudToPngMap::Position> 
     cloud->height = 1;
 
     return cloud;
-}
-
-auto remove_outlier_points(std::shared_ptr<PointCloud> const& pointcloud, double resolution)
-    -> void {
-    if (pointcloud == nullptr || pointcloud->empty()) {
-        return;
-    }
-
-    auto outlier_filter = pcl::StatisticalOutlierRemoval<Point> { };
-    outlier_filter.setMeanK(20);
-    outlier_filter.setStddevMulThresh(0.5);
-    outlier_filter.setInputCloud(pointcloud);
-    outlier_filter.filter(*pointcloud);
-
-    auto voxel = pcl::VoxelGrid<Point> { };
-    voxel.setLeafSize(static_cast<float>(resolution), static_cast<float>(resolution),
-        static_cast<float>(resolution));
-    voxel.setInputCloud(pointcloud);
-    voxel.filter(*pointcloud);
 }
 
 auto generate_png_map(PointCloud const& pointcloud, pcs::PngMapParameters const& params,
@@ -246,14 +225,7 @@ auto ConvertPointcloudToPngMap::exec() noexcept -> Result {
     auto original_max = Point { };
     pcl::getMinMax3D(*pointcloud, original_min, original_max);
 
-    auto filtered = std::make_shared<PointCloud>(*pointcloud);
-    remove_outlier_points(filtered, params.resolution);
-
-    if (filtered->empty()) {
-        return std::unexpected { "离群点过滤后点云为空" };
-    }
-
-    return generate_png_map(*filtered, params, original_min.z);
+    return generate_png_map(*pointcloud, params, original_min.z);
 }
 
 auto ConvertPointcloudToPngMap::redo() noexcept -> Result { return exec(); }

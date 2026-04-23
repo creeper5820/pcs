@@ -44,7 +44,7 @@ auto PngOriginPickMode::on_exit(Mouse&) noexcept -> void { }
 
 auto PngOriginPickMode::supports_selection(
     std::optional<MouseSelection> const& selection) const noexcept -> bool {
-    return selection.has_value() && selection->kind == pcs::AssetKind::PngMap;
+    return selection.has_value() && selection->kind == PngMapHandle::kKind;
 }
 
 auto PngOriginPickMode::allows_camera_interaction(Mouse const&) const noexcept -> bool {
@@ -58,7 +58,7 @@ auto PngOriginPickMode::on_move(Mouse& mouse, MouseEvent const& event) noexcept 
         return;
     }
 
-    auto handle = assets.get_png_map_handle(request->asset_id);
+    auto handle = assets.get_handle<PngMapHandle>(request->asset_id);
     if (!handle.has_value() || handle.value() == nullptr) {
         mouse.set_status(mode_status(QString::fromUtf8("PNG 地图不可用")));
         return;
@@ -89,7 +89,7 @@ auto PngOriginPickMode::on_lclick(Mouse& mouse, MouseEvent const& event) noexcep
         return;
     }
 
-    auto handle = assets.get_png_map_handle(request->asset_id);
+    auto handle = assets.get_handle<PngMapHandle>(request->asset_id);
     if (!handle.has_value() || handle.value() == nullptr) {
         mouse.set_status(mode_status(QString::fromUtf8("PNG 地图不可用")));
         return;

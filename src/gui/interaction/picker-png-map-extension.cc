@@ -17,11 +17,11 @@ namespace {
 
     class PngMapPickerExtension final : public PickerExtension {
     public:
-        auto kind() const noexcept -> pcs::AssetKind override { return pcs::AssetKind::PngMap; }
+        auto kind() const noexcept -> std::string_view override { return PngMapHandle::kKind; }
 
         auto pick(Mouse& mouse, MouseEvent const& event, std::string const& asset_id,
             Renderer& renderer, AssetsManager& assets) noexcept -> void override {
-            auto handle = assets.get_png_map_handle(asset_id);
+            auto handle = assets.get_handle<PngMapHandle>(asset_id);
             if (!handle.has_value() || handle.value() == nullptr) {
                 mouse.set_status("拾取模式：PNG 地图不可用");
                 return;

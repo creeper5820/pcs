@@ -5,6 +5,7 @@
 
 #include <expected>
 #include <optional>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -14,6 +15,8 @@ struct PointsHandle {
     PCS_PIMPL_DEFINITION(PointsHandle)
 
 public:
+    static constexpr std::string_view kKind = "pointcloud";
+
     using Position = std::tuple<double, double, double>;
 
     auto set_position(double x, double y, double z) noexcept -> void;
@@ -41,6 +44,9 @@ public:
 
     auto save_into_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view>;
+
+    auto clone(std::string const& target_name) const noexcept
+        -> std::expected<std::unique_ptr<PointsHandle>, std::string>;
 
     auto attach_renderer(Renderer&) noexcept -> void;
 

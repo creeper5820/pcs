@@ -1,7 +1,10 @@
 #include "gui/working/panels/model-panel.hh"
 
 #include "core/events/process/model-to-pointcloud.hh"
+#include "core/handle/model.hh"
+#include "core/handle/points.hh"
 #include "gui/working/panels/common.hh"
+#include "utility/morandi-pointcloud-color.hh"
 
 #include <creeper-qt/layout/linear.hh>
 #include <creeper-qt/widget/buttons/outlined-button.hh>
@@ -12,6 +15,7 @@
 #include <spdlog/spdlog.h>
 
 #include <chrono>
+#include <filesystem>
 #include <future>
 
 using namespace creeper;
@@ -24,10 +28,10 @@ namespace {
         explicit ModelPanelBody(ActionPanelContext context, QFont const& font)
             : context { std::move(context) }
             , assets { *this->context.assets }
-            , runtime { *this->context.runtime }
-            , mouse { *this->context.mouse } {
-            namespace ob = creeper::outlined_button::pro;
-            namespace bp = creeper::button::pro;
+            , runtime { *this->context.runtime } {
+            using namespace creeper;
+            namespace ob     = outlined_button::pro;
+            namespace bp     = button::pro;
             const auto theme = ob::ThemeManager { *this->context.manager };
 
             density_row = new panels::CompactFieldRow(theme, font, "点云密度（倍）", 92, 116, "10");
@@ -42,7 +46,7 @@ namespace {
                 new panels::CompactFieldRow(theme, font, "最大点数（点）", 92, 116, "0");
             max_points_input = &max_points_row->field();
 
-            convert_button = new creeper::OutlinedButton {
+            convert_button = new OutlinedButton {
                 theme,
                 ob::FixedHeight { 36 },
                 ob::MinimumWidth { 180 },
@@ -59,17 +63,17 @@ namespace {
                     parameters.density = panels::parse_double_input(*density_input, 10.0, 0.01);
                     parameters.sample_distance =
                         panels::parse_double_input(*sample_distance_input, 0.0, 0.0);
-                    parameters.unit_scale = panels::parse_double_input(*unit_scale_input, 1.0, 1e-6);
+                    parameters.unit_scale =
+                        panels::parse_double_input(*unit_scale_input, 1.0, 1e-6);
                     parameters.max_points = panels::parse_size_input(*max_points_input, 0, 0);
 
-                    const auto handle = assets.get_model_handle(selected_asset_id);
-                    if (!handle.has_value() || handle.value() == nullptr) {
+                    if (selected_handle == nullptr) {
                         spdlog::error("模型转点云失败: 模型资产不可用");
                         return;
                     }
 
                     auto event       = pcs::event::ConvertModelToPointcloud { };
-                    event.model      = handle.value()->model_data();
+                    event.model      = selected_handle->model_data();
                     event.parameters = parameters;
 
                     const auto source_id = selected_asset_id;
@@ -98,55 +102,76 @@ namespace {
                                 return;
                             }
 
-                            auto upsert_result =
-                                assets.upsert_generated_pointcloud(source_id, result.value());
-                            if (!upsert_result.has_value()) {
-                                spdlog::error("模型转点云失败: {}", upsert_result.error());
+                            auto pointcloud  = std::make_unique<PointsHandle>();
+                            auto load_result = pointcloud->load_from_positions(result.value());
+                            if (!load_result.has_value()) {
+                                spdlog::error("模型转点云失败: {}", load_result.error());
                                 return;
                             }
 
+                            const auto color = utility::next_morandi_pointcloud_color();
+                            pointcloud->set_overall_color(color.r, color.g, color.b);
+
+                            auto source_name = assets.get_asset_name(source_id);
+                            auto derived     = std::filesystem::path(source_name);
+                            if (derived.empty()) {
+                                derived = "converted-pointcloud.pcd";
+                            } else {
+                                derived.replace_extension(".pcd");
+                            }
+
+                            auto generated_id = assets.register_asset<PointsHandle>(
+                                std::move(pointcloud), derived.filename().string(), { }, false);
+
                             this->context.refresh_assets_list();
-                            this->context.select_asset(*upsert_result);
+                            this->context.select_asset(generated_id);
                         });
                     watcher->start();
                 } },
             };
 
-            root = new creeper::FilledCard {
+            root = new FilledCard {
                 theme,
-                creeper::card::pro::LevelLow,
-                creeper::card::pro::Layout<creeper::Col> {
-                    creeper::col::pro::Alignment { Qt::AlignTop },
-                    creeper::col::pro::Margin { 10 },
-                    creeper::col::pro::Spacing { 10 },
-                    creeper::col::pro::Item<creeper::Text> {
+                card::pro::LevelLow,
+                card::pro::Layout<Col> {
+                    col::pro::Alignment { Qt::AlignTop },
+                    col::pro::Margin { 10 },
+                    col::pro::Spacing { 10 },
+                    col::pro::Item<Text> {
                         theme,
-                        creeper::text::pro::Font { font },
-                        creeper::text::pro::Text { "模型操作" },
-                        creeper::text::pro::Alignment { Qt::AlignHCenter },
+                        text::pro::Font { font },
+                        text::pro::Text { "模型操作" },
+                        text::pro::Alignment { Qt::AlignHCenter },
                     },
-                    creeper::col::pro::Item<creeper::FilledCard> {
+                    col::pro::Item<FilledCard> {
                         theme,
-                        creeper::card::pro::LevelLowest,
-                        creeper::card::pro::Layout<creeper::Col> {
-                            creeper::col::pro::Margin { 8 },
-                            creeper::col::pro::Spacing { 4 },
-                            creeper::col::pro::Item { density_row },
-                            creeper::col::pro::Item { sample_distance_row },
-                            creeper::col::pro::Item { unit_scale_row },
-                            creeper::col::pro::Item { max_points_row },
+                        card::pro::LevelLowest,
+                        card::pro::Layout<Col> {
+                            col::pro::Margin { 24 },
+                            col::pro::Spacing { 4 },
+                            col::pro::Item { density_row },
+                            col::pro::Item { sample_distance_row },
+                            col::pro::Item { unit_scale_row },
+                            col::pro::Item { max_points_row },
                         },
                     },
-                    creeper::col::pro::Item { convert_button },
+                    col::pro::Item { convert_button },
                 },
             };
         }
 
         auto widget() const noexcept -> QWidget* override { return root; }
 
-        auto bind_asset(std::string const& id) noexcept -> void override { selected_asset_id = id; }
+        auto bind_asset(std::string const& id) noexcept -> void override {
+            selected_asset_id = id;
+            auto handle       = assets.get_handle<ModelHandle>(id);
+            selected_handle   = handle.has_value() ? handle.value() : nullptr;
+        }
 
-        auto clear() noexcept -> void override { selected_asset_id.clear(); }
+        auto clear() noexcept -> void override {
+            selected_asset_id.clear();
+            selected_handle = nullptr;
+        }
 
     private:
         auto set_convert_busy(bool busy) noexcept -> void {
@@ -157,21 +182,21 @@ namespace {
         ActionPanelContext context;
         pcs::AssetsManager& assets;
         pcs::Runtime& runtime;
-        pcs::gui::interaction::Mouse& mouse;
         std::string selected_asset_id;
+        ModelHandle* selected_handle = nullptr;
 
         panels::CompactFieldRow* density_row         = nullptr;
         panels::CompactFieldRow* sample_distance_row = nullptr;
         panels::CompactFieldRow* unit_scale_row      = nullptr;
         panels::CompactFieldRow* max_points_row      = nullptr;
 
-        creeper::OutlinedTextField* density_input         = nullptr;
-        creeper::OutlinedTextField* sample_distance_input = nullptr;
-        creeper::OutlinedTextField* unit_scale_input      = nullptr;
-        creeper::OutlinedTextField* max_points_input      = nullptr;
+        OutlinedTextField* density_input         = nullptr;
+        OutlinedTextField* sample_distance_input = nullptr;
+        OutlinedTextField* unit_scale_input      = nullptr;
+        OutlinedTextField* max_points_input      = nullptr;
 
-        creeper::OutlinedButton* convert_button = nullptr;
-        creeper::FilledCard* root               = nullptr;
+        OutlinedButton* convert_button = nullptr;
+        FilledCard* root               = nullptr;
     };
 
 }

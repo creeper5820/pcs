@@ -222,7 +222,7 @@ auto PngEditMode::id() const noexcept -> MouseModeId { return MouseModeId::PngEd
 
 auto PngEditMode::supports_selection(std::optional<MouseSelection> const& selection) const noexcept
     -> bool {
-    return selection.has_value() && selection->kind == pcs::AssetKind::PngMap;
+    return selection.has_value() && selection->kind == PngMapHandle::kKind;
 }
 
 auto PngEditMode::allows_camera_interaction(Mouse const& mouse) const noexcept -> bool {
@@ -239,7 +239,7 @@ auto PngEditMode::on_init(Mouse& mouse) noexcept -> void {
 
 auto PngEditMode::on_exit(Mouse& mouse) noexcept -> void {
     for (auto& [asset_id, session] : sessions) {
-        auto handle = assets.get_png_map_handle(asset_id);
+        auto handle = assets.get_handle<PngMapHandle>(asset_id);
         if (handle.has_value() && handle.value() != nullptr) {
             handle.value()->clear_preview();
         }
@@ -300,11 +300,11 @@ auto PngEditMode::register_tool_handler(PngEditTool tool, ToolHandler handler) n
 auto PngEditMode::resolve_edit_context(Mouse& mouse, MouseEvent const& event) noexcept
     -> std::optional<EditContext> {
     const auto& selected = mouse.selected_asset();
-    if (!selected.has_value() || selected->kind != pcs::AssetKind::PngMap) {
+    if (!selected.has_value() || selected->kind != PngMapHandle::kKind) {
         return std::nullopt;
     }
 
-    auto handle = assets.get_png_map_handle(selected->id);
+    auto handle = assets.get_handle<PngMapHandle>(selected->id);
     if (!handle.has_value() || handle.value() == nullptr) {
         mouse.set_status(mode_status(mouse, "PNG 地图不可用"));
         return std::nullopt;
@@ -326,7 +326,7 @@ auto PngEditMode::resolve_edit_context(Mouse& mouse, MouseEvent const& event) no
 
 auto PngEditMode::pick_pixel(std::string const& asset_id, MouseEvent const& event) const noexcept
     -> std::optional<PixelPoint> {
-    auto handle = assets.get_png_map_handle(asset_id);
+    auto handle = assets.get_handle<PngMapHandle>(asset_id);
     if (!handle.has_value() || handle.value() == nullptr) {
         return std::nullopt;
     }

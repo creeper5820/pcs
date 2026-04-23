@@ -17,11 +17,11 @@ namespace {
 
     class PointcloudPickerExtension final : public PickerExtension {
     public:
-        auto kind() const noexcept -> pcs::AssetKind override { return pcs::AssetKind::Pointcloud; }
+        auto kind() const noexcept -> std::string_view override { return PointsHandle::kKind; }
 
         auto pick(Mouse& mouse, MouseEvent const& event, std::string const& asset_id,
             Renderer& renderer, AssetsManager& assets) noexcept -> void override {
-            auto handle = assets.get_pointcloud_handle(asset_id);
+            auto handle = assets.get_handle<PointsHandle>(asset_id);
             if (!handle.has_value() || handle.value() == nullptr) {
                 mouse.set_status("拾取模式：点云不可用");
                 return;

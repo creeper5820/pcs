@@ -40,7 +40,25 @@ auto ModelHandle::load_from_filesystem(std::string const& path) noexcept
     return pimpl->load_from_filesystem(path);
 }
 
+auto ModelHandle::save_into_filesystem(std::string const&) noexcept
+    -> std::expected<void, std::string_view> {
+    return std::unexpected { "Save not supported for model asset" };
+}
+
 auto ModelHandle::model_data() const noexcept -> ModelData const& { return pimpl->data; }
+
+auto ModelHandle::clone(std::string const&) const noexcept
+    -> std::expected<std::unique_ptr<ModelHandle>, std::string> {
+    auto cloned      = std::make_unique<ModelHandle>();
+    auto load_result = cloned->pimpl->load_from_data(model_data());
+    if (!load_result.has_value()) {
+        return std::unexpected { std::string(load_result.error()) };
+    }
+
+    const auto [r, g, b] = get_overall_color();
+    cloned->set_overall_color(r, g, b);
+    return cloned;
+}
 
 auto ModelHandle::attach_renderer(Renderer& r) noexcept -> void {
     r.attach(*pimpl->unit);

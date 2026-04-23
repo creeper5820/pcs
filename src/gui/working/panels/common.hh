@@ -19,8 +19,8 @@ namespace pcs::gui::working::panels {
 class CompactFieldRow final : public QWidget {
 public:
     CompactFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
-        std::string_view label, int label_width, int field_width,
-        QString const& default_value, QString const& placeholder = {}) noexcept;
+        std::string_view label, int label_width, int field_width, QString const& default_value,
+        QString const& placeholder = { }) noexcept;
 
     auto field() const noexcept -> creeper::OutlinedTextField&;
 
@@ -31,9 +31,9 @@ private:
 class CompactDualFieldRow final : public QWidget {
 public:
     CompactDualFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
-        std::string_view label, int label_width, int field_width,
-        QString const& first_default, QString const& second_default,
-        QString const& first_placeholder = {}, QString const& second_placeholder = {}) noexcept;
+        std::string_view label, int label_width, int field_width, QString const& first_default,
+        QString const& second_default, QString const& first_placeholder = { },
+        QString const& second_placeholder = { }) noexcept;
 
     auto first() const noexcept -> creeper::OutlinedTextField&;
     auto second() const noexcept -> creeper::OutlinedTextField&;
@@ -48,8 +48,8 @@ public:
     CompactTripleFieldRow(creeper::theme::pro::ThemeManager const& theme, QFont const& font,
         std::string_view label, int label_width, int field_width, QString const& first_default,
         QString const& second_default, QString const& third_default,
-        QString const& first_placeholder = {}, QString const& second_placeholder = {},
-        QString const& third_placeholder = {}) noexcept;
+        QString const& first_placeholder = { }, QString const& second_placeholder = { },
+        QString const& third_placeholder = { }) noexcept;
 
     auto first() const noexcept -> creeper::OutlinedTextField&;
     auto second() const noexcept -> creeper::OutlinedTextField&;
@@ -116,7 +116,7 @@ auto make_parameter_field(creeper::theme::pro::ThemeManager const& theme, QFont 
 
 auto compact_text_field_measurements() noexcept -> creeper::OutlinedTextField::Measurements;
 
-auto compact_slider_measurements() noexcept -> creeper::slider::internal::Slider::Measurements;
+auto compact_slider_measurements() noexcept -> creeper::Slider::Measurements;
 
 auto confirm_large_pointcloud_warning(std::uintmax_t bytes) noexcept -> bool;
 

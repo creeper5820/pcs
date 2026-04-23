@@ -1,5 +1,6 @@
 #include "app.hh"
 
+#include "core/handle/points.hh"
 #include "gui/context/features.hh"
 #include "gui/context/modules.hh"
 #include "gui/context/states.hh"
@@ -60,29 +61,7 @@ public:
             manager->set_theme_pack(kBlueMikuThemePack);
             manager->set_color_mode(ColorMode::LIGHT);
 
-            states = gui::context::AppStates { *manager, modules };
-
-            {
-                navigation_state = std::move(states.navigation);
-
-                navigation_state->icon_font     = material::round::font;
-                navigation_state->mouse         = modules.mouse.get();
-                navigation_state->function_quit = [this] { exit_application_with_confirment(); };
-                navigation_state->picker_mode_getter = [this] {
-                    return modules.mouse->mode() == gui::interaction::MouseModeId::Picker;
-                };
-                navigation_state->picker_mode_setter = [this](bool on) {
-                    modules.mouse->set_mode(on ? gui::interaction::MouseModeId::Picker
-                                               : gui::interaction::MouseModeId::None);
-                };
-
-                auto& contexts = navigation_state->buttons_context;
-                contexts.emplace_back("3d window", "home", [this] { });
-                contexts.emplace_back(
-                    "switch theme", "format_paint", [this] { switch_next_theme(); });
-            }
-            { visualization_window_state = std::move(states.visualization); }
-            { working_panel_state = std::move(states.working); }
+            states = gui::context::AppStates { };
 
             window = MainWindowComponent();
 
@@ -92,14 +71,21 @@ public:
                 background.redF(), background.greenF(), background.blueF());
 
             const auto point = colorscheme.primary;
-            modules.assets->set_default_point_color(point.redF(), point.greenF(), point.blueF());
+            // Set color for all pointcloud assets
+            for (auto const& id : modules.assets->get_asset_ids()) {
+                if (auto handle = modules.assets->get_handle<PointsHandle>(std::string { id })) {
+                    auto* points = handle.value();
+                    const auto alpha = std::get<3>(points->get_overall_color());
+                    points->set_overall_color(point.redF(), point.greenF(), point.blueF(), alpha);
+                }
+            }
 
             modules.renderer->render_window();
 
             manager->apply_theme();
 
             // Q 键退出
-            auto shortcut_q = new QShortcut { Qt::Key_Q, window };
+            auto shortcut_q = new QShortcut { QKeySequence { Qt::Key_Q }, window };
             QObject::connect(shortcut_q, &QShortcut::activated, //
                 [this] { exit_application_with_confirment(); });
 
@@ -115,6 +101,18 @@ public:
                 new QShortcut { QKeySequence { Qt::CTRL | Qt::SHIFT | Qt::Key_Z }, window };
             QObject::connect(
                 shortcut_redo_shift_z, &QShortcut::activated, [this] { modules.runtime->redo(); });
+
+            auto shortcut_redo_y =
+                new QShortcut { QKeySequence { Qt::CTRL | Qt::Key_Y }, window };
+            QObject::connect(
+                shortcut_redo_y, &QShortcut::activated, [this] { modules.runtime->redo(); });
+
+            auto shortcut_save = new QShortcut { QKeySequence::Save, window };
+            QObject::connect(shortcut_save, &QShortcut::activated, [this] {
+                if (working_panel != nullptr) {
+                    working_panel->save_current_asset();
+                }
+            });
 
             sp::info("App gui are loaded");
         }
@@ -156,22 +154,20 @@ public:
     auto show() noexcept { window->show(); }
 
 private:
-    QPointer<MainWindow> window;
+    MainWindow* window = nullptr;
 
     std::string application_name = "pointcloud-shop";
     std::string configuration_path;
     std::vector<std::string> startup_files;
     bool exit_requested = false;
 
-    std::unique_ptr<NavigationState> navigation_state;
-    std::unique_ptr<VisualizationWindowState> visualization_window_state;
-    std::unique_ptr<WorkingPanelState> working_panel_state;
+    WorkingPanel* working_panel = nullptr;
     gui::context::AppStates states;
 
     std::unique_ptr<ThemeManager> manager;
     gui::context::AppModules modules;
 
-    auto MainWindowComponent() noexcept -> QPointer<MainWindow> {
+    auto MainWindowComponent() noexcept -> MainWindow* {
         namespace mwp = main_window::pro;
         namespace cp  = card::pro;
         namespace lp  = linear::pro;
@@ -186,15 +182,43 @@ private:
                     lp::Spacing { 0 },
                     lp::Item {
                         { 0 },
-                        NavigationComponent(*navigation_state).get(),
+                        new Navigation {
+                            *manager,
+                            material::round::font,
+                            std::vector<Navigation::ButtonContext> {
+                                { "3d window", "home", [this] { } },
+                                { "switch theme", "format_paint", [this] { switch_next_theme(); } },
+                            },
+                            [this](bool on) {
+                                modules.mouse->set_mode(on ? gui::interaction::MouseModeId::Picker
+                                                           : gui::interaction::MouseModeId::None);
+                            },
+                            [this] {
+                                return modules.mouse->mode() == gui::interaction::MouseModeId::Picker;
+                            },
+                            [this] { exit_application_with_confirment(); },
+                            *modules.mouse,
+                        },
                     },
                     lp::Item {
                         { 255 },
-                        VisualizationWindowComponent(*visualization_window_state).get(),
+                        new VisualizationWindow {
+                            *manager,
+                            *modules.renderer,
+                            *modules.runtime,
+                            *modules.mouse,
+                        },
                     },
                     lp::Item {
                         { 0 },
-                        WorkingPanelComponent(*working_panel_state).get(),
+                        [this]() {
+                            working_panel = new WorkingPanel { *manager, *modules.assets,
+                                *modules.runtime, *modules.renderer, *modules.open_control,
+                                *modules.asset_details, *modules.mouse,
+                                *modules.action_panels, states.working_panel_width,
+                                states.assets_visibility };
+                            return working_panel;
+                        }(),
                     },
                 },
             },
@@ -204,7 +228,7 @@ private:
     auto use_configuration() noexcept { }
 
     auto use_startup_files() noexcept -> void {
-        if (startup_files.empty() || working_panel_state == nullptr
+        if (startup_files.empty() || working_panel == nullptr
             || modules.open_control == nullptr) {
             return;
         }
@@ -216,17 +240,15 @@ private:
                 continue;
             }
 
-            if (working_panel_state->refresh_callback) {
-                working_panel_state->refresh_callback();
-            }
+            working_panel->refresh_assets_list();
             auto id = modules.assets->last_asset_id();
-            if (id.has_value()) {
-                last_opened_id = *id;
+            if (!id.empty()) {
+                last_opened_id = id;
             }
         }
 
-        if (last_opened_id.has_value() && working_panel_state->select_callback) {
-            working_panel_state->select_callback(*last_opened_id);
+        if (last_opened_id.has_value()) {
+            working_panel->select_asset(*last_opened_id);
         }
 
         startup_files.clear();

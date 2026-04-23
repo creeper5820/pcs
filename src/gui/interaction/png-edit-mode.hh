@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/assets.hh"
+#include "core/handle/png-map.hh"
 #include "core/events/process/png-map-edit.hh"
 #include "core/map/png-edit-ops.hh"
 #include "core/renderer.hh"

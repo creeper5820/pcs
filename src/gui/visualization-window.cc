@@ -9,7 +9,9 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <QPainterPath>
+#include <QPointer>
 #include <QRegion>
+#include <QVBoxLayout>
 
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
@@ -37,7 +39,7 @@ struct Rounded : public T {
 
 class InteractiveVtkWindow : public Rounded<pcs::QtVtkWindow> {
 public:
-    explicit InteractiveVtkWindow(pcs::gui::interaction::Mouse* mouse) noexcept
+    explicit InteractiveVtkWindow(pcs::gui::interaction::Mouse& mouse) noexcept
         : mouse { mouse } {
         setMouseTracking(true);
 
@@ -128,10 +130,7 @@ protected:
 
 private:
     auto allow_camera_interaction() const noexcept -> bool {
-        if (mouse == nullptr) {
-            return true;
-        }
-        return mouse->allows_camera_interaction();
+        return mouse.allows_camera_interaction();
     }
 
     auto update_overlay_labels() noexcept -> void {
@@ -175,11 +174,7 @@ private:
     }
 
     auto emit_move(QMouseEvent const& event) noexcept -> void {
-        if (mouse == nullptr) {
-            return;
-        }
-
-        mouse->emit_move(pcs::gui::interaction::MouseEvent {
+        mouse.emit_move(pcs::gui::interaction::MouseEvent {
             .x         = event.position().toPoint().x(),
             .y         = event.position().toPoint().y(),
             .modifiers = event.modifiers(),
@@ -188,10 +183,6 @@ private:
     }
 
     auto emit_click(QMouseEvent const& event) noexcept -> void {
-        if (mouse == nullptr) {
-            return;
-        }
-
         const auto payload = pcs::gui::interaction::MouseEvent {
             .x         = event.position().toPoint().x(),
             .y         = event.position().toPoint().y(),
@@ -200,68 +191,74 @@ private:
         };
 
         if (event.button() == Qt::LeftButton) {
-            mouse->emit_lclick(payload);
+            mouse.emit_lclick(payload);
             return;
         }
         if (event.button() == Qt::RightButton) {
-            mouse->emit_rclick(payload);
+            mouse.emit_rclick(payload);
             return;
         }
     }
 
-    pcs::gui::interaction::Mouse* mouse = nullptr;
+    pcs::gui::interaction::Mouse& mouse;
     QLabel* status_label                = nullptr;
     QLabel* operation_label             = nullptr;
     QString status_text;
     QString operation_text;
 };
 
-auto VisualizationWindowComponent(VisualizationWindowState& state) noexcept -> QPointer<QWidget> {
-    const auto QtVtkWindowComponent = [&] {
-        auto window = new InteractiveVtkWindow { state.mouse };
+struct VisualizationWindow::Impl {
+    InteractiveVtkWindow* window = nullptr;
+};
 
-        state.renderer.connect_ui(*window);
-        window->sync_interaction_state();
+VisualizationWindow::VisualizationWindow(ThemeManager& manager, pcs::Renderer& renderer,
+    pcs::Runtime& runtime, pcs::gui::interaction::Mouse& mouse) noexcept
+    : pimpl { std::make_unique<Impl>() } {
+    pimpl->window = new InteractiveVtkWindow { mouse };
 
-        if (state.mouse != nullptr) {
-            state.mouse->set_status_sink(
-                [guard = QPointer<InteractiveVtkWindow> { window }](QString const& text) {
-                    if (guard != nullptr) {
-                        guard->set_status_text(text);
-                    }
-                });
-            state.mouse->set_mode_sink([guard = QPointer<InteractiveVtkWindow> { window }](auto) {
-                if (guard != nullptr) {
-                    guard->sync_interaction_state();
-                }
-            });
-            state.mouse->set_png_edit_tool_sink(
-                [guard = QPointer<InteractiveVtkWindow> { window }](auto) {
-                    if (guard != nullptr) {
-                        guard->sync_interaction_state();
-                    }
-                });
+    renderer.connect_ui(*pimpl->window);
+    pimpl->window->sync_interaction_state();
+
+    mouse.set_status_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](
+                              QString const& text) {
+        if (guard != nullptr) {
+            guard->set_status_text(text);
         }
-
-        if (state.runtime != nullptr) {
-            state.runtime->set_operation_sink(
-                [guard = QPointer<InteractiveVtkWindow> { window }](std::string const& message) {
-                    if (guard != nullptr) {
-                        guard->set_operation_text(QString::fromStdString(message));
-                    }
-                });
+    });
+    mouse.set_mode_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](auto) {
+        if (guard != nullptr) {
+            guard->sync_interaction_state();
         }
+    });
+    mouse.set_png_edit_tool_sink(
+        [guard = QPointer<InteractiveVtkWindow> { pimpl->window }](auto) {
+            if (guard != nullptr) {
+                guard->sync_interaction_state();
+            }
+        });
 
-        return window;
-    };
+    runtime.set_operation_sink([guard = QPointer<InteractiveVtkWindow> { pimpl->window }](
+                                  std::string const& message) {
+        if (guard != nullptr) {
+            guard->set_operation_text(QString::fromStdString(message));
+        }
+    });
 
-    return new FilledCard {
-        card::pro::ThemeManager { state.manager },
+    auto* root = new FilledCard {
+        card::pro::ThemeManager { manager },
         card::pro::LevelDefault,
         card::pro::Radius { 0 },
         card::pro::Layout<Row> {
             row::pro::Margin { 10 },
-            row::pro::Item { QtVtkWindowComponent() },
+            row::pro::Item { pimpl->window },
         },
     };
+
+    auto* layout = new QVBoxLayout { };
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    layout->addWidget(root);
+    setLayout(layout);
 }
+
+VisualizationWindow::~VisualizationWindow() noexcept = default;

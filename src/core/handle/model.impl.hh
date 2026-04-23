@@ -3,7 +3,6 @@
 #include "core/handle/model.hh"
 #include "core/units/model.hh"
 
-#include <array>
 #include <charconv>
 #include <fstream>
 #include <optional>
@@ -106,6 +105,16 @@ struct ModelHandle::Impl final {
     std::unique_ptr<ModelUnit> unit;
     ModelData data;
 
+    auto load_from_data(ModelData const& model) noexcept -> std::expected<void, std::string_view> {
+        if (model.vertices.empty()) {
+            return std::unexpected { "Model data is empty" };
+        }
+
+        data = model;
+        unit = std::make_unique<ModelUnit>(data);
+        return { };
+    }
+
     auto load_from_filesystem(std::string const& path) noexcept
         -> std::expected<void, std::string_view> {
         auto result = load_obj_data(path);
@@ -113,8 +122,6 @@ struct ModelHandle::Impl final {
             return std::unexpected { result.error() };
         }
 
-        data = std::move(result).value();
-        unit = std::make_unique<ModelUnit>(data);
-        return { };
+        return load_from_data(std::move(result).value());
     }
 };

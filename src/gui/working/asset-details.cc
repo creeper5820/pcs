@@ -2,14 +2,14 @@
 
 namespace pcs::gui::working {
 
-auto AssetDetailsRegistry::register_provider(pcs::AssetKind kind, Provider provider) noexcept
+auto AssetDetailsRegistry::register_provider(std::type_index type, Provider provider) noexcept
     -> void {
-    providers[kind] = std::move(provider);
+    providers[type] = std::move(provider);
 }
 
-auto AssetDetailsRegistry::provide(pcs::AssetKind kind, pcs::AssetsManager& assets,
+auto AssetDetailsRegistry::provide(std::type_index type, pcs::AssetsManager& assets,
     std::string const& id) const noexcept -> std::optional<AssetDetails> {
-    auto iter = providers.find(kind);
+    auto iter = providers.find(type);
     if (iter == providers.end() || !iter->second) {
         return std::nullopt;
     }

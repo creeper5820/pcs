@@ -145,7 +145,7 @@ auto Mouse::set_png_edit_tool(PngEditTool tool) noexcept -> void {
 
 auto Mouse::png_edit_tool() const noexcept -> PngEditTool { return png_edit_tool_mode; }
 
-auto Mouse::set_selected_asset(std::string id, pcs::AssetKind kind) noexcept -> void {
+auto Mouse::set_selected_asset(std::string id, std::string_view kind) noexcept -> void {
     asset = MouseSelection {
         .id   = std::move(id),
         .kind = kind,

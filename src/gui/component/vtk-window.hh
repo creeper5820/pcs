@@ -16,7 +16,4 @@ public:
     auto component() -> QWidget* const;
 };
 
-struct VtkWindowState { };
-auto VtkWindowComponent(VtkWindowState&) noexcept -> QPointer<QWidget>;
-
 }

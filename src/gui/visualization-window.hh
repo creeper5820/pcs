@@ -1,18 +1,18 @@
 #pragma once
+
 #include "core/renderer.hh"
 #include "core/runtime.hh"
 #include "gui/interaction/mouse.hh"
 
 #include <creeper-qt/utility/theme/theme.hh>
+#include <creeper-qt/utility/wrapper/pimpl.hh>
 
-#include <qpointer.h>
-#include <qwidget.h>
+#include <QWidget>
 
-struct VisualizationWindowState {
-    creeper::ThemeManager& manager;
-    pcs::Renderer& renderer;
-    pcs::Runtime* runtime = nullptr;
-    pcs::gui::interaction::Mouse* mouse = nullptr;
+class VisualizationWindow final : public QWidget {
+    CREEPER_PIMPL_DEFINITION(VisualizationWindow)
+
+public:
+    VisualizationWindow(creeper::ThemeManager& manager, pcs::Renderer& renderer,
+        pcs::Runtime& runtime, pcs::gui::interaction::Mouse& mouse) noexcept;
 };
-
-auto VisualizationWindowComponent(VisualizationWindowState&) noexcept -> QPointer<QWidget>;

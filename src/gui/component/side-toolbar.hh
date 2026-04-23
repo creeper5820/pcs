@@ -16,8 +16,3 @@ public:
 };
 
 }
-
-struct SideToolBarState {
-    creeper::ThemeManager& manager;
-};
-auto SideToolBarComponent();

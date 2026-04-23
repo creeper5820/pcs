@@ -1,17 +1,16 @@
 #pragma once
 
-#include "core/assets.hh"
 #include "core/map/png-edit-ops.hh"
 
 #include <qnamespace.h>
 #include <qstring.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace pcs::gui::interaction {
@@ -39,7 +38,7 @@ struct MouseEvent {
 
 struct MouseSelection {
     std::string id;
-    pcs::AssetKind kind = pcs::AssetKind::Pointcloud;
+    std::string_view kind;
 };
 
 struct PngOriginPickRequest {
@@ -102,7 +101,7 @@ public:
     auto set_png_edit_tool(PngEditTool) noexcept -> void;
     auto png_edit_tool() const noexcept -> PngEditTool;
 
-    auto set_selected_asset(std::string id, pcs::AssetKind kind) noexcept -> void;
+    auto set_selected_asset(std::string id, std::string_view kind) noexcept -> void;
     auto clear_selected_asset() noexcept -> void;
     auto selected_asset() const noexcept -> std::optional<MouseSelection> const&;
 

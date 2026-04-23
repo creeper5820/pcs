@@ -3,8 +3,6 @@
 #include "gui/working/action-panels.hh"
 #include "utility/pimpl.hh"
 
-#include <memory>
-
 namespace pcs::gui::working {
 
 class PointcloudPanel final : public AssetActionPanel {

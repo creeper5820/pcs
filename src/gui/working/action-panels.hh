@@ -11,11 +11,10 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace pcs::gui::working {
-
-using namespace creeper;
 
 struct ActionPanelContext {
     creeper::ThemeManager* manager      = nullptr;
@@ -41,12 +40,12 @@ public:
     using Factory =
         std::function<std::unique_ptr<AssetActionPanel>(ActionPanelContext, QFont const&)>;
 
-    auto register_factory(pcs::AssetKind, Factory) noexcept -> void;
-    auto create(pcs::AssetKind, ActionPanelContext, QFont const&) const noexcept
+    auto register_factory(std::string_view, Factory) noexcept -> void;
+    auto create(std::string_view, ActionPanelContext, QFont const&) const noexcept
         -> std::unique_ptr<AssetActionPanel>;
 
 private:
-    std::unordered_map<pcs::AssetKind, Factory> factories;
+    std::unordered_map<std::string_view, Factory> factories;
 };
 
 struct ActionPanelHost {
@@ -57,22 +56,22 @@ struct ActionPanelHost {
 
     auto widget() const noexcept -> QWidget*;
     auto clear() noexcept -> void;
-    auto bind_asset(pcs::AssetKind kind, std::string const& id) noexcept -> void;
+    auto bind_asset(std::string_view kind, std::string const& id) noexcept -> void;
 
 private:
     auto sync_current_panel_height() noexcept -> void;
-    auto ensure_panel(pcs::AssetKind) noexcept -> AssetActionPanel*;
+    auto ensure_panel(std::string_view) noexcept -> AssetActionPanel*;
 
     ActionPanelContext context;
     ActionPanelRegistry const* registry = nullptr;
     QFont font;
 
-    Widget* root         = nullptr;
-    Stacked* stack       = nullptr;
+    creeper::Widget* root  = nullptr;
+    creeper::Stacked* stack = nullptr;
     QWidget* placeholder = nullptr;
 
-    std::unordered_map<pcs::AssetKind, std::unique_ptr<AssetActionPanel>> panels;
-    std::unordered_map<pcs::AssetKind, int> panel_indices;
+    std::unordered_map<std::string_view, std::unique_ptr<AssetActionPanel>> panels;
+    std::unordered_map<std::string_view, int> panel_indices;
 };
 
 }

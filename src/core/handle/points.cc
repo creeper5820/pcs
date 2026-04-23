@@ -41,8 +41,7 @@ auto PointsHandle::pick_position(Renderer& renderer, int display_x, int display_
 }
 
 auto PointsHandle::set_visibility(bool on) noexcept -> void {
-    pimpl->unit->set_visibility(on); //
-    pimpl->unit->set_coordinate_visibility(on && pimpl->coordinate_visibility());
+    pimpl->set_visibility(on);
 }
 
 auto PointsHandle::set_coordinate_visibility(bool on) noexcept -> void {
@@ -54,10 +53,10 @@ auto PointsHandle::coordinate_visibility() const noexcept -> bool {
 }
 
 auto PointsHandle::attach_renderer(Renderer& r) noexcept -> void {
-    r.attach(*pimpl->unit);
+    pimpl->attach_renderer(r);
 }
 auto PointsHandle::detach_renderer(Renderer& r) noexcept -> void {
-    r.detach(*pimpl->unit);
+    pimpl->detach_renderer(r);
 }
 
 auto PointsHandle::load_from_filesystem(std::string const& path) noexcept
@@ -71,4 +70,18 @@ auto PointsHandle::load_from_positions(std::vector<Position> const& points) noex
 auto PointsHandle::save_into_filesystem(std::string const& path) noexcept
     -> std::expected<void, std::string_view> {
     return pimpl->save_into_filesystem(path);
+}
+
+auto PointsHandle::clone(std::string const&) const noexcept
+    -> std::expected<std::unique_ptr<PointsHandle>, std::string> {
+    auto cloned      = std::make_unique<PointsHandle>();
+    auto load_result = cloned->load_from_positions(get_positions());
+    if (!load_result.has_value()) {
+        return std::unexpected { std::string(load_result.error()) };
+    }
+
+    const auto [r, g, b, a] = get_overall_color();
+    cloned->set_overall_color(r, g, b, a);
+    cloned->set_coordinate_visibility(coordinate_visibility());
+    return cloned;
 }

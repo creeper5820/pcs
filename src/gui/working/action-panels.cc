@@ -6,13 +6,15 @@
 
 #include <algorithm>
 
+using namespace creeper;
 namespace pcs::gui::working {
 
-auto ActionPanelRegistry::register_factory(pcs::AssetKind kind, Factory factory) noexcept -> void {
+auto ActionPanelRegistry::register_factory(std::string_view kind, Factory factory) noexcept
+    -> void {
     factories[kind] = std::move(factory);
 }
 
-auto ActionPanelRegistry::create(pcs::AssetKind kind, ActionPanelContext context,
+auto ActionPanelRegistry::create(std::string_view kind, ActionPanelContext context,
     QFont const& font) const noexcept -> std::unique_ptr<AssetActionPanel> {
     auto iter = factories.find(kind);
     if (iter == factories.end() || !iter->second) {
@@ -61,7 +63,7 @@ auto ActionPanelHost::clear() noexcept -> void {
     sync_current_panel_height();
 }
 
-auto ActionPanelHost::bind_asset(pcs::AssetKind kind, std::string const& id) noexcept -> void {
+auto ActionPanelHost::bind_asset(std::string_view kind, std::string const& id) noexcept -> void {
     auto* panel = ensure_panel(kind);
     if (panel == nullptr) {
         stack->setCurrentIndex(kPlaceholderIndex);
@@ -74,7 +76,7 @@ auto ActionPanelHost::bind_asset(pcs::AssetKind kind, std::string const& id) noe
     sync_current_panel_height();
 }
 
-auto ActionPanelHost::ensure_panel(pcs::AssetKind kind) noexcept -> AssetActionPanel* {
+auto ActionPanelHost::ensure_panel(std::string_view kind) noexcept -> AssetActionPanel* {
     if (auto iter = panels.find(kind); iter != panels.end() && iter->second != nullptr) {
         return iter->second.get();
     }

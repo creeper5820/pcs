@@ -43,12 +43,39 @@ auto PngMapHandle::export_to_ros_directory(std::string const& directory) const n
     return pimpl->export_to_ros_directory(directory);
 }
 
+auto PngMapHandle::clone(std::string const&) const noexcept
+    -> std::expected<std::unique_ptr<PngMapHandle>, std::string> {
+    auto map          = PngMapData { };
+    map.pixels        = copy_pixels();
+    map.width         = get_width();
+    map.height        = get_height();
+    map.origin_x      = get_origin_x();
+    map.origin_y      = get_origin_y();
+    map.resolution    = get_resolution();
+    map.plane_z       = get_plane_z();
+    map.z_area_start  = get_z_area_start();
+    map.z_area_end    = get_z_area_end();
+    map.frame_config  = get_frame_config();
+
+    auto cloned       = std::make_unique<PngMapHandle>();
+    auto load_result  = cloned->load_from_data(map);
+    if (!load_result.has_value()) {
+        return std::unexpected { std::string(load_result.error()) };
+    }
+
+    cloned->set_frame_visibility(frame_visibility());
+    cloned->set_source_area_visibility(source_area_visibility());
+    return cloned;
+}
+
 auto PngMapHandle::get_width() const noexcept -> std::size_t { return pimpl->data.width; }
 auto PngMapHandle::get_height() const noexcept -> std::size_t { return pimpl->data.height; }
 auto PngMapHandle::get_resolution() const noexcept -> double { return pimpl->data.resolution; }
 auto PngMapHandle::get_plane_z() const noexcept -> double { return pimpl->data.plane_z; }
 auto PngMapHandle::get_origin_x() const noexcept -> double { return pimpl->data.origin_x; }
 auto PngMapHandle::get_origin_y() const noexcept -> double { return pimpl->data.origin_y; }
+auto PngMapHandle::get_z_area_start() const noexcept -> double { return pimpl->data.z_area_start; }
+auto PngMapHandle::get_z_area_end() const noexcept -> double { return pimpl->data.z_area_end; }
 auto PngMapHandle::get_frame_config() const noexcept -> PngMapFrameConfig {
     return pimpl->data.frame_config;
 }

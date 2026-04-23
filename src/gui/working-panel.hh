@@ -1,4 +1,5 @@
 #pragma once
+
 #include "core/assets.hh"
 #include "core/runtime.hh"
 #include "gui/interaction/mouse.hh"
@@ -7,32 +8,26 @@
 
 #include <creeper-qt/utility/theme/theme.hh>
 #include <creeper-qt/utility/wrapper/mutable-value.hh>
-#include <creeper-qt/utility/wrapper/widget.hh>
+#include <creeper-qt/utility/wrapper/pimpl.hh>
 
-#include <qpointer.h>
-#include <qwidget.h>
-
-#include <functional>
+#include <QWidget>
 
 namespace pcs::gui::working {
 class ActionPanelRegistry;
 }
 
-struct WorkingPanelState {
-    creeper::ThemeManager& manager;
-    pcs::AssetsManager& assets;
-    pcs::Runtime& runtime;
-    pcs::Renderer& renderer;
-    pcs::gui::working::OpenControl* open_control                    = nullptr;
-    pcs::gui::working::AssetDetailsRegistry* asset_details_registry = nullptr;
-    pcs::gui::interaction::Mouse* mouse                             = nullptr;
-    pcs::gui::working::ActionPanelRegistry* action_panel_registry   = nullptr;
+class WorkingPanel final : public QWidget {
+    CREEPER_PIMPL_DEFINITION(WorkingPanel)
 
-    creeper::MutableDouble panel_width { 300. };
+public:
+    WorkingPanel(creeper::ThemeManager& manager, pcs::AssetsManager& assets, pcs::Runtime& runtime,
+        pcs::Renderer& renderer, pcs::gui::working::OpenControl& open_control,
+        pcs::gui::working::AssetDetailsRegistry& asset_details_registry,
+        pcs::gui::interaction::Mouse& mouse,
+        pcs::gui::working::ActionPanelRegistry& action_panel_registry,
+        creeper::MutableDouble& panel_width, bool& assets_visibility) noexcept;
 
-    bool assets_visibility = true;
-
-    std::function<void()> refresh_callback;
-    std::function<void(std::string const&)> select_callback;
+    auto refresh_assets_list() noexcept -> void;
+    auto select_asset(std::string const& id) noexcept -> void;
+    auto save_current_asset() noexcept -> void;
 };
-auto WorkingPanelComponent(WorkingPanelState&) noexcept -> QPointer<QWidget>;

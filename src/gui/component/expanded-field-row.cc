@@ -14,6 +14,7 @@ namespace pcs::gui::component {
 namespace {
 
     auto compact_measurements() noexcept -> OutlinedTextField::Measurements {
+        using namespace creeper;
         auto measurements = OutlinedTextField::Measurements { };
 
         measurements.container_height     = 26;
@@ -36,14 +37,15 @@ namespace {
 
     auto make_expanded_field(theme::pro::ThemeManager const& theme, QFont const& font,
         QString const& default_value, QString const& placeholder) noexcept -> OutlinedTextField* {
+        using namespace creeper;
         auto* field = new OutlinedTextField {
             theme,
             text_field::pro::Font { font },
-            widget::pro::Apply { [](auto& self) {
+            widget::pro::Apply { [default_value](auto& self) {
                 self.set_measurements(compact_measurements());
                 self.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+                self.setText(default_value);
             } },
-            common::pro::Text<text_field::pro::Token> { default_value },
         };
 
         if (!placeholder.isEmpty()) {
