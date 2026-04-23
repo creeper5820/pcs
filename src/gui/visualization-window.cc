@@ -19,10 +19,6 @@
 #include <algorithm>
 #include <tuple>
 
-#ifndef APP_VERSION
-#define APP_VERSION "dev"
-#endif
-
 using namespace creeper;
 
 template <class T>
